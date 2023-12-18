@@ -1396,11 +1396,12 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
 
     // TODO: Don't do this every time.
     var collatorCaseInsensitive =
-            java.text.Collator.getInstance(java.util.Locale.forLanguageTag("sr"));
+        java.text.Collator.getInstance(java.util.Locale.forLanguageTag("sr"));
+    // Primary -> case-insensitive
+    // Secondary -> case-sensitive, accent-insensitive
+    // Tertiary -> case-sensitive, accent-sensitive
     collatorCaseInsensitive.setStrength(Collator.PRIMARY);
     return collatorCaseInsensitive.compare(this.toString(), other.toString());
-    // return ByteArray.compareBinary(
-    //     base, offset, numBytes, other.base, other.offset, other.numBytes);
   }
 
   public int compare(final UTF8String other) {
