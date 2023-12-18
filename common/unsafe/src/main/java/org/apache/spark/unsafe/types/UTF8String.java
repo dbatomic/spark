@@ -21,6 +21,7 @@ import javax.annotation.Nonnull;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.text.Collator;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -1390,8 +1391,16 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
 
   @Override
   public int compareTo(@Nonnull final UTF8String other) {
-    return ByteArray.compareBinary(
-        base, offset, numBytes, other.base, other.offset, other.numBytes);
+    // Just a prototype. Instead of doing proper byte by byte compare.
+    // here we rely back on Java's String comparison. We need proper plan here!
+
+    // TODO: Don't do this every time.
+    var collatorCaseInsensitive =
+            java.text.Collator.getInstance(java.util.Locale.forLanguageTag("sr"));
+    collatorCaseInsensitive.setStrength(Collator.PRIMARY);
+    return collatorCaseInsensitive.compare(this.toString(), other.toString());
+    // return ByteArray.compareBinary(
+    //     base, offset, numBytes, other.base, other.offset, other.numBytes);
   }
 
   public int compare(final UTF8String other) {
@@ -1404,7 +1413,8 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
       if (numBytes != o.numBytes) {
         return false;
       }
-      return ByteArrayMethods.arrayEquals(base, offset, o.base, o.offset, numBytes);
+      return compareTo(o) == 0;
+      // return ByteArrayMethods.arrayEquals(base, offset, o.base, o.offset, numBytes);
     } else {
       return false;
     }

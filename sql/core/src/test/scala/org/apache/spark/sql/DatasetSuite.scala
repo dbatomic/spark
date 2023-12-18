@@ -87,6 +87,19 @@ class DatasetSuite extends QueryTest
       data: _*)
   }
 
+  test("collation test") {
+    // Serbian case insensitive ordering
+    sql("select 'aaa' = 'aaa'").show()
+    sql("select 'љзшђ' = 'ЉЗШЂ'").show()
+
+    // Serbian
+    sql("""
+      SELECT name FROM
+      VALUES('Павле'), ('Зоја'), ('Ивона'), ('Александар') as data(name)
+      ORDER BY name
+      """).show()
+  }
+
   test("toDS should compare map with byte array keys correctly") {
     // Choose the order of arrays in such way, that sorting keys of different maps by _.toString
     // will not incidentally put equal keys together.
