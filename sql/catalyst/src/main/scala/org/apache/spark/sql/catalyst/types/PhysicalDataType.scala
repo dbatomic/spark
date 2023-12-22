@@ -278,9 +278,9 @@ case class PhysicalStringType(val collation: String = "utf8") extends PhysicalDa
       case Array(language, strength) =>
         val collator = Collator.getInstance(java.util.Locale.forLanguageTag(language))
         collator.setStrength(strength match {
-          case "primary" => Collator.PRIMARY
-          case "secondary" => Collator.SECONDARY
-          case "tertiary" => Collator.TERTIARY
+          case "pr" => Collator.PRIMARY
+          case "se" => Collator.SECONDARY
+          case "te" => Collator.TERTIARY
           case "identical" => Collator.IDENTICAL
           case _ => throw QueryExecutionErrors.orderedOperationUnsupportedByDataTypeError(
             "PhysicalStringType")

@@ -24,6 +24,12 @@ class CollationSuite extends QueryTest
   with SharedSparkSession
   with AdaptiveSparkPlanHelper {
 
+  test("collate keyword") {
+    // Serbian case insensitive ordering
+    assert(sql("select collate('aaa', 'sr-pr')").collect().head.getString(0) == "aaa")
+    assert(sql("select collation(collate('aaa', 'sr-pr'))").collect()(0).getString(0) == "sr-pr")
+  }
+
   test("collation test") {
     // Serbian case insensitive ordering
     sql("select 'aaa' = 'aaa'").show()

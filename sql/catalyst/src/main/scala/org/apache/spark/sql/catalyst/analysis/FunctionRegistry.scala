@@ -596,6 +596,9 @@ object FunctionRegistry {
     expression[RegExpSubStr]("regexp_substr"),
     expression[RegExpInStr]("regexp_instr"),
 
+    expression[Collate]("collate"),
+    expression[Collation]("collation"),
+
     // url functions
     expression[UrlEncode]("url_encode"),
     expression[UrlDecode]("url_decode"),

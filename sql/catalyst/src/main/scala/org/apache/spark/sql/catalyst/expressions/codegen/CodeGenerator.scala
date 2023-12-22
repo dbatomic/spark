@@ -1644,7 +1644,9 @@ object CodeGenerator extends Logging {
         case PhysicalStringType(collation) if collation == "utf8"
           => s"$input.getUTF8String($ordinal)"
         case PhysicalStringType(collation) =>
-          throw new IllegalArgumentException(s"code gen with collation: $dataType")
+          // TODO: What is the proper thing to do here?
+          s"$input.getUTF8String($ordinal)"
+          // throw new IllegalArgumentException(s"code gen with collation: $dataType")
         case t: PhysicalStructType => s"$input.getStruct($ordinal, ${t.fields.length})"
         case PhysicalVariantType => s"$input.getVariant($ordinal)"
         case _ => s"($jt)$input.get($ordinal, null)"
