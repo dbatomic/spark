@@ -280,7 +280,7 @@ case class PhysicalStringType(val collation: String = "utf8") extends PhysicalDa
         collator.setStrength(strength match {
           case "pr" => Collator.PRIMARY
           case "se" => Collator.SECONDARY
-          case "te" => Collator.TERTIARY
+          case "tr" => Collator.TERTIARY
           case "identical" => Collator.IDENTICAL
           case _ => throw QueryExecutionErrors.orderedOperationUnsupportedByDataTypeError(
             "PhysicalStringType")

@@ -30,16 +30,49 @@ class CollationSuite extends QueryTest
     assert(sql("select collation(collate('aaa', 'sr-pr'))").collect()(0).getString(0) == "sr-pr")
   }
 
-  test("collation test") {
-    // Serbian case insensitive ordering
-    sql("select 'aaa' = 'aaa'").show()
-    // sql("select 'љзшђ' = 'ЉЗШЂ'").show()
+  test("collation comparison") {
+    // Collation pre-read - https://docs.oracle.com/javase/8/docs/api/java/text/Collator.html
+    // You can set a Collator's strength property to determine the level of difference considered
+    // significant in comparisons.
+    // Four strengths are provided:
+    // PRIMARY, SECONDARY, TERTIARY, and IDENTICAL.
+    // The exact assignment of strengths to language features is locale dependant.
+    // For example, in Czech, "e" and "f" are considered primary differences,
+    // while "e" and "ě" are secondary differences,
+    // "e" and "E" are tertiary differences and "e" and "e" are identical.
 
-    // Serbian
-    // sql("""
-    //   SELECT name FROM
-    //   VALUES('Павле'), ('Зоја'), ('Ивона'), ('Александар') as data(name)
-    //   ORDER BY name
-    //   """).show()
+    // In spark implementation chose between PRIMARY, SECONDARY and TERTIARY through following map:
+    // case "pr" => Collator.PRIMARY
+    // case "se" => Collator.SECONDARY
+    // case "tr" => Collator.TERTIARY
+    // case "identical" => Collator.IDENTICAL
+
+
+    // Serbian case insensitive ordering
+    assert(sql("select collate('aaa', 'sr-pr') = collate('AAA', 'sr-pr')")
+      .collect().head.getBoolean(0))
+    assert(sql("select collate('aaa', 'sr-pr') = collate('aaa', 'sr-pr')")
+      .collect().head.getBoolean(0))
+    assert(sql("select collate('aaa', 'sr-pr') = collate('AaA', 'sr-pr')")
+      .collect().head.getBoolean(0))
+    assert(!sql("select collate('aaa', 'sr-pr') = collate('zzz', 'sr-pr')")
+      .collect().head.getBoolean(0))
+
+    assert(sql("select collate('љзшђ', 'sr-pr') = collate('ЉЗШЂ', 'sr-pr')")
+      .collect().head.getBoolean(0))
+
+    // switching to case sensitive Serbian.
+    assert(!sql("select collate('aaa', 'sr-tr') = collate('AAA', 'sr-tr')")
+      .collect().head.getBoolean(0))
+    assert(sql("select collate('aaa', 'sr-tr') = collate('aaa', 'sr-tr')")
+      .collect().head.getBoolean(0))
+    assert(!sql("select collate('aaa', 'sr-tr') = collate('AaA', 'sr-tr')")
+      .collect().head.getBoolean(0))
+    assert(!sql("select collate('aaa', 'sr-tr') = collate('zzz', 'sr-tr')")
+      .collect().head.getBoolean(0))
+    assert(!sql("select collate('љзшђ', 'sr-tr') = collate('ЉЗШЂ', 'sr-tr')")
+      .collect().head.getBoolean(0))
+    assert(sql("select collate('ЉЗШЂ', 'sr-tr') = collate('ЉЗШЂ', 'sr-tr')")
+      .collect().head.getBoolean(0))
   }
 }
