@@ -349,7 +349,7 @@ class CodegenContext extends Logging {
   def addBufferedState(dataType: DataType, variableName: String, initCode: String): ExprCode = {
     val value = addMutableState(javaType(dataType), variableName)
     val code = UserDefinedType.sqlType(dataType) match {
-      case StringType => code"$value = $initCode.clone();"
+      case StringType(_) => code"$value = $initCode.clone();"
       case _: StructType | _: ArrayType | _: MapType => code"$value = $initCode.copy();"
       case _ => code"$value = $initCode;"
     }
@@ -1631,6 +1631,7 @@ object CodeGenerator extends Logging {
   def getValue(input: String, dataType: DataType, ordinal: String): String = {
     val jt = javaType(dataType)
     dataType match {
+      // TODO: Codegen support for collations.
       case udt: UserDefinedType[_] => getValue(input, udt.sqlType, ordinal)
       case _ if isPrimitiveType(jt) => s"$input.get${primitiveTypeName(jt)}($ordinal)"
       case _ => PhysicalDataType(dataType) match {
@@ -1714,7 +1715,7 @@ object CodeGenerator extends Logging {
       case udt: UserDefinedType[_] => setColumn(row, udt.sqlType, ordinal, value)
       // The UTF8String, InternalRow, ArrayData and MapData may came from UnsafeRow, we should copy
       // it to avoid keeping a "pointer" to a memory region which may get updated afterwards.
-      case StringType | _: StructType | _: ArrayType | _: MapType =>
+      case StringType(_) | _: StructType | _: ArrayType | _: MapType =>
         s"$row.update($ordinal, $value.copy())"
       case _ => s"$row.update($ordinal, $value)"
     }
@@ -1947,7 +1948,7 @@ object CodeGenerator extends Logging {
     case DoubleType => java.lang.Double.TYPE
     case _: DecimalType => classOf[Decimal]
     case BinaryType => classOf[Array[Byte]]
-    case StringType => classOf[UTF8String]
+    case StringType(_) => classOf[UTF8String]
     case CalendarIntervalType => classOf[CalendarInterval]
     case _: StructType => classOf[InternalRow]
     case _: ArrayType => classOf[ArrayData]

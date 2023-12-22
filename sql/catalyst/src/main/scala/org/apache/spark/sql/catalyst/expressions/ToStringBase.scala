@@ -162,7 +162,7 @@ trait ToStringBase { self: UnaryExpression with TimeZoneAwareExpression =>
         IntervalUtils.toDayTimeIntervalString(i, ANSI_STYLE, startField, endField)))
     case _: DecimalType if useDecimalPlainString =>
       acceptAny[Decimal](d => UTF8String.fromString(d.toPlainString))
-    case StringType => identity
+    case StringType(_) => identity
     case _ => o => UTF8String.fromString(o.toString)
   }
 
@@ -257,7 +257,7 @@ trait ToStringBase { self: UnaryExpression with TimeZoneAwareExpression =>
       // notation if an exponent is needed.
       case _: DecimalType if useDecimalPlainString =>
         (c, evPrim) => code"$evPrim = UTF8String.fromString($c.toPlainString());"
-      case StringType =>
+      case StringType(_) =>
         (c, evPrim) => code"$evPrim = $c;"
       case _ =>
         (c, evPrim) => code"$evPrim = UTF8String.fromString(String.valueOf($c));"
@@ -282,7 +282,7 @@ trait ToStringBase { self: UnaryExpression with TimeZoneAwareExpression =>
     val elementToStringCode = castToStringCode(et, ctx)
     val funcName = ctx.freshName("elementToString")
     val element = JavaCode.variable("element", et)
-    val elementStr = JavaCode.variable("elementStr", StringType)
+    val elementStr = JavaCode.variable("elementStr", StringType())
     val elementToStringFunc = inline"${ctx.addNewFunction(funcName,
       s"""
          |private UTF8String $funcName(${CodeGenerator.javaType(et)} $element) {
@@ -326,7 +326,7 @@ trait ToStringBase { self: UnaryExpression with TimeZoneAwareExpression =>
       val funcName = ctx.freshName(func)
       val dataToStringCode = castToStringCode(dataType, ctx)
       val data = JavaCode.variable("data", dataType)
-      val dataStr = JavaCode.variable("dataStr", StringType)
+      val dataStr = JavaCode.variable("dataStr", StringType())
       val functionCall = ctx.addNewFunction(funcName,
         s"""
            |private UTF8String $funcName(${CodeGenerator.javaType(dataType)} $data) {
@@ -383,7 +383,7 @@ trait ToStringBase { self: UnaryExpression with TimeZoneAwareExpression =>
     val structToStringCode = st.zipWithIndex.map { case (ft, i) =>
       val fieldToStringCode = castToStringCode(ft, ctx)
       val field = ctx.freshVariable("field", ft)
-      val fieldStr = ctx.freshVariable("fieldStr", StringType)
+      val fieldStr = ctx.freshVariable("fieldStr", StringType())
       val javaType = JavaCode.javaType(ft)
       code"""
          |${if (i != 0) code"""$buffer.append(",");""" else EmptyBlock}

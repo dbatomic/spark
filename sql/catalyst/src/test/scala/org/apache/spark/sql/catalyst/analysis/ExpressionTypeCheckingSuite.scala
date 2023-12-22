@@ -31,7 +31,6 @@ import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types._
 
 class ExpressionTypeCheckingSuite extends SparkFunSuite with SQLHelper with QueryErrorsBase {
-
   val testRelation = LocalRelation(
     $"intField".int,
     $"stringField".string,

@@ -52,7 +52,7 @@ trait BaseScriptTransformationExec extends UnaryExecNode {
         case _: ArrayType | _: MapType | _: StructType =>
           new StructsToJson(ioschema.inputSerdeProps.toMap, in)
             .withTimeZone(conf.sessionLocalTimeZone)
-        case _ => Cast(in, StringType).withTimeZone(conf.sessionLocalTimeZone)
+        case _ => Cast(in, StringType()).withTimeZone(conf.sessionLocalTimeZone)
       }
     }
   }
@@ -126,7 +126,7 @@ trait BaseScriptTransformationExec extends UnaryExecNode {
         // If output column size less than 2, it will return NULL for columns with missing values.
         // Here we split row string and choose first 2 values, if values's size less than 2,
         // we pad NULL value until 2 to make behavior same with hive.
-        val kvWriter = CatalystTypeConverters.createToCatalystConverter(StringType)
+        val kvWriter = CatalystTypeConverters.createToCatalystConverter(StringType())
         prevLine: String =>
           new GenericInternalRow(
             prevLine.split(outputRowFormat, -1).slice(0, 2).padTo(2, null)
@@ -194,7 +194,7 @@ trait BaseScriptTransformationExec extends UnaryExecNode {
   private lazy val outputFieldWriters: Seq[String => Any] = output.map { attr =>
     val converter = CatalystTypeConverters.createToCatalystConverter(attr.dataType)
     attr.dataType match {
-      case StringType => wrapperConvertException(data => data, converter)
+      case StringType(_) => wrapperConvertException(data => data, converter)
       case BooleanType => wrapperConvertException(data => data.toBoolean, converter)
       case ByteType => wrapperConvertException(data => data.toByte, converter)
       case BinaryType =>

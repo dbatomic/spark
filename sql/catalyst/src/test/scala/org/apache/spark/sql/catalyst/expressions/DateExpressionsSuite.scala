@@ -42,7 +42,6 @@ import org.apache.spark.sql.types.DataTypeTestUtils.{dayTimeIntervalTypes, yearM
 import org.apache.spark.unsafe.types.{CalendarInterval, UTF8String}
 
 class DateExpressionsSuite extends SparkFunSuite with ExpressionEvalHelper {
-
   import IntegralLiteralTestUtils._
 
   private val PST_OPT = Option(PST.getId)

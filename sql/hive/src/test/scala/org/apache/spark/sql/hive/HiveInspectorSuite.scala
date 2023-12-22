@@ -104,7 +104,7 @@ class HiveInspectorSuite extends SparkFunSuite with HiveInspectors {
     case MapType(keyType, valueType, _) =>
       ObjectInspectorFactory.getStandardMapObjectInspector(
         toWritableInspector(keyType), toWritableInspector(valueType))
-    case StringType => PrimitiveObjectInspectorFactory.writableStringObjectInspector
+    case StringType(_) => PrimitiveObjectInspectorFactory.writableStringObjectInspector
     case IntegerType => PrimitiveObjectInspectorFactory.writableIntObjectInspector
     case DoubleType => PrimitiveObjectInspectorFactory.writableDoubleObjectInspector
     case BooleanType => PrimitiveObjectInspectorFactory.writableBooleanObjectInspector

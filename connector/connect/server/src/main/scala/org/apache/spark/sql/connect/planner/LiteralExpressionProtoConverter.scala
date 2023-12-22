@@ -73,7 +73,7 @@ object LiteralExpressionProtoConverter {
         expressions.Literal(decimal, DecimalType(math.max(precision, scale), scale))
 
       case proto.Expression.Literal.LiteralTypeCase.STRING =>
-        expressions.Literal(UTF8String.fromString(lit.getString), StringType)
+        expressions.Literal(UTF8String.fromString(lit.getString), StringType())
 
       case proto.Expression.Literal.LiteralTypeCase.DATE =>
         expressions.Literal(lit.getDate, DateType)

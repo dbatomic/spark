@@ -95,7 +95,7 @@ class ProjectEstimationSuite extends StatsEstimationTestBase {
       AttributeReference("cdecimal", DecimalType.SYSTEM_DEFAULT)() -> ColumnStat(
         distinctCount = Some(2), min = Some(dec1), max = Some(dec2),
         nullCount = Some(0), avgLen = Some(16), maxLen = Some(16)),
-      AttributeReference("cstring", StringType)() -> ColumnStat(distinctCount = Some(2),
+      AttributeReference("cstring", StringType())() -> ColumnStat(distinctCount = Some(2),
         min = None, max = None, nullCount = Some(0), avgLen = Some(3), maxLen = Some(3)),
       AttributeReference("cbinary", BinaryType)() -> ColumnStat(distinctCount = Some(2),
         min = None, max = None, nullCount = Some(0), avgLen = Some(3), maxLen = Some(3)),

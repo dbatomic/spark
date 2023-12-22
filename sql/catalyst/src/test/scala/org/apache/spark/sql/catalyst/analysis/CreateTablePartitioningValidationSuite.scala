@@ -137,7 +137,7 @@ private[sql] object CreateTablePartitioningValidationSuite {
 
   val schema: StructType = new StructType()
       .add("id", LongType)
-      .add("data", StringType)
+      .add("data", StringType())
       .add("point", new StructType().add("x", DoubleType).add("y", DoubleType))
 }
 

@@ -34,7 +34,7 @@ public class JavaWord2VecSuite extends SharedSparkSession {
   @Test
   public void testJavaWord2Vec() {
     StructType schema = new StructType(new StructField[]{
-      new StructField("text", new ArrayType(DataTypes.StringType, true), false, Metadata.empty())
+      new StructField("text", new ArrayType(DataTypes.CreateStringType("utf8"), true), false, Metadata.empty())
     });
     Dataset<Row> documentDF = spark.createDataFrame(
       Arrays.asList(

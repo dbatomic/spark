@@ -24,7 +24,6 @@ import org.apache.spark.sql.internal.SQLConf.TimestampTypes
 import org.apache.spark.sql.types._
 
 class DataTypeParserSuite extends SparkFunSuite with SQLHelper {
-
   def parse(sql: String): DataType = DataTypeParser.parseDataType(sql)
 
   def checkDataType(dataTypeString: String, expectedDataType: DataType): Unit = {

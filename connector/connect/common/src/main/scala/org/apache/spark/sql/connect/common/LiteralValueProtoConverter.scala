@@ -210,7 +210,7 @@ object LiteralValueProtoConverter {
     case JByte.TYPE => ByteType
     case JFloat.TYPE => FloatType
     case JBoolean.TYPE => BooleanType
-    case JChar.TYPE => StringType
+    case JChar.TYPE => StringType()
 
     // java classes
     case _ if clz == classOf[LocalDate] || clz == classOf[Date] => DateType
@@ -220,7 +220,7 @@ object LiteralValueProtoConverter {
     case _ if clz == classOf[Period] => YearMonthIntervalType.DEFAULT
     case _ if clz == classOf[JBigDecimal] => DecimalType.SYSTEM_DEFAULT
     case _ if clz == classOf[Array[Byte]] => BinaryType
-    case _ if clz == classOf[Array[Char]] => StringType
+    case _ if clz == classOf[Array[Char]] => StringType()
     case _ if clz == classOf[JShort] => ShortType
     case _ if clz == classOf[JInteger] => IntegerType
     case _ if clz == classOf[JLong] => LongType
@@ -230,7 +230,7 @@ object LiteralValueProtoConverter {
     case _ if clz == classOf[JBoolean] => BooleanType
 
     // other scala classes
-    case _ if clz == classOf[String] => StringType
+    case _ if clz == classOf[String] => StringType()
     case _ if clz == classOf[BigInt] || clz == classOf[BigDecimal] => DecimalType.SYSTEM_DEFAULT
     case _ if clz == classOf[CalendarInterval] => CalendarIntervalType
     case _ if clz.isArray => ArrayType(toDataType(clz.getComponentType))

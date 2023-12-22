@@ -283,27 +283,27 @@ class ToNumberParser(numberFormat: String, errorOnFail: Boolean) extends Seriali
     if (numberFormat.isEmpty) {
       return InvalidFormat(
         errorSubClass = "EMPTY",
-        messageParameters = Map("format" -> toSQLValue(numberFormat, StringType)))
+        messageParameters = Map("format" -> toSQLValue(numberFormat, StringType())))
     }
     // Make sure the format string contains at least one digit.
     if (!formatTokens.exists(
       token => token.isInstanceOf[DigitGroups])) {
       return InvalidFormat(
         errorSubClass = "WRONG_NUM_DIGIT",
-        messageParameters = Map("format" -> toSQLValue(numberFormat, StringType)))
+        messageParameters = Map("format" -> toSQLValue(numberFormat, StringType())))
     }
     // Make sure that any dollar sign in the format string occurs before any digits.
     if (firstDigitIndex < firstDollarSignIndex) {
       return InvalidFormat(
         errorSubClass = "CUR_MUST_BEFORE_DIGIT",
-        messageParameters = Map("format" -> toSQLValue(numberFormat, StringType)))
+        messageParameters = Map("format" -> toSQLValue(numberFormat, StringType())))
     }
     // Make sure that any dollar sign in the format string occurs before any decimal point.
     if (firstDecimalPointIndex != -1 &&
       firstDecimalPointIndex < firstDollarSignIndex) {
       return InvalidFormat(
         errorSubClass = "CUR_MUST_BEFORE_DEC",
-        messageParameters = Map("format" -> toSQLValue(numberFormat, StringType)))
+        messageParameters = Map("format" -> toSQLValue(numberFormat, StringType())))
     }
     // Make sure that any thousands separators in the format string have digits before and after.
     if (digitGroupsBeforeDecimalPoint.exists {
@@ -321,7 +321,7 @@ class ToNumberParser(numberFormat: String, errorOnFail: Boolean) extends Seriali
     }) {
       return InvalidFormat(
         errorSubClass = "CONT_THOUSANDS_SEPS",
-        messageParameters = Map("format" -> toSQLValue(numberFormat, StringType)))
+        messageParameters = Map("format" -> toSQLValue(numberFormat, StringType())))
     }
     // Make sure that thousands separators does not appear after the decimal point, if any.
     if (digitGroupsAfterDecimalPoint.exists {
@@ -330,7 +330,7 @@ class ToNumberParser(numberFormat: String, errorOnFail: Boolean) extends Seriali
     }) {
       return InvalidFormat(
         errorSubClass = "THOUSANDS_SEPS_MUST_BEFORE_DEC",
-        messageParameters = Map("format" -> toSQLValue(numberFormat, StringType))
+        messageParameters = Map("format" -> toSQLValue(numberFormat, StringType()))
       )
     }
     // Make sure that the format string does not contain any prohibited duplicate tokens.
@@ -345,7 +345,7 @@ class ToNumberParser(numberFormat: String, errorOnFail: Boolean) extends Seriali
           errorSubClass = "WRONG_NUM_TOKEN",
           messageParameters = Map(
             "token" -> token.toString,
-            "format" -> toSQLValue(numberFormat, StringType)))
+            "format" -> toSQLValue(numberFormat, StringType())))
       }
     }
     // Enforce the ordering of tokens in the format string according to this specification:
@@ -382,7 +382,7 @@ class ToNumberParser(numberFormat: String, errorOnFail: Boolean) extends Seriali
         errorSubClass = "UNEXPECTED_TOKEN",
         messageParameters = Map(
           "token" -> formatTokens(formatTokenIndex).toString,
-          "format" -> toSQLValue(numberFormat, StringType)))
+          "format" -> toSQLValue(numberFormat, StringType())))
     }
     // Validation of the format string finished successfully.
     TypeCheckSuccess
@@ -594,7 +594,7 @@ class ToNumberParser(numberFormat: String, errorOnFail: Boolean) extends Seriali
   private def formatMatchFailure(input: UTF8String, originNumberFormat: String): Decimal = {
     if (errorOnFail) {
       throw QueryExecutionErrors.invalidNumberFormatError(
-        StringType, input.toString, originNumberFormat)
+        StringType(), input.toString, originNumberFormat)
     }
     null
   }

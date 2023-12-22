@@ -44,7 +44,7 @@ abstract class StringRegexExpression extends BinaryExpression
   def escape(v: String): String
   def matches(regex: Pattern, str: String): Boolean
 
-  override def inputTypes: Seq[DataType] = Seq(StringType, StringType)
+  override def inputTypes: Seq[DataType] = Seq(StringType(), StringType())
 
   // try cache foldable pattern
   private lazy val cache: Pattern = right match {
@@ -258,7 +258,7 @@ case class ILike(
   def this(left: Expression, right: Expression) =
     this(left, right, '\\')
 
-  override def inputTypes: Seq[AbstractDataType] = Seq(StringType, StringType)
+  override def inputTypes: Seq[AbstractDataType] = Seq(StringType(), StringType())
 
   override protected def withNewChildrenInternal(
       newLeft: Expression, newRight: Expression): Expression = {
@@ -273,7 +273,7 @@ sealed abstract class MultiLikeBase
 
   protected def isNotSpecified: Boolean
 
-  override def inputTypes: Seq[DataType] = StringType :: Nil
+  override def inputTypes: Seq[DataType] = StringType() :: Nil
 
   override def nullable: Boolean = true
 
@@ -543,8 +543,8 @@ case class RLike(left: Expression, right: Expression) extends StringRegexExpress
 case class StringSplit(str: Expression, regex: Expression, limit: Expression)
   extends TernaryExpression with ImplicitCastInputTypes with NullIntolerant {
 
-  override def dataType: DataType = ArrayType(StringType, containsNull = false)
-  override def inputTypes: Seq[DataType] = Seq(StringType, StringType, IntegerType)
+  override def dataType: DataType = ArrayType(StringType(), containsNull = false)
+  override def inputTypes: Seq[DataType] = Seq(StringType(), StringType(), IntegerType)
   override def first: Expression = str
   override def second: Expression = regex
   override def third: Expression = limit
@@ -683,9 +683,9 @@ case class RegExpReplace(subject: Expression, regexp: Expression, rep: Expressio
     }
   }
 
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
   override def inputTypes: Seq[AbstractDataType] =
-    Seq(StringType, StringType, StringType, IntegerType)
+    Seq(StringType(), StringType(), StringType(), IntegerType)
   override def prettyName: String = "regexp_replace"
 
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
@@ -771,7 +771,7 @@ abstract class RegExpExtractBase
 
   final override val nodePatterns: Seq[TreePattern] = Seq(REGEXP_EXTRACT_FAMILY)
 
-  override def inputTypes: Seq[AbstractDataType] = Seq(StringType, StringType, IntegerType)
+  override def inputTypes: Seq[AbstractDataType] = Seq(StringType(), StringType(), IntegerType)
   override def first: Expression = subject
   override def second: Expression = regexp
   override def third: Expression = idx
@@ -848,7 +848,7 @@ case class RegExpExtract(subject: Expression, regexp: Expression, idx: Expressio
     }
   }
 
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
   override def prettyName: String = "regexp_extract"
 
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
@@ -947,7 +947,7 @@ case class RegExpExtractAll(subject: Expression, regexp: Expression, idx: Expres
     new GenericArrayData(matchResults.toArray.asInstanceOf[Array[Any]])
   }
 
-  override def dataType: DataType = ArrayType(StringType)
+  override def dataType: DataType = ArrayType(StringType())
   override def prettyName: String = "regexp_extract_all"
 
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
@@ -1020,7 +1020,7 @@ case class RegExpCount(left: Expression, right: Expression)
 
   override def children: Seq[Expression] = Seq(left, right)
 
-  override def inputTypes: Seq[AbstractDataType] = Seq(StringType, StringType)
+  override def inputTypes: Seq[AbstractDataType] = Seq(StringType(), StringType())
 
   override protected def withNewChildrenInternal(
       newChildren: IndexedSeq[Expression]): RegExpCount =
@@ -1059,7 +1059,7 @@ case class RegExpSubStr(left: Expression, right: Expression)
 
   override def children: Seq[Expression] = Seq(left, right)
 
-  override def inputTypes: Seq[AbstractDataType] = Seq(StringType, StringType)
+  override def inputTypes: Seq[AbstractDataType] = Seq(StringType(), StringType())
 
   override protected def withNewChildrenInternal(
       newChildren: IndexedSeq[Expression]): RegExpSubStr =

@@ -164,7 +164,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
       messageParameters = Map(
         "parameter" -> toSQLId("format"),
         "functionName" -> toSQLId(funcName),
-        "invalidFormat" -> toSQLValue(invalidFormat, StringType)))
+        "invalidFormat" -> toSQLValue(invalidFormat, StringType())))
   }
 
   def nullArgumentError(funcName: String, parameter: String): Throwable = {
@@ -2443,14 +2443,14 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     new AnalysisException(
       errorClass = "INVALID_FORMAT.ESC_IN_THE_MIDDLE",
       messageParameters = Map(
-        "format" -> toSQLValue(pattern, StringType),
-        "char" -> toSQLValue(char, StringType)))
+        "format" -> toSQLValue(pattern, StringType()),
+        "char" -> toSQLValue(char, StringType())))
   }
 
   def escapeCharacterAtTheEndError(pattern: String): Throwable = {
     new AnalysisException(
       errorClass = "INVALID_FORMAT.ESC_AT_THE_END",
-      messageParameters = Map("format" -> toSQLValue(pattern, StringType)))
+      messageParameters = Map("format" -> toSQLValue(pattern, StringType())))
   }
 
   def tableIdentifierExistsError(tableIdentifier: TableIdentifier): Throwable = {
@@ -3228,7 +3228,7 @@ private[sql] object QueryCompilationErrors extends QueryErrorsBase with Compilat
     val threshold = if (delayThreshold == null) "" else delayThreshold
     new AnalysisException(
       errorClass = "CANNOT_PARSE_INTERVAL",
-      messageParameters = Map("intervalString" -> toSQLValue(threshold, StringType)),
+      messageParameters = Map("intervalString" -> toSQLValue(threshold, StringType())),
       cause = Some(e))
   }
 

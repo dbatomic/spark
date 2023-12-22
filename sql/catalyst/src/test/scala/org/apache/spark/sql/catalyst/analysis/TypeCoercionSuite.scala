@@ -1786,13 +1786,13 @@ object TypeCoercionSuite {
   val intervalTypes: Seq[DataType] = Seq(CalendarIntervalType,
     DayTimeIntervalType.defaultConcreteType, YearMonthIntervalType.defaultConcreteType)
   val atomicTypes: Seq[DataType] =
-    numericTypes ++ datetimeTypes ++ Seq(BinaryType, BooleanType, StringType)
+    numericTypes ++ datetimeTypes ++ Seq(BinaryType, BooleanType, StringType())
   val complexTypes: Seq[DataType] =
     Seq(ArrayType(IntegerType),
-      ArrayType(StringType),
-      MapType(StringType, StringType),
-      new StructType().add("a1", StringType),
-      new StructType().add("a1", StringType).add("a2", IntegerType))
+      ArrayType(StringType()),
+      MapType(StringType(), StringType()),
+      new StructType().add("a1", StringType()),
+      new StructType().add("a1", StringType()).add("a2", IntegerType))
   val allTypes: Seq[DataType] =
     atomicTypes ++ intervalTypes ++ complexTypes ++ Seq(NullType)
 

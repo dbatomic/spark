@@ -28,7 +28,7 @@ import org.apache.spark.sql.errors.QueryErrorsBase
 import org.apache.spark.sql.execution.datasources.PreprocessTableCreation
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{LongType, StringType}
+import org.apache.spark.sql.types.LongType
 import org.apache.spark.util.ArrayImplicits._
 
 class V2CommandsCaseSensitivitySuite

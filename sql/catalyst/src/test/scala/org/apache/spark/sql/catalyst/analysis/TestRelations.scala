@@ -25,42 +25,42 @@ object TestRelations {
   val testRelation = LocalRelation(AttributeReference("a", IntegerType, nullable = true)())
 
   val testRelation2 = LocalRelation(
-    AttributeReference("a", StringType)(),
-    AttributeReference("b", StringType)(),
+    AttributeReference("a", StringType())(),
+    AttributeReference("b", StringType())(),
     AttributeReference("c", DoubleType)(),
     AttributeReference("d", DecimalType(10, 2))(),
     AttributeReference("e", ShortType)())
 
   val testRelation3 = LocalRelation(
     AttributeReference("e", ShortType)(),
-    AttributeReference("f", StringType)(),
+    AttributeReference("f", StringType())(),
     AttributeReference("g", DoubleType)(),
     AttributeReference("h", DecimalType(10, 2))())
 
   // This is the same with `testRelation3` but only `h` is incompatible type.
   val testRelation4 = LocalRelation(
-    AttributeReference("e", StringType)(),
-    AttributeReference("f", StringType)(),
-    AttributeReference("g", StringType)(),
+    AttributeReference("e", StringType())(),
+    AttributeReference("f", StringType())(),
+    AttributeReference("g", StringType())(),
     AttributeReference("h", MapType(IntegerType, IntegerType))())
 
-  val testRelation5 = LocalRelation(AttributeReference("i", StringType)())
+  val testRelation5 = LocalRelation(AttributeReference("i", StringType())())
 
   val testRelation6 = LocalRelation(AttributeReference("the.id", LongType)())
 
   val nestedRelation = LocalRelation(
     AttributeReference("top", StructType(
-      StructField("duplicateField", StringType) ::
-        StructField("duplicateField", StringType) ::
-        StructField("differentCase", StringType) ::
-        StructField("differentcase", StringType) :: Nil
+      StructField("duplicateField", StringType()) ::
+        StructField("duplicateField", StringType()) ::
+        StructField("differentCase", StringType()) ::
+        StructField("differentcase", StringType()) :: Nil
     ))())
 
   val nestedRelation2 = LocalRelation(
     AttributeReference("top", StructType(
-      StructField("aField", StringType) ::
-        StructField("bField", StringType) ::
-        StructField("cField", StringType) :: Nil
+      StructField("aField", StringType()) ::
+        StructField("bField", StringType()) ::
+        StructField("cField", StringType()) :: Nil
     ))())
 
   val listRelation = LocalRelation(

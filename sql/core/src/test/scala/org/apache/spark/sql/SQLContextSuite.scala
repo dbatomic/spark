@@ -122,8 +122,8 @@ class SQLContextSuite extends SparkFunSuite with SharedSparkContext {
     df.createOrReplaceTempView("listtablessuitetable")
 
     val expectedSchema = StructType(
-      StructField("namespace", StringType, false) ::
-        StructField("tableName", StringType, false) ::
+      StructField("namespace", StringType(), false) ::
+        StructField("tableName", StringType(), false) ::
         StructField("isTemporary", BooleanType, false) :: Nil)
 
     Seq(sqlContext.tables(), sqlContext.sql("SHOW TABLes")).foreach {

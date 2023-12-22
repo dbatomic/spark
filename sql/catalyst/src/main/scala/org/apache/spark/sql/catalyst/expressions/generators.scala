@@ -606,7 +606,7 @@ case class Inline(child: Expression) extends UnaryExpression with CollectionGene
   group = "generator_funcs")
 case class SQLKeywords() extends LeafExpression with Generator with CodegenFallback {
   override def elementSchema: StructType = new StructType()
-    .add("keyword", StringType, nullable = false)
+    .add("keyword", StringType(), nullable = false)
     .add("reserved", BooleanType, nullable = false)
 
   override def eval(input: InternalRow): IterableOnce[InternalRow] = {

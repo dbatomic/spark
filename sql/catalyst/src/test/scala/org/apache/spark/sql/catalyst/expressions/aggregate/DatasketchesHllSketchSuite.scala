@@ -78,7 +78,7 @@ class DatasketchesHllSketchSuite extends SparkFunSuite {
     assert(longEstimate == longRange.size || longEstimateRange.contains(longRange.size.toLong))
 
     val stringRange = Seq.tabulate(1000)(i => UTF8String.fromString(Random.nextString(i)))
-    val (stringEstimate, stringEstimateRange) = simulateUpdateMerge(StringType, stringRange)
+    val (stringEstimate, stringEstimateRange) = simulateUpdateMerge(StringType(), stringRange)
     assert(stringEstimate == stringRange.size ||
       stringEstimateRange.contains(stringRange.size.toLong))
 

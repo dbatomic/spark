@@ -59,8 +59,8 @@ object ArrowWriter {
       case (DoubleType, vector: Float8Vector) => new DoubleWriter(vector)
       case (DecimalType.Fixed(precision, scale), vector: DecimalVector) =>
         new DecimalWriter(vector, precision, scale)
-      case (StringType, vector: VarCharVector) => new StringWriter(vector)
-      case (StringType, vector: LargeVarCharVector) => new LargeStringWriter(vector)
+      case (StringType(_), vector: VarCharVector) => new StringWriter(vector)
+      case (StringType(_), vector: LargeVarCharVector) => new LargeStringWriter(vector)
       case (BinaryType, vector: VarBinaryVector) => new BinaryWriter(vector)
       case (BinaryType, vector: LargeVarBinaryVector) => new LargeBinaryWriter(vector)
       case (DateType, vector: DateDayVector) => new DateWriter(vector)

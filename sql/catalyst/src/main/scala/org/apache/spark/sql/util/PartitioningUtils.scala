@@ -51,7 +51,7 @@ private[sql] object PartitioningUtils {
   private def normalizePartitionStringValue(value: String, field: StructField): String = {
     val casted = Cast(
       castPartitionSpec(value, field.dataType, SQLConf.get),
-      StringType,
+      StringType(),
       Option(SQLConf.get.sessionLocalTimeZone)
     ).eval()
     if (casted != null) {

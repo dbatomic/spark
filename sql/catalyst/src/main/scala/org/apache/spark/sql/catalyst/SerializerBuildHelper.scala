@@ -66,7 +66,7 @@ object SerializerBuildHelper {
   def createSerializerForString(inputObject: Expression): Expression = {
     StaticInvoke(
       classOf[UTF8String],
-      StringType,
+      StringType(),
       "fromString",
       inputObject :: Nil,
       returnNullable = false)

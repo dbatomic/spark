@@ -34,7 +34,8 @@ import org.apache.spark.util.ArrayImplicits._
 
 
 abstract class QueryTest extends PlanTest {
-
+  // protected val StringType: org.apache.spark.sql.types.StringType =
+  //   org.apache.spark.sql.types.StringType()
   protected def spark: SparkSession
 
   /**

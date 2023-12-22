@@ -59,7 +59,7 @@ case class SimpleDDLScan(
   override def schema: StructType =
     StructType(Seq(
       StructField("intType", IntegerType, nullable = false).withComment(s"test comment $table"),
-      StructField("stringType", StringType, nullable = false),
+      StructField("stringType", StringType(), nullable = false),
       StructField("dateType", DateType, nullable = false),
       StructField("timestampType", TimestampType, nullable = false),
       StructField("doubleType", DoubleType, nullable = false),
@@ -71,10 +71,10 @@ case class SimpleDDLScan(
       StructField("booleanType", BooleanType, nullable = false),
       StructField("smallIntType", ShortType, nullable = false),
       StructField("floatType", FloatType, nullable = false),
-      StructField("mapType", MapType(StringType, StringType)),
-      StructField("arrayType", ArrayType(StringType)),
+      StructField("mapType", MapType(StringType(), StringType())),
+      StructField("arrayType", ArrayType(StringType())),
       StructField("structType",
-        StructType(StructField("f1", StringType) :: StructField("f2", IntegerType) :: Nil
+        StructType(StructField("f1", StringType()) :: StructField("f2", IntegerType) :: Nil
         )
       )
     ))

@@ -400,7 +400,7 @@ class DataFrameCallbackSuite extends QueryTest
 /** A test command that throws `java.lang.Error` during execution. */
 case class ErrorTestCommand(foo: String) extends LeafRunnableCommand {
 
-  override val output: Seq[Attribute] = Seq(AttributeReference("foo", StringType)())
+  override val output: Seq[Attribute] = Seq(AttributeReference("foo", StringType())())
 
   override def run(sparkSession: SparkSession): Seq[Row] =
     throw new java.lang.Error(foo)

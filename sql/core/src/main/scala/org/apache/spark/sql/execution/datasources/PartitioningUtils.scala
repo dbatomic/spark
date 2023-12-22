@@ -518,10 +518,10 @@ object PartitioningUtils extends SQLConfHelper {
         .orElse(dateTry)
         // Then falls back to string
         .getOrElse {
-          if (raw == DEFAULT_PARTITION_NAME) NullType else StringType
+          if (raw == DEFAULT_PARTITION_NAME) NullType else StringType()
         }
     } else {
-      if (raw == DEFAULT_PARTITION_NAME) NullType else StringType
+      if (raw == DEFAULT_PARTITION_NAME) NullType else StringType()
     }
   }
 
@@ -531,7 +531,7 @@ object PartitioningUtils extends SQLConfHelper {
       zoneId: ZoneId): Any = desiredType match {
     case _ if value == DEFAULT_PARTITION_NAME => null
     case NullType => null
-    case StringType => UTF8String.fromString(unescapePathName(value))
+    case StringType(_) => UTF8String.fromString(unescapePathName(value))
     case ByteType => Integer.parseInt(value).toByte
     case ShortType => Integer.parseInt(value).toShort
     case IntegerType => Integer.parseInt(value)
@@ -631,8 +631,8 @@ object PartitioningUtils extends SQLConfHelper {
    * precision loss when widening double/long and decimal, and fall back to string.
    */
   private val findWiderTypeForPartitionColumn: (DataType, DataType) => DataType = {
-    case (DoubleType, _: DecimalType) | (_: DecimalType, DoubleType) => StringType
-    case (DoubleType, LongType) | (LongType, DoubleType) => StringType
-    case (t1, t2) => TypeCoercion.findWiderTypeForTwo(t1, t2).getOrElse(StringType)
+    case (DoubleType, _: DecimalType) | (_: DecimalType, DoubleType) => StringType()
+    case (DoubleType, LongType) | (LongType, DoubleType) => StringType()
+    case (t1, t2) => TypeCoercion.findWiderTypeForTwo(t1, t2).getOrElse(StringType())
   }
 }

@@ -733,7 +733,7 @@ private[client] class Shim_v2_0 extends Shim with Logging {
         val resolver = SQLConf.get.resolver
         if (varcharKeys.exists(c => resolver(c, attr.name))) {
           None
-        } else if (attr.dataType.isInstanceOf[IntegralType] || attr.dataType == StringType ||
+        } else if (attr.dataType.isInstanceOf[IntegralType] || attr.dataType == StringType() ||
             attr.dataType == DateType) {
           Some(attr.name)
         } else {

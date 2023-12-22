@@ -30,7 +30,7 @@ private[sql] abstract class DataTypeExpression(val dataType: DataType) {
 }
 
 private[sql] case object BooleanTypeExpression extends DataTypeExpression(BooleanType)
-private[sql] case object StringTypeExpression extends DataTypeExpression(StringType)
+private[sql] case object StringTypeExpression extends DataTypeExpression(StringType())
 private[sql] case object TimestampTypeExpression extends DataTypeExpression(TimestampType)
 private[sql] case object DateTypeExpression extends DataTypeExpression(DateType)
 private[sql] case object ByteTypeExpression extends DataTypeExpression(ByteType)

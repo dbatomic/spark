@@ -43,11 +43,11 @@ class Tokenizer @Since("1.4.0") (@Since("1.4.0") override val uid: String)
   }
 
   override protected def validateInputType(inputType: DataType): Unit = {
-    require(inputType == StringType,
-      s"Input type must be ${StringType.catalogString} type but got ${inputType.catalogString}.")
+    require(inputType == StringType(),
+      s"Input type must be ${StringType().catalogString} type but got ${inputType.catalogString}.")
   }
 
-  override protected def outputDataType: DataType = new ArrayType(StringType, true)
+  override protected def outputDataType: DataType = new ArrayType(StringType(), true)
 
   @Since("1.4.1")
   override def copy(extra: ParamMap): Tokenizer = defaultCopy(extra)
@@ -152,10 +152,10 @@ class RegexTokenizer @Since("1.4.0") (@Since("1.4.0") override val uid: String)
   }
 
   override protected def validateInputType(inputType: DataType): Unit = {
-    require(inputType == StringType, s"Input type must be string type but got $inputType.")
+    require(inputType == StringType(), s"Input type must be string type but got $inputType.")
   }
 
-  override protected def outputDataType: DataType = new ArrayType(StringType, true)
+  override protected def outputDataType: DataType = new ArrayType(StringType(), true)
 
   @Since("1.4.1")
   override def copy(extra: ParamMap): RegexTokenizer = defaultCopy(extra)

@@ -33,7 +33,7 @@ import org.apache.spark.sql.catalyst.dsl.expressions._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.SQLHelper
 import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.types.{BooleanType, DateType, IntegerType, LongType, StringType, StructType, TimestampType}
+import org.apache.spark.sql.types.{BooleanType, DateType, IntegerType, LongType, StructType, TimestampType}
 import org.apache.spark.util.Utils
 
 class HivePartitionFilteringSuite(version: String)

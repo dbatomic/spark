@@ -21,7 +21,7 @@ import org.apache.spark.SparkException
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.connector.catalog.{Column, ColumnDefaultValue}
 import org.apache.spark.sql.connector.expressions.LiteralValue
-import org.apache.spark.sql.types.{IntegerType, StringType}
+import org.apache.spark.sql.types.IntegerType
 
 abstract class UpdateTableSuiteBase extends RowLevelOperationSuiteBase {
 

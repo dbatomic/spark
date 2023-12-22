@@ -31,6 +31,8 @@ import org.apache.spark.util.Utils
 
 trait SQLHelper extends SQLConfHelper {
 
+  protected val StringType = org.apache.spark.sql.types.StringType()
+
   /**
    * Generates a temporary path without creating the actual file/directory, then pass it to `f`. If
    * a file/directory is created there by `f`, it will be delete after `f` returns.

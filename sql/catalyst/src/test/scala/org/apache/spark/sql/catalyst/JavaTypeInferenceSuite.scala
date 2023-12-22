@@ -134,7 +134,7 @@ class JavaTypeInferenceSuite extends SparkFunSuite {
       .find(_.getName == "getMapOfDummyBeans")
       .get
     val (schema, nullable) = JavaTypeInference.inferDataType(getter.getGenericReturnType)
-    val expected = MapType(StringType, expectedDummyBeanSchema, valueContainsNull = true)
+    val expected = MapType(StringType(), expectedDummyBeanSchema, valueContainsNull = true)
     assert(nullable)
     assert(schema === expected)
   }

@@ -242,7 +242,7 @@ object StatFunctions extends Logging {
         }
 
         // map { "count" -> "1024", "min" -> "1.0", ... }
-        mapColumns :+= map(aggColumns.map(_.cast(StringType)): _*).as(field.name)
+        mapColumns :+= map(aggColumns.map(_.cast(StringType())): _*).as(field.name)
         columnNames :+= field.name
       }
     }

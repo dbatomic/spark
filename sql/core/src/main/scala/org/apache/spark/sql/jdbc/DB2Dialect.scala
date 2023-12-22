@@ -86,7 +86,7 @@ private object DB2Dialect extends JdbcDialect {
     case Types.OTHER =>
       typeName match {
         case "DECFLOAT" => Option(DecimalType(38, 18))
-        case "XML" => Option(StringType)
+        case "XML" => Option(StringType())
         case t if (t.startsWith("TIMESTAMP")) => Option(TimestampType) // TIMESTAMP WITH TIMEZONE
         case _ => None
       }
@@ -94,7 +94,7 @@ private object DB2Dialect extends JdbcDialect {
   }
 
   override def getJDBCType(dt: DataType): Option[JdbcType] = dt match {
-    case StringType => Option(JdbcType("CLOB", java.sql.Types.CLOB))
+    case StringType(_) => Option(JdbcType("CLOB", java.sql.Types.CLOB))
     case BooleanType => Option(JdbcType("CHAR(1)", java.sql.Types.CHAR))
     case ShortType | ByteType => Some(JdbcType("SMALLINT", java.sql.Types.SMALLINT))
     case _ => None

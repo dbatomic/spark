@@ -112,9 +112,9 @@ object XSDToSchema extends Logging{
                    Constants.XSD_UNSIGNEDINT => LongType
               case Constants.XSD_DATE => DateType
               case Constants.XSD_DATETIME => TimestampType
-              case _ => StringType
+              case _ => StringType()
             }
-          case _ => StringType
+          case _ => StringType()
         }
         StructField("baseName", schemaType)
 
@@ -167,7 +167,7 @@ object XSDToSchema extends Logging{
               case attribute: XmlSchemaAttribute =>
                 val attributeType = attribute.getSchemaTypeName match {
                   case null =>
-                    StringType
+                    StringType()
                   case t =>
                     getStructField(xmlSchema, xmlSchema.getParent.getTypeByQName(t)).dataType
                 }
@@ -222,7 +222,7 @@ object XSDToSchema extends Logging{
                 StructField(element.getName, ArrayType(baseStructField.dataType), true)
               }
             case any: XmlSchemaAny =>
-              val dataType = if (any.getMaxOccurs > 1) ArrayType(StringType) else StringType
+              val dataType = if (any.getMaxOccurs > 1) ArrayType(StringType()) else StringType()
               StructField(XmlOptions.DEFAULT_WILDCARD_COL_NAME, dataType, true)
           }.toSeq
         // xs:sequence
@@ -253,7 +253,7 @@ object XSDToSchema extends Logging{
                 Seq(StructField(structFieldName, dataType, nullable))
               case any: XmlSchemaAny =>
                 val dataType =
-                  if (any.getMaxOccurs > 1) ArrayType(StringType) else StringType
+                  if (any.getMaxOccurs > 1) ArrayType(StringType()) else StringType()
                 val nullable = any.getMinOccurs == 0
                 Seq(StructField(XmlOptions.DEFAULT_WILDCARD_COL_NAME, dataType, nullable))
               case unsupported =>

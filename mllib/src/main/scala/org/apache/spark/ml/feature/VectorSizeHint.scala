@@ -114,7 +114,7 @@ class VectorSizeHint @Since("2.3.0") (@Since("2.3.0") override val uid: String)
               "filter invalid rows.")))
             .when(sizeCol =!= localSize, raise_error(concat(
               lit(s"VectorSizeHint Expecting a vector of size $localSize but got "),
-              sizeCol.cast(StringType))))
+              sizeCol.cast(StringType()))))
             .otherwise(vecCol)
         case VectorSizeHint.SKIP_INVALID =>
           when(!vecCol.isNull && sizeCol === localSize, vecCol)

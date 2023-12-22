@@ -73,6 +73,7 @@ public final class ColumnarRow extends InternalRow {
         } else if (pdt instanceof PhysicalDoubleType) {
           row.setDouble(i, getDouble(i));
         } else if (pdt instanceof PhysicalStringType) {
+          // TODO -> collation support.
           row.update(i, getUTF8String(i).copy());
         } else if (pdt instanceof PhysicalBinaryType) {
           row.update(i, getBinary(i));

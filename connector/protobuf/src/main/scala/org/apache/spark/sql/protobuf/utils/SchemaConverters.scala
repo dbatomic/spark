@@ -73,9 +73,9 @@ object SchemaConverters extends Logging {
       case FLOAT => Some(FloatType)
       case DOUBLE => Some(DoubleType)
       case BOOLEAN => Some(BooleanType)
-      case STRING => Some(StringType)
+      case STRING => Some(StringType())
       case BYTE_STRING => Some(BinaryType)
-      case ENUM => if (protobufOptions.enumsAsInts) Some(IntegerType) else Some(StringType)
+      case ENUM => if (protobufOptions.enumsAsInts) Some(IntegerType) else Some(StringType())
       case MESSAGE
         if (fd.getMessageType.getName == "Duration" &&
           fd.getMessageType.getFields.size() == 2 &&
@@ -90,7 +90,7 @@ object SchemaConverters extends Logging {
         Some(TimestampType)
       case MESSAGE if protobufOptions.convertAnyFieldsToJson &&
             fd.getMessageType.getFullName == "google.protobuf.Any" =>
-        Some(StringType) // Any protobuf will be parsed and converted to json string.
+        Some(StringType()) // Any protobuf will be parsed and converted to json string.
       case MESSAGE if fd.isRepeated && fd.getMessageType.getOptions.hasMapEntry =>
         var keyType: Option[DataType] = None
         var valueType: Option[DataType] = None

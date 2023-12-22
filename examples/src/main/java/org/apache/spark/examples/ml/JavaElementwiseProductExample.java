@@ -51,7 +51,7 @@ public class JavaElementwiseProductExample {
     );
 
     List<StructField> fields = new ArrayList<>(2);
-    fields.add(DataTypes.createStructField("id", DataTypes.StringType, false));
+    fields.add(DataTypes.createStructField("id", DataTypes.CreateStringType("utf8"), false));
     fields.add(DataTypes.createStructField("vector", new VectorUDT(), false));
 
     StructType schema = DataTypes.createStructType(fields);

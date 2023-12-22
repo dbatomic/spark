@@ -250,7 +250,7 @@ object ApplyInPandasWithStateWriter {
        */
 
       // properties of state instance (excluding state value) in json format
-      StructField("properties", StringType),
+      StructField("properties", StringType()),
       // key row as UnsafeRow, Python worker won't touch this value but send the value back to
       // executor when sending an update of state
       StructField("keyRowAsUnsafe", BinaryType),

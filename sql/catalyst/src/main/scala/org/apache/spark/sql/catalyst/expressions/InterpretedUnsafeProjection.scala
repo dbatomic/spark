@@ -161,6 +161,7 @@ object InterpretedUnsafeProjection {
 
         case PhysicalBinaryType => (v, i) => writer.write(i, v.getBinary(i))
 
+        // TODO: Collation support
         case PhysicalStringType => (v, i) => writer.write(i, v.getUTF8String(i))
 
         case PhysicalVariantType => (v, i) => writer.write(i, v.getVariant(i))
@@ -296,7 +297,7 @@ object InterpretedUnsafeProjection {
    */
   @scala.annotation.tailrec
   private def getElementSize(dataType: DataType): Int = dataType match {
-    case NullType | StringType | BinaryType | CalendarIntervalType | VariantType |
+    case NullType | StringType(_) | BinaryType | CalendarIntervalType | VariantType |
          _: DecimalType | _: StructType | _: ArrayType | _: MapType => 8
     case udt: UserDefinedType[_] =>
       getElementSize(udt.sqlType)

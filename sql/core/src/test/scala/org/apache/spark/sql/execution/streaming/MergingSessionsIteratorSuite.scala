@@ -25,7 +25,7 @@ import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.execution.aggregate.MergingSessionsIterator
 import org.apache.spark.sql.execution.metric.SQLMetrics
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructType}
+import org.apache.spark.sql.types.{IntegerType, LongType, StructType}
 import org.apache.spark.unsafe.types.UTF8String
 
 class MergingSessionsIteratorSuite extends SharedSparkSession {

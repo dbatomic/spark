@@ -83,7 +83,7 @@ private[sql] trait ExecutionErrors extends DataTypeErrorsBase {
       value: UTF8String,
       to: DataType,
       context: QueryContext): SparkDateTimeException = {
-    invalidInputInCastToDatetimeErrorInternal(toSQLValue(value), StringType, to, context)
+    invalidInputInCastToDatetimeErrorInternal(toSQLValue(value), StringType(), to, context)
   }
 
   def invalidInputInCastToDatetimeError(

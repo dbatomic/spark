@@ -69,7 +69,7 @@ class FilterEstimationSuite extends StatsEstimationTestBase {
 
   // column cstring has 10 String values:
   // "A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9"
-  val attrString = AttributeReference("cstring", StringType)()
+  val attrString = AttributeReference("cstring", StringType())()
   val colStatString = ColumnStat(distinctCount = Some(10), min = None, max = None,
     nullCount = Some(0), avgLen = Some(2), maxLen = Some(2))
 

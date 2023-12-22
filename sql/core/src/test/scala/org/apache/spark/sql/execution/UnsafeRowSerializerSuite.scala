@@ -61,14 +61,14 @@ class UnsafeRowSerializerSuite extends SparkFunSuite with LocalSparkSession {
   test("toUnsafeRow() test helper method") {
     // This currently doesn't work because the generic getter throws an exception.
     val row = Row("Hello", 123)
-    val unsafeRow = toUnsafeRow(row, Array(StringType, IntegerType))
+    val unsafeRow = toUnsafeRow(row, Array(StringType(), IntegerType))
     assert(row.getString(0) === unsafeRow.getUTF8String(0).toString)
     assert(row.getInt(1) === unsafeRow.getInt(1))
   }
 
   test("basic row serialization") {
     val rows = Seq(Row("Hello", 1), Row("World", 2))
-    val unsafeRows = rows.map(row => toUnsafeRow(row, Array(StringType, IntegerType)))
+    val unsafeRows = rows.map(row => toUnsafeRow(row, Array(StringType(), IntegerType)))
     val serializer = new UnsafeRowSerializer(numFields = 2).newInstance()
     val baos = new ByteArrayOutputStream()
     val serializerStream = serializer.serializeStream(baos)
@@ -137,7 +137,7 @@ class UnsafeRowSerializerSuite extends SparkFunSuite with LocalSparkSession {
     val conf = new SparkConf().set(SHUFFLE_MANAGER, "sort")
     spark = SparkSession.builder().master("local").appName("test").config(conf).getOrCreate()
     val row = Row("Hello", 123)
-    val unsafeRow = toUnsafeRow(row, Array(StringType, IntegerType))
+    val unsafeRow = toUnsafeRow(row, Array(StringType(), IntegerType))
     val rowsRDD = spark.sparkContext.parallelize(
       Seq((0, unsafeRow), (1, unsafeRow), (0, unsafeRow))
     ).asInstanceOf[RDD[Product2[Int, InternalRow]]]

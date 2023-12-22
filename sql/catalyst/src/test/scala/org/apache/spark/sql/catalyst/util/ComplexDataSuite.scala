@@ -21,10 +21,13 @@ import org.apache.spark.SparkFunSuite
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{BoundReference, GenericInternalRow, SpecificInternalRow, UnsafeMapData, UnsafeProjection}
 import org.apache.spark.sql.catalyst.expressions.codegen.GenerateUnsafeProjection
-import org.apache.spark.sql.types.{DataType, IntegerType, MapType, StringType}
+import org.apache.spark.sql.types.{DataType, IntegerType, MapType}
 import org.apache.spark.unsafe.types.UTF8String
 
 class ComplexDataSuite extends SparkFunSuite {
+  // hack to make things working -> always use utf8.
+  private val StringType = org.apache.spark.sql.types.StringType("utf8")
+
   def utf8(str: String): UTF8String = UTF8String.fromString(str)
 
   test("inequality tests for MapData") {

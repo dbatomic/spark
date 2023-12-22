@@ -174,10 +174,10 @@ class StaxXmlParser(
 
     def convertComplicatedType(dt: DataType, attributes: Array[Attribute]): Any = dt match {
       case st: StructType => convertObject(parser, st)
-      case MapType(StringType, vt, _) => convertMap(parser, vt, attributes)
+      case MapType(StringType(_), vt, _) => convertMap(parser, vt, attributes)
       case ArrayType(st, _) => convertField(parser, st)
       case _: StringType =>
-        convertTo(StaxXmlParserUtils.currentStructureAsString(parser), StringType)
+        convertTo(StaxXmlParserUtils.currentStructureAsString(parser), StringType())
     }
 
     (parser.peek, dataType) match {
@@ -215,7 +215,7 @@ class StaxXmlParser(
           }
         }
       case (_: Characters, _: StringType) =>
-        convertTo(StaxXmlParserUtils.currentStructureAsString(parser), StringType)
+        convertTo(StaxXmlParserUtils.currentStructureAsString(parser), StringType())
       case (c: Characters, _: DataType) if c.isWhiteSpace =>
         // When `Characters` is found, we need to look further to decide
         // if this is really data or space between other elements.
@@ -375,12 +375,12 @@ class StaxXmlParser(
               if (hasWildcard) {
                 // Special case: there's an 'any' wildcard element that matches anything else
                 // as a string (or array of strings, to parse multiple ones)
-                val newValue = convertField(parser, StringType)
+                val newValue = convertField(parser, StringType())
                 val anyIndex = schema.fieldIndex(wildcardColName)
                 schema(wildcardColName).dataType match {
-                  case StringType =>
+                  case StringType(_) =>
                     row(anyIndex) = newValue
-                  case ArrayType(StringType, _) =>
+                  case ArrayType(StringType(_), _) =>
                     val values = Option(row(anyIndex))
                       .map(_.asInstanceOf[ArrayBuffer[String]])
                       .getOrElse(ArrayBuffer.empty[String])
@@ -495,11 +495,11 @@ class StaxXmlParser(
       null
     } else {
       dataType match {
-        case NullType => castTo(value, StringType)
+        case NullType => castTo(value, StringType())
         case LongType => signSafeToLong(value)
         case DoubleType => signSafeToDouble(value)
         case BooleanType => castTo(value, BooleanType)
-        case StringType => castTo(value, StringType)
+        case StringType(_) => castTo(value, StringType())
         case DateType => castTo(value, DateType)
         case TimestampType => castTo(value, TimestampType)
         case FloatType => signSafeToFloat(value)

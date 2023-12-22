@@ -122,7 +122,7 @@ case class StrLen(impl: BoundFunction) extends UnboundFunction {
       throw new UnsupportedOperationException("Expect exactly one argument");
     }
     inputType.fields(0).dataType match {
-      case StringType => impl
+      case StringType(_) => impl
       case _ =>
         throw new UnsupportedOperationException("Expect StringType")
     }

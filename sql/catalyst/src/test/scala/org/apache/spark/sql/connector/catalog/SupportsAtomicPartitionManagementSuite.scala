@@ -39,8 +39,8 @@ class SupportsAtomicPartitionManagementSuite extends SparkFunSuite {
       ident,
       new StructType()
         .add("id", IntegerType)
-        .add("data", StringType)
-        .add("dt", StringType),
+        .add("data", StringType())
+        .add("dt", StringType()),
       Array[Transform](LogicalExpressions.identity(ref("dt"))),
       util.Collections.emptyMap[String, String])
     newCatalog

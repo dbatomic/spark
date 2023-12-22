@@ -61,7 +61,7 @@ case class AddArchivesCommand(paths: Seq[String]) extends LeafRunnableCommand {
  */
 case class ListFilesCommand(files: Seq[String] = Seq.empty[String]) extends LeafRunnableCommand {
   override val output: Seq[Attribute] = {
-    AttributeReference("Results", StringType, nullable = false)() :: Nil
+    AttributeReference("Results", StringType(), nullable = false)() :: Nil
   }
   override def run(sparkSession: SparkSession): Seq[Row] = {
     val fileList = sparkSession.sparkContext.listFiles()
@@ -87,7 +87,7 @@ case class ListFilesCommand(files: Seq[String] = Seq.empty[String]) extends Leaf
  */
 case class ListJarsCommand(jars: Seq[String] = Seq.empty[String]) extends LeafRunnableCommand {
   override val output: Seq[Attribute] = {
-    AttributeReference("Results", StringType, nullable = false)() :: Nil
+    AttributeReference("Results", StringType(), nullable = false)() :: Nil
   }
   override def run(sparkSession: SparkSession): Seq[Row] = {
     val jarList = sparkSession.sparkContext.listJars()
@@ -109,7 +109,7 @@ case class ListJarsCommand(jars: Seq[String] = Seq.empty[String]) extends LeafRu
 case class ListArchivesCommand(archives: Seq[String] = Seq.empty[String])
   extends LeafRunnableCommand {
   override val output: Seq[Attribute] = {
-    AttributeReference("Results", StringType, nullable = false)() :: Nil
+    AttributeReference("Results", StringType(), nullable = false)() :: Nil
   }
   override def run(sparkSession: SparkSession): Seq[Row] = {
     val archiveList = sparkSession.sparkContext.listArchives()

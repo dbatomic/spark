@@ -69,7 +69,7 @@ class UnsafeRowSuite extends SparkFunSuite {
   test("writeToStream") {
     val row = InternalRow.apply(UTF8String.fromString("hello"), UTF8String.fromString("world"), 123)
     val arrayBackedUnsafeRow: UnsafeRow =
-      UnsafeProjection.create(Array[DataType](StringType, StringType, IntegerType)).apply(row)
+      UnsafeProjection.create(Array[DataType](StringType(), StringType(), IntegerType)).apply(row)
     assert(arrayBackedUnsafeRow.getBaseObject.isInstanceOf[Array[Byte]])
     val (bytesFromArrayBackedRow, field0StringFromArrayBackedRow): (Array[Byte], String) = {
       val baos = new ByteArrayOutputStream()
@@ -136,7 +136,7 @@ class UnsafeRowSuite extends SparkFunSuite {
 
   test("createFromByteArray and copyFrom") {
     val row = InternalRow(1, UTF8String.fromString("abc"))
-    val converter = UnsafeProjection.create(Array[DataType](IntegerType, StringType))
+    val converter = UnsafeProjection.create(Array[DataType](IntegerType, StringType()))
     val unsafeRow = converter.apply(row)
 
     val emptyRow = UnsafeRow.createFromByteArray(64, 2)

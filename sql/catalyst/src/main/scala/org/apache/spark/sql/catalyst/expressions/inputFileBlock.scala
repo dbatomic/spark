@@ -39,7 +39,7 @@ case class InputFileName() extends LeafExpression with Nondeterministic {
 
   override def nullable: Boolean = false
 
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
 
   override def prettyName: String = "input_file_name"
 

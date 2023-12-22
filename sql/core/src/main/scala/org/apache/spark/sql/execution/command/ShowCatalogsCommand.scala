@@ -27,7 +27,7 @@ import org.apache.spark.sql.types.StringType
  */
 case class ShowCatalogsCommand(pattern: Option[String]) extends LeafRunnableCommand {
   override val output: Seq[Attribute] = Seq(
-    AttributeReference("catalog", StringType, nullable = false)())
+    AttributeReference("catalog", StringType(), nullable = false)())
 
   override def run(sparkSession: SparkSession): Seq[Row] = {
     val catalogManager = sparkSession.sessionState.catalogManager

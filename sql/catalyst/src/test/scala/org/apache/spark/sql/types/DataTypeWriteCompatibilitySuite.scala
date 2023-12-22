@@ -32,6 +32,9 @@ class StrictDataTypeWriteCompatibilitySuite extends DataTypeWriteCompatibilityBa
   override def storeAssignmentPolicy: SQLConf.StoreAssignmentPolicy.Value =
     StoreAssignmentPolicy.STRICT
 
+  // hack to make things working -> always use utf8.
+  private val StringType = org.apache.spark.sql.types.StringType("utf8")
+
   override def canCast: (DataType, DataType) => Boolean = Cast.canUpCast
 
   test("Check struct types: unsafe casts are not allowed") {
@@ -128,6 +131,9 @@ class StrictDataTypeWriteCompatibilitySuite extends DataTypeWriteCompatibilityBa
 }
 
 class ANSIDataTypeWriteCompatibilitySuite extends DataTypeWriteCompatibilityBaseSuite {
+  // hack to make things working -> always use utf8.
+  private val StringType = org.apache.spark.sql.types.StringType("utf8")
+
   override protected def storeAssignmentPolicy: SQLConf.StoreAssignmentPolicy.Value =
     StoreAssignmentPolicy.ANSI
 
@@ -257,6 +263,9 @@ class ANSIDataTypeWriteCompatibilitySuite extends DataTypeWriteCompatibilityBase
 }
 
 abstract class DataTypeWriteCompatibilityBaseSuite extends SparkFunSuite {
+  // hack to make things working -> always use utf8.
+  private val StringType = org.apache.spark.sql.types.StringType("utf8")
+
   protected def storeAssignmentPolicy: StoreAssignmentPolicy.Value
 
   protected def canCast: (DataType, DataType) => Boolean

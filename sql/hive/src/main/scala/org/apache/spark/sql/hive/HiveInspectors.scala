@@ -192,7 +192,7 @@ private[hive] trait HiveInspectors {
     case c: Class[_] if c == classOf[hiveIo.ShortWritable] => ShortType
     case c: Class[_] if c == classOf[hiveIo.DateWritable] => DateType
     case c: Class[_] if c == classOf[hiveIo.TimestampWritable] => TimestampType
-    case c: Class[_] if c == classOf[hadoopIo.Text] => StringType
+    case c: Class[_] if c == classOf[hadoopIo.Text] => StringType()
     case c: Class[_] if c == classOf[hadoopIo.IntWritable] => IntegerType
     case c: Class[_] if c == classOf[hadoopIo.LongWritable] => LongType
     case c: Class[_] if c == classOf[hadoopIo.FloatWritable] => FloatType
@@ -200,7 +200,7 @@ private[hive] trait HiveInspectors {
     case c: Class[_] if c == classOf[hadoopIo.BytesWritable] => BinaryType
 
     // java class
-    case c: Class[_] if c == classOf[java.lang.String] => StringType
+    case c: Class[_] if c == classOf[java.lang.String] => StringType()
     case c: Class[_] if c == classOf[java.sql.Date] => DateType
     case c: Class[_] if c == classOf[java.sql.Timestamp] => TimestampType
     case c: Class[_] if c == classOf[HiveDecimal] => DecimalType.SYSTEM_DEFAULT
@@ -822,7 +822,7 @@ private[hive] trait HiveInspectors {
     case MapType(keyType, valueType, _) =>
       ObjectInspectorFactory.getStandardMapObjectInspector(
         toInspector(keyType), toInspector(valueType))
-    case StringType => PrimitiveObjectInspectorFactory.javaStringObjectInspector
+    case StringType(_) => PrimitiveObjectInspectorFactory.javaStringObjectInspector
     case IntegerType => PrimitiveObjectInspectorFactory.javaIntObjectInspector
     case DoubleType => PrimitiveObjectInspectorFactory.javaDoubleObjectInspector
     case BooleanType => PrimitiveObjectInspectorFactory.javaBooleanObjectInspector
@@ -857,7 +857,7 @@ private[hive] trait HiveInspectors {
    * @return Hive java objectinspector (recursively).
    */
   def toInspector(expr: Expression): ObjectInspector = expr match {
-    case Literal(value, StringType) =>
+    case Literal(value, StringType(_)) =>
       getStringWritableConstantObjectInspector(value)
     case Literal(value, IntegerType) =>
       getIntWritableConstantObjectInspector(value)
@@ -936,12 +936,12 @@ private[hive] trait HiveInspectors {
       MapType(
         inspectorToDataType(m.getMapKeyObjectInspector),
         inspectorToDataType(m.getMapValueObjectInspector))
-    case _: WritableStringObjectInspector => StringType
-    case _: JavaStringObjectInspector => StringType
-    case _: WritableHiveVarcharObjectInspector => StringType
-    case _: JavaHiveVarcharObjectInspector => StringType
-    case _: WritableHiveCharObjectInspector => StringType
-    case _: JavaHiveCharObjectInspector => StringType
+    case _: WritableStringObjectInspector => StringType()
+    case _: JavaStringObjectInspector => StringType()
+    case _: WritableHiveVarcharObjectInspector => StringType()
+    case _: JavaHiveVarcharObjectInspector => StringType()
+    case _: WritableHiveCharObjectInspector => StringType()
+    case _: JavaHiveCharObjectInspector => StringType()
     case _: WritableIntObjectInspector => IntegerType
     case _: JavaIntObjectInspector => IntegerType
     case _: WritableDoubleObjectInspector => DoubleType
@@ -1145,7 +1145,7 @@ private[hive] trait HiveInspectors {
       case IntegerType => intTypeInfo
       case LongType => longTypeInfo
       case ShortType => shortTypeInfo
-      case StringType => stringTypeInfo
+      case StringType(_) => stringTypeInfo
       case d: DecimalType => decimalTypeInfo(d)
       case DateType => dateTypeInfo
       case TimestampType => timestampTypeInfo

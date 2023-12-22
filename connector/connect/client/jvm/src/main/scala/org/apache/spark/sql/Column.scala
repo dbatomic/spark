@@ -1385,7 +1385,7 @@ class ColumnName(name: String) extends Column(name) {
    * Creates a new `StructField` of type string.
    * @since 3.4.0
    */
-  def string: StructField = StructField(name, StringType)
+  def string: StructField = StructField(name, StringType())
 
   /**
    * Creates a new `StructField` of type date.

@@ -30,6 +30,7 @@ import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Project}
 import org.apache.spark.sql.types._
 
 class AnalysisExternalCatalogSuite extends AnalysisTest with Matchers {
+  override val StringType = org.apache.spark.sql.types.StringType()
   private def getAnalyzer(externCatalog: ExternalCatalog, databasePath: File): Analyzer = {
     val catalog = new SessionCatalog(externCatalog, FunctionRegistry.builtin)
     catalog.createDatabase(

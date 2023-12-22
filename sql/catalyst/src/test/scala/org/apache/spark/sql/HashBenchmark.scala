@@ -121,7 +121,7 @@ object HashBenchmark extends BenchmarkBase {
       .add("double", DoubleType)
       .add("bigDecimal", DecimalType.SYSTEM_DEFAULT)
       .add("smallDecimal", DecimalType.USER_DEFAULT)
-      .add("string", StringType)
+      .add("string", StringType())
       .add("binary", BinaryType)
       .add("date", DateType)
       .add("timestamp", TimestampType)

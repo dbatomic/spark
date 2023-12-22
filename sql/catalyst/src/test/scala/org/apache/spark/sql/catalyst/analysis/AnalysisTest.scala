@@ -21,9 +21,10 @@ import java.net.URI
 import java.util.Locale
 
 import org.apache.spark.SparkException
+
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.catalyst.{QueryPlanningTracker, TableIdentifier}
-import org.apache.spark.sql.catalyst.catalog.{CatalogDatabase, CatalogStorageFormat, CatalogTable, CatalogTableType, InMemoryCatalog, SessionCatalog, TemporaryViewRelation}
+import org.apache.spark.sql.catalyst.catalog._
 import org.apache.spark.sql.catalyst.catalog.CatalogTable.VIEW_STORING_ANALYZED_PLAN
 import org.apache.spark.sql.catalyst.optimizer.InlineCTE
 import org.apache.spark.sql.catalyst.parser.ParseException
@@ -34,7 +35,6 @@ import org.apache.spark.sql.internal.{SQLConf, StaticSQLConf}
 import org.apache.spark.sql.types.StructType
 
 trait AnalysisTest extends PlanTest {
-
   protected def extendedAnalysisRules: Seq[Rule[LogicalPlan]] = Nil
 
   protected def createTempView(

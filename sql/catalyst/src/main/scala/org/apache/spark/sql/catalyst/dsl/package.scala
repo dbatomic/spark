@@ -166,7 +166,7 @@ package object dsl {
     implicit def longToLiteral(l: Long): Literal = Literal(l)
     implicit def floatToLiteral(f: Float): Literal = Literal(f)
     implicit def doubleToLiteral(d: Double): Literal = Literal(d)
-    implicit def stringToLiteral(s: String): Literal = Literal.create(s, StringType)
+    implicit def stringToLiteral(s: String): Literal = Literal.create(s, StringType())
     implicit def dateToLiteral(d: Date): Literal = Literal(d)
     implicit def localDateToLiteral(d: LocalDate): Literal = Literal(d)
     implicit def bigDecimalToLiteral(d: BigDecimal): Literal = Literal(d.underlying())
@@ -302,7 +302,7 @@ package object dsl {
       def double: AttributeReference = attrRef(DoubleType)
 
       /** Creates a new AttributeReference of type string */
-      def string: AttributeReference = attrRef(StringType)
+      def string: AttributeReference = attrRef(StringType())
 
       /** Creates a new AttributeReference of type date */
       def date: AttributeReference = attrRef(DateType)

@@ -47,9 +47,10 @@ private[sql] object ArrowUtils {
     case LongType => new ArrowType.Int(8 * 8, true)
     case FloatType => new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)
     case DoubleType => new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE)
-    case StringType if !largeVarTypes => ArrowType.Utf8.INSTANCE
+    // TODO: What about serialization for collations?
+    case StringType(_) if !largeVarTypes => ArrowType.Utf8.INSTANCE
     case BinaryType if !largeVarTypes => ArrowType.Binary.INSTANCE
-    case StringType if largeVarTypes => ArrowType.LargeUtf8.INSTANCE
+    case StringType(_) if largeVarTypes => ArrowType.LargeUtf8.INSTANCE
     case BinaryType if largeVarTypes => ArrowType.LargeBinary.INSTANCE
     case DecimalType.Fixed(precision, scale) => new ArrowType.Decimal(precision, scale)
     case DateType => new ArrowType.Date(DateUnit.DAY)
@@ -76,9 +77,11 @@ private[sql] object ArrowUtils {
       if float.getPrecision() == FloatingPointPrecision.SINGLE => FloatType
     case float: ArrowType.FloatingPoint
       if float.getPrecision() == FloatingPointPrecision.DOUBLE => DoubleType
-    case ArrowType.Utf8.INSTANCE => StringType
+    // TODO: Should non UTF8 string be stored as binary?
+    // Or we want to always convert them to UTF8 for storage?
+    case ArrowType.Utf8.INSTANCE => StringType()
     case ArrowType.Binary.INSTANCE => BinaryType
-    case ArrowType.LargeUtf8.INSTANCE => StringType
+    case ArrowType.LargeUtf8.INSTANCE => StringType()
     case ArrowType.LargeBinary.INSTANCE => BinaryType
     case d: ArrowType.Decimal => DecimalType(d.getPrecision, d.getScale)
     case date: ArrowType.Date if date.getUnit == DateUnit.DAY => DateType

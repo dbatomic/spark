@@ -164,7 +164,7 @@ class NaiveBayes @Since("1.5.0") (
             v => v.isNaN || v < 0 || v === Double.PositiveInfinity),
             raise_error(concat(
               lit("Vector values MUST NOT be Negative, NaN or Infinity, but got "),
-              vecCol.cast(StringType))))
+              vecCol.cast(StringType()))))
           .otherwise(vecCol)
 
       case Bernoulli =>
@@ -173,7 +173,7 @@ class NaiveBayes @Since("1.5.0") (
             v => v =!= 0 && v =!= 1),
             raise_error(concat(
               lit("Vector values MUST be in {0, 1}, but got "),
-              vecCol.cast(StringType))))
+              vecCol.cast(StringType()))))
           .otherwise(vecCol)
 
       case _ => checkNonNanVectors(vecCol)

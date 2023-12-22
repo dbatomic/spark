@@ -89,7 +89,7 @@ case class TestFunction(
     inputTypes: Seq[AbstractDataType])
   extends Expression with ImplicitCastInputTypes with Unevaluable {
   override def nullable: Boolean = true
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
   override protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression =
     copy(children = newChildren)
 }
@@ -111,7 +111,7 @@ case class TestFunctionWithTypeCheckFailure(
   }
 
   override def nullable: Boolean = true
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
   override protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression =
     copy(children = newChildren)
 }
@@ -120,6 +120,8 @@ case class UnresolvedTestPlan() extends UnresolvedLeafNode
 
 class AnalysisErrorSuite extends AnalysisTest {
   import TestRelations._
+
+  override val StringType = org.apache.spark.sql.types.StringType()
 
   def errorTest(
       name: String,

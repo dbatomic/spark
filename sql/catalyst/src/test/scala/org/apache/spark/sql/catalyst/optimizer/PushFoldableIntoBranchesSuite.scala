@@ -28,7 +28,7 @@ import org.apache.spark.sql.catalyst.expressions.Literal.{FalseLiteral, TrueLite
 import org.apache.spark.sql.catalyst.plans.PlanTest
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules._
-import org.apache.spark.sql.types.{BooleanType, IntegerType, StringType, TimestampType, YearMonthIntervalType}
+import org.apache.spark.sql.types.{BooleanType, IntegerType, TimestampType, YearMonthIntervalType}
 import org.apache.spark.unsafe.types.CalendarInterval
 
 

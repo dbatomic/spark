@@ -41,8 +41,8 @@ class SupportsPartitionManagementSuite extends SparkFunSuite {
       ident,
       new StructType()
         .add("id", IntegerType)
-        .add("data", StringType)
-        .add("dt", StringType),
+        .add("data", StringType())
+        .add("dt", StringType()),
       Array[Transform](LogicalExpressions.identity(ref("dt"))),
       util.Collections.emptyMap[String, String])
     newCatalog
@@ -166,7 +166,7 @@ class SupportsPartitionManagementSuite extends SparkFunSuite {
       new StructType()
         .add("col0", IntegerType)
         .add("part0", IntegerType)
-        .add("part1", StringType),
+        .add("part1", StringType()),
       Array[Transform](
         LogicalExpressions.identity(ref("part0")), LogicalExpressions.identity(ref("part1"))),
       util.Collections.emptyMap[String, String])

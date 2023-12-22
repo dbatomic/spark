@@ -210,7 +210,7 @@ object TimeWindow {
    * that we can use `window` in SQL.
    */
   def parseExpression(expr: Expression): Long = expr match {
-    case NonNullLiteral(s, StringType) => getIntervalInMicroSeconds(s.toString)
+    case NonNullLiteral(s, StringType(_)) => getIntervalInMicroSeconds(s.toString)
     case IntegerLiteral(i) => i.toLong
     case NonNullLiteral(l, LongType) => l.toString.toLong
     case _ => throw QueryCompilationErrors.invalidLiteralForWindowDurationError()

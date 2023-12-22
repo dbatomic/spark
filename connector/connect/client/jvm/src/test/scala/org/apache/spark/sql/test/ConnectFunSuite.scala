@@ -24,6 +24,7 @@ import org.scalatest.funsuite.AnyFunSuite // scalastyle:ignore funsuite
  * The basic testsuite the client tests should extend from.
  */
 trait ConnectFunSuite extends AnyFunSuite { // scalastyle:ignore funsuite
+  protected val StringType = org.apache.spark.sql.types.StringType()
 
   // Borrowed from SparkFunSuite
   protected def getWorkspaceFilePath(first: String, more: String*): Path = {

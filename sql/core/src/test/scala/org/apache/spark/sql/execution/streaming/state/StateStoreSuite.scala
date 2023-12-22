@@ -1535,11 +1535,11 @@ abstract class StateStoreSuiteBase[ProviderClass <: StateStoreProvider]
 object StateStoreTestsHelper {
 
   val keySchema = StructType(
-    Seq(StructField("key1", StringType, true), StructField("key2", IntegerType, true)))
+    Seq(StructField("key1", StringType(), true), StructField("key2", IntegerType, true)))
   val valueSchema = StructType(Seq(StructField("value", IntegerType, true)))
 
-  val keyProj = UnsafeProjection.create(Array[DataType](StringType, IntegerType))
-  val prefixKeyProj = UnsafeProjection.create(Array[DataType](StringType))
+  val keyProj = UnsafeProjection.create(Array[DataType](StringType(), IntegerType))
+  val prefixKeyProj = UnsafeProjection.create(Array[DataType](StringType()))
   val valueProj = UnsafeProjection.create(Array[DataType](IntegerType))
 
   def dataToPrefixKeyRow(s: String): UnsafeRow = {

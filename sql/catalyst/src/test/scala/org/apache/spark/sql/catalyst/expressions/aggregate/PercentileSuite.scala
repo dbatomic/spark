@@ -33,6 +33,8 @@ import org.apache.spark.util.collection.OpenHashMap
 class PercentileSuite extends SparkFunSuite {
 
   private val random = new java.util.Random()
+  // hack to make things working -> always use utf8.
+  private val StringType = org.apache.spark.sql.types.StringType("utf8")
 
   private val data = (0 until 10000).map { _ =>
     random.nextInt(10000)

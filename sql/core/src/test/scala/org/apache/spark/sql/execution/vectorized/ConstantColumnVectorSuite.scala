@@ -144,7 +144,7 @@ class ConstantColumnVectorSuite extends SparkFunSuite {
     }
   }
 
-  testVector("utf8string", 10, StringType) { vector =>
+  testVector("utf8string", 10, StringType()) { vector =>
     vector.setUtf8String(UTF8String.fromString("hello"))
     (0 until 10).foreach { i =>
       assert(vector.getUTF8String(i) == UTF8String.fromString("hello"))
@@ -160,10 +160,10 @@ class ConstantColumnVectorSuite extends SparkFunSuite {
 
   testVector("struct", 10,
     new StructType()
-      .add(StructField("name", StringType))
+      .add(StructField("name", StringType()))
       .add(StructField("age", IntegerType))) { vector =>
 
-    val nameVector = new ConstantColumnVector(10, StringType)
+    val nameVector = new ConstantColumnVector(10, StringType())
     nameVector.setUtf8String(UTF8String.fromString("jack"))
     vector.setChild(0, nameVector)
 
@@ -181,7 +181,7 @@ class ConstantColumnVectorSuite extends SparkFunSuite {
 
     // another API
     (0 until 10).foreach { i =>
-      assert(vector.getStruct(i).get(0, StringType) == UTF8String.fromString("jack"))
+      assert(vector.getStruct(i).get(0, StringType()) == UTF8String.fromString("jack"))
       assert(vector.getStruct(i).get(1, IntegerType) == 27)
     }
   }

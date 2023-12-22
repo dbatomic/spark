@@ -20,6 +20,7 @@ package org.apache.spark.ml.feature;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.spark.sql.types.DataTypes;
 import static org.apache.spark.sql.types.DataTypes.*;
 
 import org.junit.jupiter.api.Assertions;
@@ -38,7 +39,7 @@ public class JavaStringIndexerSuite extends SharedSparkSession {
   public void testStringIndexer() {
     StructType schema = createStructType(new StructField[]{
       createStructField("id", IntegerType, false),
-      createStructField("label", StringType, false)
+      createStructField("label", DataTypes.CreateStringType("utf8"), false)
     });
     List<Row> data = Arrays.asList(
       cr(0, "a"), cr(1, "b"), cr(2, "c"), cr(3, "a"), cr(4, "a"), cr(5, "c"));

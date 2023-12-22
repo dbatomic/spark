@@ -196,8 +196,8 @@ class StopWordsRemover @Since("1.5.0") (@Since("1.5.0") override val uid: String
        require(!schema.fieldNames.contains(outputColName),
         s"Output Column $outputColName already exists.")
       val inputType = schema(inputColName).dataType
-      require(DataTypeUtils.sameType(inputType, ArrayType(StringType)), "Input type must be " +
-        s"${ArrayType(StringType).catalogString} but got ${inputType.catalogString}.")
+      require(DataTypeUtils.sameType(inputType, ArrayType(StringType())), "Input type must be " +
+        s"${ArrayType(StringType()).catalogString} but got ${inputType.catalogString}.")
       StructField(outputColName, inputType, schema(inputColName).nullable)
     }
     StructType(schema.fields ++ newCols)

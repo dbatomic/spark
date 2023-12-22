@@ -71,13 +71,13 @@ private[kafka010] object KafkaRecordToRowConverter {
   type Record = ConsumerRecord[Array[Byte], Array[Byte]]
 
   val headersType = ArrayType(StructType(Array(
-    StructField("key", StringType),
+    StructField("key", StringType()),
     StructField("value", BinaryType))))
 
   private val schemaWithoutHeaders = new StructType(Array(
     StructField("key", BinaryType),
     StructField("value", BinaryType),
-    StructField("topic", StringType),
+    StructField("topic", StringType()),
     StructField("partition", IntegerType),
     StructField("offset", LongType),
     StructField("timestamp", TimestampType),

@@ -97,7 +97,7 @@ class JacksonGeneratorSuite extends SparkFunSuite {
   }
 
   test("initial with Map and write out a map data") {
-    val dataType = MapType(StringType, IntegerType)
+    val dataType = MapType(StringType(), IntegerType)
     val input = ArrayBasedMapData(Map("a" -> 1))
     val writer = new CharArrayWriter()
     val gen = new JacksonGenerator(dataType, writer, option)
@@ -107,7 +107,7 @@ class JacksonGeneratorSuite extends SparkFunSuite {
   }
 
   test("initial with Map and write out an array of maps") {
-    val dataType = MapType(StringType, IntegerType)
+    val dataType = MapType(StringType(), IntegerType)
     val input = new GenericArrayData(
       ArrayBasedMapData(Map("a" -> 1)) :: ArrayBasedMapData(Map("b" -> 2)) :: Nil)
     val writer = new CharArrayWriter()
@@ -128,7 +128,7 @@ class JacksonGeneratorSuite extends SparkFunSuite {
   }
 
   test("error handling: initial with MapType and write out a row") {
-    val dataType = MapType(StringType, IntegerType)
+    val dataType = MapType(StringType(), IntegerType)
     val input = InternalRow(1)
     val writer = new CharArrayWriter()
     val gen = new JacksonGenerator(dataType, writer, option)

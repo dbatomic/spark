@@ -53,7 +53,7 @@ object ImageSchema {
    * Schema for the image column: Row(String, Int, Int, Int, Int, Array[Byte])
    */
   val columnSchema = StructType(Array(
-    StructField("origin", StringType, true),
+    StructField("origin", StringType(), true),
     StructField("height", IntegerType, false),
     StructField("width", IntegerType, false),
     StructField("nChannels", IntegerType, false),

@@ -58,11 +58,11 @@ private object PostgresDialect extends JdbcDialect with SQLConfHelper {
     } else if (sqlType == Types.DOUBLE && typeName == "money") {
       // money type seems to be broken but one workaround is to handle it as string.
       // See SPARK-34333 and https://github.com/pgjdbc/pgjdbc/issues/100
-      Some(StringType)
+      Some(StringType())
     } else if (sqlType == Types.OTHER) {
-      Some(StringType)
+      Some(StringType())
     } else if ("text".equalsIgnoreCase(typeName)) {
-      Some(StringType) // sqlType is  Types.VARCHAR
+      Some(StringType()) // sqlType is  Types.VARCHAR
     } else if (sqlType == Types.ARRAY) {
       val scale = md.build().getLong("scale").toInt
       // postgres array type names start with underscore
@@ -87,7 +87,7 @@ private object PostgresDialect extends JdbcDialect with SQLConfHelper {
          "xml" | "tsvector" | "tsquery" | "macaddr" | "macaddr8" | "txid_snapshot" | "point" |
          "line" | "lseg" | "box" | "path" | "polygon" | "circle" | "pg_lsn" | "varbit" |
          "interval" | "pg_snapshot" =>
-      Some(StringType)
+      Some(StringType())
     case "bytea" => Some(BinaryType)
     case "timestamp" | "timestamptz" | "time" | "timetz" => Some(TimestampType)
     case "date" => Some(DateType)
@@ -102,7 +102,7 @@ private object PostgresDialect extends JdbcDialect with SQLConfHelper {
       None
     case _ =>
       // SPARK-43267: handle unknown types in array as string, because there are user-defined types
-      Some(StringType)
+      Some(StringType())
   }
 
   override def convertJavaTimestampToTimestampNTZ(t: Timestamp): LocalDateTime = {
@@ -114,7 +114,7 @@ private object PostgresDialect extends JdbcDialect with SQLConfHelper {
   }
 
   override def getJDBCType(dt: DataType): Option[JdbcType] = dt match {
-    case StringType => Some(JdbcType("TEXT", Types.VARCHAR))
+    case StringType(_) => Some(JdbcType("TEXT", Types.VARCHAR))
     case BinaryType => Some(JdbcType("BYTEA", Types.BINARY))
     case BooleanType => Some(JdbcType("BOOLEAN", Types.BOOLEAN))
     case FloatType => Some(JdbcType("FLOAT4", Types.FLOAT))

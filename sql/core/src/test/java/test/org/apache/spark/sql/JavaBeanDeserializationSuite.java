@@ -156,7 +156,7 @@ public class JavaBeanDeserializationSuite implements Serializable {
       .add("longField", DataTypes.LongType)
       .add("floatField", DataTypes.FloatType)
       .add("doubleField", DataTypes.DoubleType)
-      .add("stringField", DataTypes.StringType)
+      .add("stringField", DataTypes.CreateStringType("utf8"))
       .add("booleanField", DataTypes.BooleanType)
       .add("timestampField", DataTypes.TimestampType)
       // explicitly setting nullable = true to make clear the intention
@@ -182,7 +182,7 @@ public class JavaBeanDeserializationSuite implements Serializable {
     Encoder<RecordSpark22000FailToUpcast> encoder =
             Encoders.bean(RecordSpark22000FailToUpcast.class);
 
-    StructType schema = new StructType().add("id", DataTypes.StringType);
+    StructType schema = new StructType().add("id", DataTypes.CreateStringType("utf8"));
 
     Dataset<Row> dataFrame = spark.createDataFrame(inputRows, schema);
 

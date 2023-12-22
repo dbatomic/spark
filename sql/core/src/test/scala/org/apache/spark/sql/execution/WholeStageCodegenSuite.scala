@@ -28,7 +28,7 @@ import org.apache.spark.sql.execution.joins.{BroadcastHashJoinExec, BroadcastNes
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{IntegerType, StringType, StructType}
+import org.apache.spark.sql.types.{IntegerType, StructType}
 
 // Disable AQE because the WholeStageCodegenExec is added when running QueryStageExec
 class WholeStageCodegenSuite extends QueryTest with SharedSparkSession

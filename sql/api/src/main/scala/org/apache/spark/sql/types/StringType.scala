@@ -25,7 +25,7 @@ import org.apache.spark.annotation.Stable
  * @since 1.3.0
  */
 @Stable
-class StringType private() extends AtomicType {
+case class StringType(val collation: String = "utf8") extends AtomicType {
   /**
    * The default size of a value of the StringType is 20 bytes.
    */
@@ -34,9 +34,6 @@ class StringType private() extends AtomicType {
   private[spark] override def asNullable: StringType = this
 }
 
-/**
- * @since 1.3.0
- */
-@Stable
-case object StringType extends StringType
-
+object StringType {
+  def apply(collation: String = "utf8"): StringType = new StringType(collation)
+}

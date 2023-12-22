@@ -25,7 +25,6 @@ import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules._
 import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.unsafe.types.UTF8String
 
 class OuterJoinEliminationSuite extends PlanTest {

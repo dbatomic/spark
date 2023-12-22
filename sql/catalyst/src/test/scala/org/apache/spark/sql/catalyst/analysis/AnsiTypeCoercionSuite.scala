@@ -29,6 +29,8 @@ import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types._
 
 class AnsiTypeCoercionSuite extends TypeCoercionSuiteBase {
+  override val StringType = org.apache.spark.sql.types.StringType()
+
   import TypeCoercionSuite._
 
   // scalastyle:off line.size.limit

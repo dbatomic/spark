@@ -29,7 +29,7 @@ import org.apache.spark.sql.types._
 object LegacyTypeStringParser extends RegexParsers {
 
   protected lazy val primitiveType: Parser[DataType] =
-    ( "StringType" ^^^ StringType
+      ( "StringType" ^^^ StringType()
       | "FloatType" ^^^ FloatType
       | "IntegerType" ^^^ IntegerType
       | "ByteType" ^^^ ByteType

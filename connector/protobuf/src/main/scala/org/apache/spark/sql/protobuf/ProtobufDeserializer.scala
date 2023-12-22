@@ -207,7 +207,7 @@ private[sql] class ProtobufDeserializer(
       case (DOUBLE, DoubleType) =>
         (updater, ordinal, value) => updater.setDouble(ordinal, value.asInstanceOf[Double])
 
-      case (STRING, StringType) =>
+      case (STRING, StringType(_)) =>
         (updater, ordinal, value) =>
           val str = value match {
             case s: String => UTF8String.fromString(s)
@@ -246,7 +246,7 @@ private[sql] class ProtobufDeserializer(
           val micros = DateTimeUtils.millisToMicros(seconds * 1000)
           updater.setLong(ordinal, micros + TimeUnit.NANOSECONDS.toMicros(nanoSeconds))
 
-      case (MESSAGE, StringType)
+      case (MESSAGE, StringType(_))
           if protoType.getMessageType.getFullName == "google.protobuf.Any" =>
         (updater, ordinal, value) =>
           // Convert 'Any' protobuf message to JSON string.
@@ -265,7 +265,7 @@ private[sql] class ProtobufDeserializer(
           writeRecord(new RowUpdater(row), value.asInstanceOf[DynamicMessage])
           updater.set(ordinal, row)
 
-      case (ENUM, StringType) =>
+      case (ENUM, StringType(_)) =>
         (updater, ordinal, value) =>
           updater.set(
             ordinal,

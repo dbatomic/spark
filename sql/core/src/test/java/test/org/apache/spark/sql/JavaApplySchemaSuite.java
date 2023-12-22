@@ -98,7 +98,7 @@ public class JavaApplySchemaSuite implements Serializable {
         person -> RowFactory.create(person.getName(), person.getAge()));
 
     List<StructField> fields = new ArrayList<>(2);
-    fields.add(DataTypes.createStructField("name", DataTypes.StringType, false));
+    fields.add(DataTypes.createStructField("name", DataTypes.CreateStringType("utf8"), false));
     fields.add(DataTypes.createStructField("age", DataTypes.IntegerType, false));
     StructType schema = DataTypes.createStructType(fields);
 
@@ -129,7 +129,7 @@ public class JavaApplySchemaSuite implements Serializable {
         person -> RowFactory.create(person.getName(), person.getAge()));
 
     List<StructField> fields = new ArrayList<>(2);
-    fields.add(DataTypes.createStructField("", DataTypes.StringType, false));
+    fields.add(DataTypes.createStructField("", DataTypes.CreateStringType("utf8"), false));
     fields.add(DataTypes.createStructField("age", DataTypes.IntegerType, false));
     StructType schema = DataTypes.createStructType(fields);
 
@@ -161,8 +161,8 @@ public class JavaApplySchemaSuite implements Serializable {
     fields.add(DataTypes.createStructField("double", DataTypes.DoubleType, true));
     fields.add(DataTypes.createStructField("integer", DataTypes.LongType, true));
     fields.add(DataTypes.createStructField("long", DataTypes.LongType, true));
-    fields.add(DataTypes.createStructField("null", DataTypes.StringType, true));
-    fields.add(DataTypes.createStructField("string", DataTypes.StringType, true));
+    fields.add(DataTypes.createStructField("null", DataTypes.CreateStringType("utf8"), true));
+    fields.add(DataTypes.createStructField("string", DataTypes.CreateStringType("utf8"), true));
     StructType expectedSchema = DataTypes.createStructType(fields);
     List<Row> expectedResult = new ArrayList<>(2);
     expectedResult.add(

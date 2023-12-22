@@ -27,6 +27,8 @@ import org.apache.spark.sql.catalyst.util.StringConcat
 import org.apache.spark.sql.types.DataTypeTestUtils.{dayTimeIntervalTypes, yearMonthIntervalTypes}
 
 class DataTypeSuite extends SparkFunSuite {
+  // hack to make things working -> always use utf8.
+  private val StringType = org.apache.spark.sql.types.StringType("utf8")
 
   test("construct an ArrayType") {
     val array = ArrayType(StringType)

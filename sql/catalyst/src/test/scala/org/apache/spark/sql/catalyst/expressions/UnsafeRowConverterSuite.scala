@@ -36,7 +36,6 @@ class UnsafeRowConverterSuite extends SparkFunSuite with Matchers with PlanTestB
     with ExpressionEvalHelper {
 
   private def roundedSize(size: Int) = ByteArrayMethods.roundNumberOfBytesToNearestWord(size)
-
   testBothCodegenAndInterpreted("basic conversion with only primitive types") {
     val factory = UnsafeProjection
     val fieldTypes: Array[DataType] = Array(LongType, LongType, IntegerType)

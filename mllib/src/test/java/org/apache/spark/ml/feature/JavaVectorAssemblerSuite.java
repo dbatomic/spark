@@ -19,6 +19,7 @@ package org.apache.spark.ml.feature;
 
 import java.util.Arrays;
 
+import org.apache.spark.sql.types.DataTypes;
 import static org.apache.spark.sql.types.DataTypes.*;
 
 import org.junit.jupiter.api.Assertions;
@@ -42,7 +43,7 @@ public class JavaVectorAssemblerSuite extends SharedSparkSession {
       createStructField("id", IntegerType, false),
       createStructField("x", DoubleType, false),
       createStructField("y", new VectorUDT(), false),
-      createStructField("name", StringType, false),
+      createStructField("name", DataTypes.CreateStringType("utf8"), false),
       createStructField("z", new VectorUDT(), false),
       createStructField("n", LongType, false)
     });

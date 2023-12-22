@@ -21,7 +21,6 @@ import org.apache.spark.sql.{AnalysisException, QueryTest, Row}
 import org.apache.spark.sql.connector.catalog.TableCatalog
 import org.apache.spark.sql.execution.command
 import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.util.Utils
 
 /**

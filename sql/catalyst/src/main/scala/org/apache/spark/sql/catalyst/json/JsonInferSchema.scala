@@ -62,7 +62,7 @@ class JsonInferSchema(options: JSONOptions) extends Serializable with Logging {
       columnNameOfCorruptRecord: String, e: Throwable): Option[StructType] = {
     parseMode match {
       case PermissiveMode =>
-        Some(StructType(Array(StructField(columnNameOfCorruptRecord, StringType))))
+        Some(StructType(Array(StructField(columnNameOfCorruptRecord, StringType()))))
       case DropMalformedMode =>
         None
       case FailFastMode =>
@@ -170,7 +170,7 @@ class JsonInferSchema(options: JSONOptions) extends Serializable with Logging {
             timestampFormatter.parseOptional(field).isDefined) {
           TimestampType
         } else {
-          StringType
+          StringType()
         }
 
       case START_OBJECT =>
@@ -198,9 +198,9 @@ class JsonInferSchema(options: JSONOptions) extends Serializable with Logging {
 
         ArrayType(elementType)
 
-      case (VALUE_NUMBER_INT | VALUE_NUMBER_FLOAT) if options.primitivesAsString => StringType
+      case (VALUE_NUMBER_INT | VALUE_NUMBER_FLOAT) if options.primitivesAsString => StringType()
 
-      case (VALUE_TRUE | VALUE_FALSE) if options.primitivesAsString => StringType
+      case (VALUE_TRUE | VALUE_FALSE) if options.primitivesAsString => StringType()
 
       case VALUE_NUMBER_INT | VALUE_NUMBER_FLOAT =>
         import JsonParser.NumberType._
@@ -260,7 +260,7 @@ class JsonInferSchema(options: JSONOptions) extends Serializable with Logging {
       if (options.dropFieldIfAllNull) {
         None
       } else {
-        Some(StringType)
+        Some(StringType())
       }
 
     case other => Some(other)
@@ -297,7 +297,7 @@ object JsonInferSchema {
         // If this given struct does not have a column used for corrupt records,
         // add this field.
         val newFields: Array[StructField] =
-        StructField(columnNameOfCorruptRecords, StringType, nullable = true) +: struct.fields
+        StructField(columnNameOfCorruptRecords, StringType(), nullable = true) +: struct.fields
         // Note: other code relies on this sorting for correctness, so don't remove it!
         java.util.Arrays.sort(newFields, structFieldComparator)
         StructType(newFields)
@@ -419,7 +419,7 @@ object JsonInferSchema {
           TimestampType
 
         // strings and every string is a Json object.
-        case (_, _) => StringType
+        case (_, _) => StringType()
       }
     }
   }

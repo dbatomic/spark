@@ -427,10 +427,10 @@ abstract class TypeCoercionBase {
           case None => c
         }
 
-      case aj @ ArrayJoin(arr, d, nr) if !ArrayType(StringType).acceptsType(arr.dataType) &&
+      case aj @ ArrayJoin(arr, d, nr) if !ArrayType(StringType()).acceptsType(arr.dataType) &&
         ArrayType.acceptsType(arr.dataType) =>
         val containsNull = arr.dataType.asInstanceOf[ArrayType].containsNull
-        implicitCast(arr, ArrayType(StringType, containsNull)) match {
+        implicitCast(arr, ArrayType(StringType(), containsNull)) match {
           case Some(castedArr) => ArrayJoin(castedArr, d, nr)
           case None => aj
         }
@@ -615,7 +615,7 @@ abstract class TypeCoercionBase {
       case c @ Concat(children) if conf.concatBinaryAsString ||
         !children.map(_.dataType).forall(_ == BinaryType) =>
         val newChildren = c.children.map { e =>
-          implicitCast(e, StringType).getOrElse(e)
+          implicitCast(e, StringType()).getOrElse(e)
         }
         c.copy(children = newChildren)
     }
@@ -663,7 +663,7 @@ abstract class TypeCoercionBase {
         val newInputs = if (conf.eltOutputAsString ||
           !children.tail.map(_.dataType).forall(_ == BinaryType)) {
           children.tail.map { e =>
-            implicitCast(e, StringType).getOrElse(e)
+            implicitCast(e, StringType()).getOrElse(e)
           }
         } else {
           children.tail
@@ -804,7 +804,7 @@ abstract class TypeCoercionBase {
     override val transform: PartialFunction[Expression, Expression] = {
       // Skip nodes who's children have not been resolved yet.
       case e if !e.childrenResolved => e
-      case DateAdd(l, r) if r.dataType == StringType && r.foldable =>
+      case DateAdd(l, r) if r.dataType == StringType() && r.foldable =>
         val days = try {
           Cast(r, IntegerType, ansiEnabled = true).eval().asInstanceOf[Int]
         } catch {
@@ -812,7 +812,7 @@ abstract class TypeCoercionBase {
             throw QueryCompilationErrors.secondArgumentOfFunctionIsNotIntegerError("date_add", e)
         }
         DateAdd(l, Literal(days))
-      case DateSub(l, r) if r.dataType == StringType && r.foldable =>
+      case DateSub(l, r) if r.dataType == StringType() && r.foldable =>
         val days = try {
           Cast(r, IntegerType, ansiEnabled = true).eval().asInstanceOf[Int]
         } catch {
@@ -891,8 +891,10 @@ object TypeCoercion extends TypeCoercionBase {
 
   /** Promotes all the way to StringType. */
   private def stringPromotion(dt1: DataType, dt2: DataType): Option[DataType] = (dt1, dt2) match {
-    case (StringType, t2: AtomicType) if t2 != BinaryType && t2 != BooleanType => Some(StringType)
-    case (t1: AtomicType, StringType) if t1 != BinaryType && t1 != BooleanType => Some(StringType)
+    case (StringType(_), t2: AtomicType) if t2 != BinaryType && t2 != BooleanType =>
+      Some(StringType())
+    case (t1: AtomicType, StringType(_)) if t1 != BinaryType && t1 != BooleanType =>
+      Some(StringType())
     case _ => None
   }
 
@@ -915,16 +917,16 @@ object TypeCoercion extends TypeCoercionBase {
    */
   def findCommonTypeForBinaryComparison(
       dt1: DataType, dt2: DataType, conf: SQLConf): Option[DataType] = (dt1, dt2) match {
-    case (StringType, DateType)
-      => if (conf.castDatetimeToString) Some(StringType) else Some(DateType)
-    case (DateType, StringType)
-      => if (conf.castDatetimeToString) Some(StringType) else Some(DateType)
-    case (StringType, TimestampType)
-      => if (conf.castDatetimeToString) Some(StringType) else Some(TimestampType)
-    case (TimestampType, StringType)
-      => if (conf.castDatetimeToString) Some(StringType) else Some(TimestampType)
-    case (StringType, NullType) => Some(StringType)
-    case (NullType, StringType) => Some(StringType)
+    case (StringType(_), DateType)
+      => if (conf.castDatetimeToString) Some(StringType()) else Some(DateType)
+    case (DateType, StringType(_))
+      => if (conf.castDatetimeToString) Some(StringType()) else Some(DateType)
+    case (StringType(_), TimestampType)
+      => if (conf.castDatetimeToString) Some(StringType()) else Some(TimestampType)
+    case (TimestampType, StringType(_))
+      => if (conf.castDatetimeToString) Some(StringType()) else Some(TimestampType)
+    case (StringType(_), NullType) => Some(StringType())
+    case (NullType, StringType(_)) => Some(StringType())
 
     // Cast to TimestampType when we compare DateType with TimestampType
     // i.e. TimeStamp('2017-03-01 00:00:00') eq Date('2017-03-01') = true
@@ -980,7 +982,7 @@ object TypeCoercion extends TypeCoercionBase {
 
       // If the function accepts any numeric type and the input is a string, we follow the hive
       // convention and cast that input into a double
-      case (StringType, NumericType) => NumericType.defaultConcreteType
+      case (StringType(_), NumericType) => NumericType.defaultConcreteType
 
       // Implicit cast among numeric types. When we reach here, input type is not acceptable.
 
@@ -995,13 +997,13 @@ object TypeCoercion extends TypeCoercionBase {
       case (_: DatetimeType, AnyTimestampType) => AnyTimestampType.defaultConcreteType
 
       // Implicit cast from/to string
-      case (StringType, DecimalType) => DecimalType.SYSTEM_DEFAULT
-      case (StringType, target: NumericType) => target
-      case (StringType, datetime: DatetimeType) => datetime
-      case (StringType, AnyTimestampType) => AnyTimestampType.defaultConcreteType
-      case (StringType, BinaryType) => BinaryType
+      case (StringType(_), DecimalType) => DecimalType.SYSTEM_DEFAULT
+      case (StringType(_), target: NumericType) => target
+      case (StringType(_), datetime: DatetimeType) => datetime
+      case (StringType(_), AnyTimestampType) => AnyTimestampType.defaultConcreteType
+      case (StringType(_), BinaryType) => BinaryType
       // Cast any atomic type to string.
-      case (any: AtomicType, StringType) if any != StringType => StringType
+      case (any: AtomicType, StringType(_)) if any != StringType() => StringType()
 
       // When we reach here, input type is not acceptable for any types in this type collection,
       // try to find the first one we can implicitly cast.
@@ -1079,7 +1081,7 @@ object TypeCoercion extends TypeCoercionBase {
    */
   @tailrec
   def hasStringType(dt: DataType): Boolean = dt match {
-    case StringType => true
+    case StringType(_) => true
     case ArrayType(et, _) => hasStringType(et)
     // Add StructType if we support string promotion for struct fields in the future.
     case _ => false

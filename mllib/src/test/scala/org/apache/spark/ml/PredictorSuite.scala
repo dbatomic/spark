@@ -48,11 +48,11 @@ class PredictorSuite extends SparkFunSuite with MLlibTestSparkContext {
     }
 
     intercept[IllegalArgumentException] {
-      predictor.fit(df.select(col("label").cast(StringType), col("weight"), col("features")))
+      predictor.fit(df.select(col("label").cast(StringType()), col("weight"), col("features")))
     }
 
     intercept[IllegalArgumentException] {
-      predictor.fit(df.select(col("label"), col("weight").cast(StringType), col("features")))
+      predictor.fit(df.select(col("label"), col("weight").cast(StringType()), col("features")))
     }
   }
 }

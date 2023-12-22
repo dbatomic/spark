@@ -83,7 +83,7 @@ class CSVInferSchema(val options: CSVOptions) extends Serializable {
       toStructFields(rootTypes, header)
     } else {
       // By default fields are assumed to be StringType
-      header.map(fieldName => StructField(fieldName, StringType, nullable = true))
+      header.map(fieldName => StructField(fieldName, StringType(), nullable = true))
     }
 
     StructType(fields)
@@ -94,7 +94,7 @@ class CSVInferSchema(val options: CSVOptions) extends Serializable {
       header: Array[String]): Array[StructField] = {
     header.zip(fieldTypes).map { case (thisHeader, rootType) =>
       val dType = rootType match {
-        case _: NullType => StringType
+        case _: NullType => StringType()
         case other => other
       }
       StructField(thisHeader, dType, nullable = true)
@@ -134,11 +134,11 @@ class CSVInferSchema(val options: CSVOptions) extends Serializable {
         case TimestampNTZType => tryParseTimestampNTZ(field)
         case TimestampType => tryParseTimestamp(field)
         case BooleanType => tryParseBoolean(field)
-        case StringType => StringType
+        case StringType(coll) => StringType(coll)
         case other: DataType =>
           throw QueryExecutionErrors.dataTypeUnexpectedError(other)
       }
-      compatibleType(typeSoFar, typeElemInfer).getOrElse(StringType)
+      compatibleType(typeSoFar, typeElemInfer).getOrElse(StringType())
     }
   }
 
@@ -232,8 +232,9 @@ class CSVInferSchema(val options: CSVOptions) extends Serializable {
   // Defining a function to return the StringType constant is necessary in order to work around
   // a Scala compiler issue which leads to runtime incompatibilities with certain Spark versions;
   // see issue #128 for more details.
+  // TODO: collations in CSV?
   private def stringType(): DataType = {
-    StringType
+    StringType()
   }
 
   /**
@@ -254,7 +255,7 @@ class CSVInferSchema(val options: CSVOptions) extends Serializable {
             Some(t2)
           case TimestampType | TimestampNTZType if canParseDateAsTimestamp(dateFormat, t1) =>
             Some(t1)
-          case _ => Some(StringType)
+          case _ => Some(StringType())
         }
       case _ => TypeCoercion.findTightestCommonType(t1, t2).orElse(findCompatibleTypeForCSV(t1, t2))
     }
@@ -282,8 +283,8 @@ class CSVInferSchema(val options: CSVOptions) extends Serializable {
    * are CSV specific.
    */
   private val findCompatibleTypeForCSV: (DataType, DataType) => Option[DataType] = {
-    case (StringType, t2) => Some(StringType)
-    case (t1, StringType) => Some(StringType)
+    case (StringType(coll), _) => Some(StringType(coll))
+    case (_, StringType(coll)) => Some(StringType(coll))
 
     // These two cases below deal with when `IntegralType` is larger than `DecimalType`.
     case (t1: IntegralType, t2: DecimalType) =>

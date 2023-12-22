@@ -62,7 +62,7 @@ abstract class InMemoryBaseTable(
 
   protected object PartitionKeyColumn extends MetadataColumn {
     override def name: String = "_partition"
-    override def dataType: DataType = StringType
+    override def dataType: DataType = StringType()
     override def comment: String = "Partition key used to store the row"
   }
 
@@ -189,7 +189,7 @@ abstract class InMemoryBaseTable(
         ((valueHashCode + 31 * dataTypeHashCode) & Integer.MAX_VALUE) % numBuckets
       case NamedTransform("truncate", Seq(ref: NamedReference, length: Literal[_])) =>
         extractor(ref.fieldNames, cleanedSchema, row) match {
-          case (str: UTF8String, StringType) =>
+          case (str: UTF8String, StringType(_)) =>
             str.substring(0, length.value.asInstanceOf[Int])
           case (v, t) =>
             throw new IllegalArgumentException(s"Match: unsupported argument(s) type - ($v, $t)")

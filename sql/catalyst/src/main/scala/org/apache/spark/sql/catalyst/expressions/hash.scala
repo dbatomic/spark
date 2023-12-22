@@ -63,7 +63,7 @@ import org.apache.spark.util.ArrayImplicits._
 case class Md5(child: Expression)
   extends UnaryExpression with ImplicitCastInputTypes with NullIntolerant {
 
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
 
   override def inputTypes: Seq[DataType] = Seq(BinaryType)
 
@@ -103,7 +103,7 @@ case class Md5(child: Expression)
 case class Sha2(left: Expression, right: Expression)
   extends BinaryExpression with ImplicitCastInputTypes with NullIntolerant with Serializable {
 
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
   override def nullable: Boolean = true
 
   override def inputTypes: Seq[DataType] = Seq(BinaryType, IntegerType)
@@ -169,7 +169,7 @@ case class Sha2(left: Expression, right: Expression)
 case class Sha1(child: Expression)
   extends UnaryExpression with ImplicitCastInputTypes with NullIntolerant {
 
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
 
   override def inputTypes: Seq[DataType] = Seq(BinaryType)
 
@@ -491,7 +491,7 @@ abstract class HashExpression[E] extends Expression {
     case _: DayTimeIntervalType => genHashLong(input, result)
     case _: YearMonthIntervalType => genHashInt(input, result)
     case BinaryType => genHashBytes(input, result)
-    case StringType => genHashString(input, result)
+    case StringType(_) => genHashString(input, result)
     case ArrayType(et, containsNull) => genHashForArray(ctx, input, result, et, containsNull)
     case MapType(kt, vt, valueContainsNull) =>
       genHashForMap(ctx, input, result, kt, vt, valueContainsNull)

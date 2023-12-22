@@ -19,7 +19,7 @@ package org.apache.spark.sql
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 
 class DeprecatedAPISuite extends QueryTest with SharedSparkSession {
   import MathFunctionsTestData.DoubleData

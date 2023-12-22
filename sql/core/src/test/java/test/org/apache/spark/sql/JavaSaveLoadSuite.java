@@ -89,7 +89,7 @@ public class JavaSaveLoadSuite {
     df.write().format("json").mode(SaveMode.ErrorIfExists).options(options).save();
 
     List<StructField> fields = new ArrayList<>();
-    fields.add(DataTypes.createStructField("b", DataTypes.StringType, true));
+    fields.add(DataTypes.createStructField("b", DataTypes.CreateStringType("utf8"), true));
     StructType schema = DataTypes.createStructType(fields);
     Dataset<Row> loadedDF = spark.read().format("json").schema(schema).options(options).load();
 

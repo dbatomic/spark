@@ -32,7 +32,7 @@ public class DataTypes {
   /**
    * Gets the StringType object.
    */
-  public static final DataType StringType = StringType$.MODULE$;
+  // public static final DataType StringType = StringType$.MODULE$.apply();
 
   /**
    * Gets the BinaryType object.
@@ -98,6 +98,10 @@ public class DataTypes {
    * Gets the NullType object.
    */
   public static final DataType NullType = NullType$.MODULE$;
+
+  public static DataType CreateStringType(String collation) {
+    return StringType$.MODULE$.apply(collation);
+  }
 
   /**
    * Creates an ArrayType by specifying the data type of elements ({@code elementType}).

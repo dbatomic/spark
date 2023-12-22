@@ -763,7 +763,7 @@ class ColumnarBatchSuite extends SparkFunSuite {
       }
   }
 
-  testVector("String APIs", 7, StringType) {
+  testVector("String APIs", 7, StringType()) {
     column =>
       val reference = mutable.ArrayBuffer.empty[String]
 
@@ -1393,7 +1393,7 @@ class ColumnarBatchSuite extends SparkFunSuite {
             val d1 = r1.getDecimal(ordinal, t.precision, t.scale).toBigDecimal
             val d2 = r2.getDecimal(ordinal)
             assert(d1.compare(d2) == 0, "Seed = " + seed)
-          case StringType =>
+          case StringType(_) =>
             assert(r1.getString(ordinal) == r2.getString(ordinal), "Seed = " + seed)
           case BinaryType =>
             assert(r1.getBinary(ordinal) sameElements r2.getAs[Array[Byte]](ordinal),
@@ -1419,7 +1419,7 @@ class ColumnarBatchSuite extends SparkFunSuite {
                     "Seed = " + seed)
                   i += 1
                 }
-              case StringType =>
+              case StringType(_) =>
                 var i = 0
                 while (i < a1.length) {
                   assert((a1(i) == null) == (a2(i) == null), "Seed = " + seed)
@@ -1492,7 +1492,7 @@ class ColumnarBatchSuite extends SparkFunSuite {
       val schema = new StructType()
         .add("i1", IntegerType)
         .add("l2", LongType)
-        .add("string", StringType)
+        .add("string", StringType())
         .add("d", DoubleType)
         .add("b", ByteType)
 
@@ -1519,7 +1519,7 @@ class ColumnarBatchSuite extends SparkFunSuite {
       DecimalType.ShortDecimal, DecimalType.IntDecimal, DecimalType.ByteDecimal,
       DecimalType.FloatDecimal, DecimalType.LongDecimal, new DecimalType(5, 2),
       new DecimalType(12, 2), new DecimalType(30, 10), CalendarIntervalType,
-      DateType, StringType, BinaryType, TimestampType, TimestampNTZType)
+      DateType, StringType(), BinaryType, TimestampType, TimestampNTZType)
     val seed = System.nanoTime()
     val NUM_ROWS = 200
     val NUM_ITERS = 1000
@@ -1629,7 +1629,7 @@ class ColumnarBatchSuite extends SparkFunSuite {
 
   test("RowToColumnConverter") {
     val schema = StructType(
-      StructField("str", StringType) ::
+      StructField("str", StringType()) ::
         StructField("bool", BooleanType) ::
         StructField("byte", ByteType) ::
         StructField("short", ShortType) ::
@@ -1742,7 +1742,7 @@ class ColumnarBatchSuite extends SparkFunSuite {
       converter.convert(row2, columns.toArray)
       converter.convert(row3, columns.toArray)
 
-      assert(columns(0).dataType() == StringType)
+      assert(columns(0).dataType() == StringType())
       assert(columns(0).getUTF8String(0).toString == "a string")
       assert(columns(0).getUTF8String(1).toString == "second string")
       assert(columns(0).isNullAt(2))

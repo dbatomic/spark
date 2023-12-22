@@ -140,6 +140,7 @@ object InternalRow {
         case PhysicalLongType => (input, ordinal) => input.getLong(ordinal)
         case PhysicalFloatType => (input, ordinal) => input.getFloat(ordinal)
         case PhysicalDoubleType => (input, ordinal) => input.getDouble(ordinal)
+        // TODO: Collation support.
         case PhysicalStringType => (input, ordinal) => input.getUTF8String(ordinal)
         case PhysicalBinaryType => (input, ordinal) => input.getBinary(ordinal)
         case PhysicalCalendarIntervalType => (input, ordinal) => input.getInterval(ordinal)
@@ -185,7 +186,7 @@ object InternalRow {
       (input, v) => input.setDecimal(ordinal, v.asInstanceOf[Decimal], precision)
     case udt: UserDefinedType[_] => getWriter(ordinal, udt.sqlType)
     case NullType => (input, _) => input.setNullAt(ordinal)
-    case StringType => (input, v) => input.update(ordinal, v.asInstanceOf[UTF8String].copy())
+    case StringType(_) => (input, v) => input.update(ordinal, v.asInstanceOf[UTF8String].copy())
     case _: StructType => (input, v) => input.update(ordinal, v.asInstanceOf[InternalRow].copy())
     case _: ArrayType => (input, v) => input.update(ordinal, v.asInstanceOf[ArrayData].copy())
     case _: MapType => (input, v) => input.update(ordinal, v.asInstanceOf[MapData].copy())

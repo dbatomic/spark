@@ -109,7 +109,7 @@ class ColumnVectorUtilsSuite extends SparkFunSuite {
     }
   }
 
-  testConstantColumnVector("fill utf8string", 10, StringType) { vector =>
+  testConstantColumnVector("fill utf8string", 10, StringType()) { vector =>
     val string = UTF8String.fromString("hello")
     ColumnVectorUtils.populate(vector, InternalRow(string), 0)
     (0 until 10).foreach { i =>
@@ -144,7 +144,7 @@ class ColumnVectorUtilsSuite extends SparkFunSuite {
 
   testConstantColumnVector("not supported: fill struct", 10,
     new StructType()
-      .add(StructField("name", StringType))
+      .add(StructField("name", StringType()))
       .add(StructField("age", IntegerType))) { vector =>
     val message = intercept[RuntimeException] {
       ColumnVectorUtils.populate(vector, InternalRow("fakeStruct"), 0)

@@ -589,9 +589,9 @@ case class DescribeNamespace(
 
 object DescribeNamespace {
   def getOutputAttrs: Seq[Attribute] = Seq(
-    AttributeReference("info_name", StringType, nullable = false,
+    AttributeReference("info_name", StringType(), nullable = false,
       new MetadataBuilder().putString("comment", "name of the namespace info").build())(),
-    AttributeReference("info_value", StringType, nullable = true,
+    AttributeReference("info_value", StringType(), nullable = true,
       new MetadataBuilder().putString("comment", "value of the namespace info").build())())
 }
 
@@ -632,7 +632,7 @@ case class ShowNamespaces(
 
 object ShowNamespaces {
   def getOutputAttrs: Seq[Attribute] = {
-    Seq(AttributeReference("namespace", StringType, nullable = false)())
+    Seq(AttributeReference("namespace", StringType(), nullable = false)())
   }
 }
 
@@ -880,8 +880,8 @@ case class ShowTables(
 
 object ShowTables {
   def getOutputAttrs: Seq[Attribute] = Seq(
-    AttributeReference("namespace", StringType, nullable = false)(),
-    AttributeReference("tableName", StringType, nullable = false)(),
+    AttributeReference("namespace", StringType(), nullable = false)(),
+    AttributeReference("tableName", StringType(), nullable = false)(),
     AttributeReference("isTemporary", BooleanType, nullable = false)())
 }
 
@@ -899,10 +899,10 @@ case class ShowTablesExtended(
 
 object ShowTablesUtils {
   def getOutputAttrs: Seq[Attribute] = Seq(
-    AttributeReference("namespace", StringType, nullable = false)(),
-    AttributeReference("tableName", StringType, nullable = false)(),
+    AttributeReference("namespace", StringType(), nullable = false)(),
+    AttributeReference("tableName", StringType(), nullable = false)(),
     AttributeReference("isTemporary", BooleanType, nullable = false)(),
-    AttributeReference("information", StringType, nullable = false)())
+    AttributeReference("information", StringType(), nullable = false)())
 }
 
 /**
@@ -934,8 +934,8 @@ case class ShowViews(
 
 object ShowViews {
   def getOutputAttrs: Seq[Attribute] = Seq(
-    AttributeReference("namespace", StringType, nullable = false)(),
-    AttributeReference("viewName", StringType, nullable = false)(),
+    AttributeReference("namespace", StringType(), nullable = false)(),
+    AttributeReference("viewName", StringType(), nullable = false)(),
     AttributeReference("isTemporary", BooleanType, nullable = false)())
 }
 
@@ -970,8 +970,8 @@ case class ShowTableProperties(
 
 object ShowTableProperties {
   def getOutputAttrs: Seq[Attribute] = Seq(
-    AttributeReference("key", StringType, nullable = false)(),
-    AttributeReference("value", StringType, nullable = false)())
+    AttributeReference("key", StringType(), nullable = false)(),
+    AttributeReference("value", StringType(), nullable = false)())
 }
 
 /**
@@ -1044,7 +1044,7 @@ case class ShowFunctions(
 
 object ShowFunctions {
   def getOutputAttrs: Seq[Attribute] = {
-    Seq(AttributeReference("function", StringType, nullable = false)())
+    Seq(AttributeReference("function", StringType(), nullable = false)())
   }
 }
 
@@ -1167,7 +1167,7 @@ case class ShowCreateTable(
 
 object ShowCreateTable {
   def getoutputAttrs: Seq[Attribute] = {
-    Seq(AttributeReference("createtab_stmt", StringType, nullable = false)())
+    Seq(AttributeReference("createtab_stmt", StringType(), nullable = false)())
   }
 }
 
@@ -1184,7 +1184,7 @@ case class ShowColumns(
 
 object ShowColumns {
   def getOutputAttrs: Seq[Attribute] = {
-    Seq(AttributeReference("col_name", StringType, nullable = false)())
+    Seq(AttributeReference("col_name", StringType(), nullable = false)())
   }
 }
 
@@ -1223,7 +1223,7 @@ case class ShowPartitions(
 
 object ShowPartitions {
   def getOutputAttrs: Seq[Attribute] = {
-    Seq(AttributeReference("partition", StringType, nullable = false)())
+    Seq(AttributeReference("partition", StringType(), nullable = false)())
   }
 }
 
@@ -1454,7 +1454,7 @@ case class UnresolvedTableSpec(
 case class OptionList(options: Seq[(String, Expression)])
   extends Expression with Unevaluable {
   override def nullable: Boolean = true
-  override def dataType: DataType = MapType(StringType, StringType)
+  override def dataType: DataType = MapType(StringType(), StringType())
   override def children: Seq[Expression] = options.map(_._2)
   override lazy val resolved: Boolean = options.map(_._2).forall(_.resolved)
 

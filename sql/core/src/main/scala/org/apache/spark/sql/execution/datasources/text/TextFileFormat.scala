@@ -60,7 +60,7 @@ class TextFileFormat extends TextBasedFileFormat with DataSourceRegister {
   override def inferSchema(
       sparkSession: SparkSession,
       options: Map[String, String],
-      files: Seq[FileStatus]): Option[StructType] = Some(new StructType().add("value", StringType))
+      files: Seq[FileStatus]): Option[StructType] = Some(new StructType().add("value", StringType()))
 
   override def prepareWrite(
       sparkSession: SparkSession,
@@ -138,6 +138,6 @@ class TextFileFormat extends TextBasedFileFormat with DataSourceRegister {
   }
 
   override def supportDataType(dataType: DataType): Boolean =
-    dataType == StringType
+    dataType == StringType()
 }
 

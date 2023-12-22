@@ -37,14 +37,14 @@ case class TextTable(
     TextScanBuilder(sparkSession, fileIndex, schema, dataSchema, options)
 
   override def inferSchema(files: Seq[FileStatus]): Option[StructType] =
-    Some(StructType(Array(StructField("value", StringType))))
+    Some(StructType(Array(StructField("value", StringType()))))
 
   override def newWriteBuilder(info: LogicalWriteInfo): WriteBuilder =
     new WriteBuilder {
       override def build(): Write = TextWrite(paths, formatName, supportsDataType, info)
     }
 
-  override def supportsDataType(dataType: DataType): Boolean = dataType == StringType
+  override def supportsDataType(dataType: DataType): Boolean = dataType == StringType()
 
   override def formatName: String = "Text"
 }

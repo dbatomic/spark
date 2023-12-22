@@ -86,7 +86,7 @@ private[spark] object DatasetUtils extends Logging {
       .when(exists(unwrap_udt(vectorCol).getField("values"),
         v => v.isNaN || v === Double.NegativeInfinity || v === Double.PositiveInfinity),
         raise_error(concat(lit("Vector values MUST NOT be NaN or Infinity, but got "),
-          vectorCol.cast(StringType))))
+          vectorCol.cast(StringType()))))
       .otherwise(vectorCol)
   }
 

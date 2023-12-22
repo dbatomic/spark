@@ -32,7 +32,7 @@ import org.apache.spark.unsafe.types.UTF8String
 case class ToPrettyString(child: Expression, timeZoneId: Option[String] = None)
   extends UnaryExpression with TimeZoneAwareExpression with ToStringBase {
 
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType("utf8")
 
   override def nullable: Boolean = false
 

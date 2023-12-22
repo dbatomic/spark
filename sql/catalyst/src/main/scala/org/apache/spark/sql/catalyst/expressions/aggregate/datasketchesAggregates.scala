@@ -101,7 +101,7 @@ case class HllSketchAgg(
   override def prettyName: String = "hll_sketch_agg"
 
   override def inputTypes: Seq[AbstractDataType] =
-    Seq(TypeCollection(IntegerType, LongType, StringType, BinaryType), IntegerType)
+    Seq(TypeCollection(IntegerType, LongType, StringType(), BinaryType), IntegerType)
 
   override def dataType: DataType = BinaryType
 
@@ -135,7 +135,7 @@ case class HllSketchAgg(
         // TODO: implement support for decimal/datetime/interval types
         case IntegerType => sketch.update(v.asInstanceOf[Int])
         case LongType => sketch.update(v.asInstanceOf[Long])
-        case StringType => sketch.update(v.asInstanceOf[UTF8String].toString)
+        case StringType(_) => sketch.update(v.asInstanceOf[UTF8String].toString)
         case BinaryType => sketch.update(v.asInstanceOf[Array[Byte]])
         case dataType => throw new UnsupportedOperationException(
           s"A HllSketch instance cannot be updates with a Spark ${dataType.toString} type")

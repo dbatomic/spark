@@ -32,7 +32,6 @@ import org.apache.spark.util.ArrayImplicits._
  * A test suite for generated projections
  */
 class GeneratedProjectionSuite extends SparkFunSuite with ExpressionEvalHelper {
-
   test("generated projections on wider table") {
     val N = 1000
     val wideRow1 = new GenericInternalRow((0 until N).toArray[Any])

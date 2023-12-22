@@ -45,7 +45,7 @@ public class JavaHashingTFSuite extends SharedSparkSession {
     );
     StructType schema = new StructType(new StructField[]{
       new StructField("label", DataTypes.DoubleType, false, Metadata.empty()),
-      new StructField("sentence", DataTypes.StringType, false, Metadata.empty())
+      new StructField("sentence", DataTypes.CreateStringType("utf8"), false, Metadata.empty())
     });
 
     Dataset<Row> sentenceData = spark.createDataFrame(data, schema);

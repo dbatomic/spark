@@ -34,14 +34,14 @@ class TypeUtilsSuite extends SparkFunSuite {
 
   test("checkForSameTypeInputExpr") {
     typeCheckPass(Nil)
-    typeCheckPass(StringType :: Nil)
-    typeCheckPass(StringType :: StringType :: Nil)
+    typeCheckPass(StringType() :: Nil)
+    typeCheckPass(StringType() :: StringType() :: Nil)
 
-    typeCheckFail(StringType :: IntegerType :: Nil)
-    typeCheckFail(StringType :: IntegerType :: Nil)
+    typeCheckFail(StringType() :: IntegerType :: Nil)
+    typeCheckFail(StringType() :: IntegerType :: Nil)
 
     // Should also work on arrays. See SPARK-14990
-    typeCheckPass(ArrayType(StringType, containsNull = true) ::
-      ArrayType(StringType, containsNull = false) :: Nil)
+    typeCheckPass(ArrayType(StringType(), containsNull = true) ::
+      ArrayType(StringType(), containsNull = false) :: Nil)
   }
 }

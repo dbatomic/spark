@@ -58,7 +58,7 @@ private[sql] object H2Dialect extends JdbcDialect {
     supportedFunctions.contains(funcName)
 
   override def getJDBCType(dt: DataType): Option[JdbcType] = dt match {
-    case StringType => Option(JdbcType("CLOB", Types.CLOB))
+    case StringType(_) => Option(JdbcType("CLOB", Types.CLOB))
     case BooleanType => Some(JdbcType("BOOLEAN", Types.BOOLEAN))
     case ShortType | ByteType => Some(JdbcType("SMALLINT", Types.SMALLINT))
     case t: DecimalType => Some(

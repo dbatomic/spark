@@ -78,7 +78,7 @@ object ComputeCurrentTime extends Rule[LogicalPlan] {
     val instant = Instant.now()
     val currentTimestampMicros = instantToMicros(instant)
     val currentTime = Literal.create(currentTimestampMicros, TimestampType)
-    val timezone = Literal.create(conf.sessionLocalTimeZone, StringType)
+    val timezone = Literal.create(conf.sessionLocalTimeZone, StringType())
     val currentDates = collection.mutable.HashMap.empty[ZoneId, Literal]
     val localTimestamps = collection.mutable.HashMap.empty[ZoneId, Literal]
 
@@ -119,11 +119,11 @@ case class ReplaceCurrentLike(catalogManager: CatalogManager) extends Rule[Logic
 
     plan.transformAllExpressionsWithPruning(_.containsPattern(CURRENT_LIKE)) {
       case CurrentDatabase() =>
-        Literal.create(currentNamespace, StringType)
+        Literal.create(currentNamespace, StringType())
       case CurrentCatalog() =>
-        Literal.create(currentCatalog, StringType)
+        Literal.create(currentCatalog, StringType())
       case CurrentUser() =>
-        Literal.create(currentUser, StringType)
+        Literal.create(currentUser, StringType())
     }
   }
 }
@@ -140,7 +140,7 @@ object SpecialDatetimeValues extends Rule[LogicalPlan] {
   def apply(plan: LogicalPlan): LogicalPlan = {
     plan.transformAllExpressionsWithPruning(_.containsPattern(CAST)) {
       case cast @ Cast(e, dt @ (DateType | TimestampType | TimestampNTZType), _, _)
-        if e.foldable && e.dataType == StringType =>
+        if e.foldable && e.dataType == StringType() =>
         Option(e.eval())
           .flatMap(s => conv(dt)(s.toString, cast.zoneId))
           .map(Literal(_, dt))

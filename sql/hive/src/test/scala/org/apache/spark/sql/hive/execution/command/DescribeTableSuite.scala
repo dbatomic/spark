@@ -21,7 +21,6 @@ import org.apache.spark.sql.{QueryTest, Row}
 import org.apache.spark.sql.connector.catalog.CatalogManager.SESSION_CATALOG_NAME
 import org.apache.spark.sql.connector.catalog.TableCatalog
 import org.apache.spark.sql.execution.command.v1
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.util.Utils
 
 /**

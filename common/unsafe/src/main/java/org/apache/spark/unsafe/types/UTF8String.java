@@ -784,6 +784,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    * Find the `str` from left to right.
    */
   private int find(UTF8String str, int start) {
+    // TODO: This also needs to be collation aware.
     assert (str.numBytes > 0);
     while (start <= numBytes - str.numBytes) {
       if (ByteArrayMethods.arrayEquals(base, offset + start, str.base, str.offset, str.numBytes)) {
@@ -1429,6 +1430,10 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
   public int levenshteinDistance(UTF8String other) {
     // Implementation adopted from
     // org.apache.commons.text.similarity.LevenshteinDistance.unlimitedCompare
+
+    // TODO: Levenshtein probably can be considered collation insensitive?
+    // But still, there are letter combinations that are considered single character.
+    // E.g. "lj" in Serbian. So, we need to be careful here.
 
     int n = numChars();
     int m = other.numChars();

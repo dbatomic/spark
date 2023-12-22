@@ -61,8 +61,8 @@ object StateMetadataTableEntry {
   private[sql] val schema = {
     new StructType()
       .add("operatorId", LongType)
-      .add("operatorName", StringType)
-      .add("stateStoreName", StringType)
+      .add("operatorName", StringType())
+      .add("stateStoreName", StringType())
       .add("numPartitions", IntegerType)
       .add("minBatchId", LongType)
       .add("maxBatchId", LongType)

@@ -157,7 +157,7 @@ class TPCDSTables(spark: SparkSession, dsdgenDir: String, scaleFactor: Int)
       val stringData =
         spark.createDataFrame(
           rows,
-          StructType(schema.fields.map(f => StructField(f.name, StringType))))
+          StructType(schema.fields.map(f => StructField(f.name, StringType()))))
 
       val convertedData = {
         val columns = schema.fields.map { f =>

@@ -160,7 +160,7 @@ case class ExplainCommand(
   extends LeafRunnableCommand {
 
   override val output: Seq[Attribute] =
-    Seq(AttributeReference("plan", StringType, nullable = true)())
+    Seq(AttributeReference("plan", StringType(), nullable = true)())
 
   // Run through the optimizer to generate the physical plan.
   override def run(sparkSession: SparkSession): Seq[Row] = try {
@@ -179,7 +179,7 @@ case class StreamingExplainCommand(
     extended: Boolean) extends LeafRunnableCommand {
 
   override val output: Seq[Attribute] =
-    Seq(AttributeReference("plan", StringType, nullable = true)())
+    Seq(AttributeReference("plan", StringType(), nullable = true)())
 
   // Run through the optimizer to generate the physical plan.
   override def run(sparkSession: SparkSession): Seq[Row] = try {
@@ -206,7 +206,7 @@ case class ExternalCommandExecutor(
     options: Map[String, String]) extends LeafRunnableCommand {
 
   override def output: Seq[Attribute] =
-    Seq(AttributeReference("command_output", StringType)())
+    Seq(AttributeReference("command_output", StringType())())
 
   override def run(sparkSession: SparkSession): Seq[Row] = {
     val output = runner.executeCommand(command, new CaseInsensitiveStringMap(options.asJava))

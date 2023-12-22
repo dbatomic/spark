@@ -50,7 +50,7 @@ class UnsafeRowUtilsSuite extends SparkFunSuite {
       testRow, StructType(testKeys.map(createIntegerField))).isDefined)
     // Fail for invalid schema
     val invalidSchema = StructType(testKeys.map(createIntegerField) ++
-      Seq(StructField("struct", StructType(Seq(StructField("value1", StringType, true))), true),
+      Seq(StructField("struct", StructType(Seq(StructField("value1", StringType(), true))), true),
         StructField("value2", IntegerType, false)))
     assert(UnsafeRowUtils.validateStructuralIntegrityWithReason(testRow, invalidSchema).isDefined)
   }

@@ -61,7 +61,7 @@ public class JavaStrLen implements UnboundFunction {
   private abstract static class JavaStrLenBase implements ScalarFunction<Integer> {
     @Override
     public DataType[] inputTypes() {
-      return new DataType[] { DataTypes.StringType };
+      return new DataType[] { DataTypes.CreateStringType("utf8")};
     }
 
     @Override

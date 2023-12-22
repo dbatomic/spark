@@ -82,7 +82,7 @@ private[sql] object PredicateUtils {
       case "STARTS_WITH" | "ENDS_WITH" | "CONTAINS" if isValidBinaryPredicate() =>
         val attribute = predicate.children()(0).toString
         val value = predicate.children()(1).asInstanceOf[LiteralValue[_]]
-        if (!DataTypeUtils.sameType(value.dataType, StringType)) return None
+        if (!DataTypeUtils.sameType(value.dataType, StringType())) return None
         val v1Value = value.value.toString
         val v1Filter = predicate.name() match {
           case "STARTS_WITH" =>

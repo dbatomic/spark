@@ -27,8 +27,8 @@ import org.apache.spark.sql.types.StringType
  */
 case class ShowCurrentNamespaceCommand() extends LeafRunnableCommand {
   override val output: Seq[Attribute] = Seq(
-    AttributeReference("catalog", StringType, nullable = false)(),
-    AttributeReference("namespace", StringType, nullable = false)())
+    AttributeReference("catalog", StringType(), nullable = false)(),
+    AttributeReference("namespace", StringType(), nullable = false)())
 
   override def run(sparkSession: SparkSession): Seq[Row] = {
     val catalogManager = sparkSession.sessionState.catalogManager

@@ -107,7 +107,8 @@ class CountMinSketchAggSuite extends SparkFunSuite {
 
   testDataType[Long](LongType, Seq.fill(100) { rand.nextInt(10) })
 
-  testDataType[UTF8String](StringType, Seq.fill(100) { UTF8String.fromString(rand.nextString(1)) })
+  testDataType[UTF8String](
+    StringType(), Seq.fill(100) { UTF8String.fromString(rand.nextString(1)) })
 
   testDataType[Array[Byte]](BinaryType, Seq.fill(100) { rand.nextString(1).getBytes() })
 

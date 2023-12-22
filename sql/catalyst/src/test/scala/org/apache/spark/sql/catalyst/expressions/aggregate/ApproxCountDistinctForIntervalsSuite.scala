@@ -32,7 +32,7 @@ import org.apache.spark.util.ArrayImplicits._
 class ApproxCountDistinctForIntervalsSuite extends SparkFunSuite {
 
   test("fails analysis if parameters are invalid") {
-    val wrongColumnTypes = Seq(BinaryType, BooleanType, StringType, ArrayType(IntegerType),
+    val wrongColumnTypes = Seq(BinaryType, BooleanType, StringType(), ArrayType(IntegerType),
       MapType(IntegerType, IntegerType), StructType(Seq(StructField("s", IntegerType))))
     wrongColumnTypes.foreach { dataType =>
       val wrongColumn = ApproxCountDistinctForIntervals(

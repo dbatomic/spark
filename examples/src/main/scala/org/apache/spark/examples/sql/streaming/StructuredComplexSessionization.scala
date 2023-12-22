@@ -116,8 +116,8 @@ object StructuredComplexSessionization {
       .load()
 
     val jsonSchema = new StructType()
-      .add("user_id", StringType, nullable = false)
-      .add("event_type", StringType, nullable = false)
+      .add("user_id", StringType(), nullable = false)
+      .add("event_type", StringType(), nullable = false)
       .add("timestamp", TimestampType, nullable = false)
 
     val gapDuration: Long = 5 * 1000 // 5 seconds

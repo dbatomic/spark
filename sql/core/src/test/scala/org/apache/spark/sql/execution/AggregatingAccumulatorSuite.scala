@@ -25,7 +25,7 @@ import org.apache.spark.sql.catalyst.expressions.{ExpressionEvalHelper, If, Sort
 import org.apache.spark.sql.catalyst.expressions.aggregate.CollectSet
 import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{LongType, StringType, StructType}
+import org.apache.spark.sql.types.{LongType, StructType}
 import org.apache.spark.unsafe.types.UTF8String
 
 /**

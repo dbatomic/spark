@@ -108,7 +108,7 @@ private[feature] trait Word2VecBase extends Params
    * Validate and transform the input schema.
    */
   protected def validateAndTransformSchema(schema: StructType): StructType = {
-    val typeCandidates = List(new ArrayType(StringType, true), new ArrayType(StringType, false))
+    val typeCandidates = List(new ArrayType(StringType(), true), new ArrayType(StringType(), false))
     SchemaUtils.checkColumnTypes(schema, $(inputCol), typeCandidates)
     SchemaUtils.appendColumn(schema, $(outputCol), new VectorUDT)
   }

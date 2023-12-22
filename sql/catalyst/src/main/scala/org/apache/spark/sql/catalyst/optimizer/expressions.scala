@@ -785,7 +785,7 @@ object LikeSimplification extends Rule[LogicalPlan] with PredicateHelper {
 
   def apply(plan: LogicalPlan): LogicalPlan = plan.transformAllExpressionsWithPruning(
     _.containsPattern(LIKE_FAMLIY), ruleId) {
-    case l @ Like(input, Literal(pattern, StringType), escapeChar) =>
+    case l @ Like(input, Literal(pattern, StringType(_)), escapeChar) =>
       if (pattern == null) {
         // If pattern is null, return null value directly, since "col like null" == null.
         Literal(null, BooleanType)
@@ -1118,7 +1118,7 @@ object CombineConcats extends Rule[LogicalPlan] {
         // If `spark.sql.function.concatBinaryAsString` is false, nested `Concat` exprs possibly
         // have `Concat`s with binary output. Since `TypeCoercion` casts them into strings,
         // we need to handle the case to combine all nested `Concat`s.
-        case c @ Cast(Concat(children), StringType, _, _) =>
+        case c @ Cast(Concat(children), StringType(_), _, _) =>
           val newChildren = children.map { e => c.copy(child = e) }
           stack.pushAll(newChildren.reverse)
         case child =>
@@ -1130,7 +1130,7 @@ object CombineConcats extends Rule[LogicalPlan] {
 
   private def hasNestedConcats(concat: Concat): Boolean = concat.children.exists {
     case c: Concat => true
-    case c @ Cast(Concat(children), StringType, _, _) => true
+    case c @ Cast(Concat(children), StringType(_), _, _) => true
     case _ => false
   }
 

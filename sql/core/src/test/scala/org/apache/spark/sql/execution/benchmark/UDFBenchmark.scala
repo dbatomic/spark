@@ -21,7 +21,7 @@ import org.apache.spark.benchmark.Benchmark
 import org.apache.spark.sql.catalyst.expressions.Literal
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{IntegerType, StringType}
+import org.apache.spark.sql.types.IntegerType
 
 /**
  * Synthetic benchmark for Scala User Defined Functions.

@@ -40,7 +40,7 @@ object SortPrefixUtils {
 
   def getPrefixComparator(sortOrder: SortOrder): PrefixComparator = {
     sortOrder.dataType match {
-      case StringType => stringPrefixComparator(sortOrder)
+      case StringType(_) => stringPrefixComparator(sortOrder)
       case BinaryType => binaryPrefixComparator(sortOrder)
       case BooleanType | ByteType | ShortType | IntegerType | LongType | DateType | TimestampType |
           TimestampNTZType | _: AnsiIntervalType =>

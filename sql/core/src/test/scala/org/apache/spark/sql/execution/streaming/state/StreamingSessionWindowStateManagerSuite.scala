@@ -28,7 +28,7 @@ import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.execution.streaming.StatefulOperatorStateInfo
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.streaming.StreamTest
-import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructType}
+import org.apache.spark.sql.types.{IntegerType, LongType, StructType}
 import org.apache.spark.unsafe.types.UTF8String
 
 class StreamingSessionWindowStateManagerSuite extends StreamTest with BeforeAndAfter {

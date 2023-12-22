@@ -926,7 +926,7 @@ class MyCastToString extends SparkUserDefinedFunction(
   } else {
     input.toString
   },
-  StringType,
+  StringType(),
   inputEncoders = Seq.fill(1)(None))
 
 class MySum extends UDF1[Int, Int] with UDF2[Int, Int, Int] {

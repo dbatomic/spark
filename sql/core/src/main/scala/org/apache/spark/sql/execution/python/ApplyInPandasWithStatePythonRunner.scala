@@ -250,7 +250,7 @@ object ApplyInPandasWithStatePythonRunner {
 
   val STATE_METADATA_SCHEMA_FROM_PYTHON_WORKER: StructType = StructType(
     Array(
-      StructField("properties", StringType),
+      StructField("properties", StringType()),
       StructField("keyRowAsUnsafe", BinaryType),
       StructField("object", BinaryType),
       StructField("oldTimeoutTimestamp", LongType)

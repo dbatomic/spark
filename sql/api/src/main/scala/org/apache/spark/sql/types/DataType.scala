@@ -159,7 +159,7 @@ object DataType {
 
   private val otherTypes = {
     Seq(NullType, DateType, TimestampType, BinaryType, IntegerType, BooleanType, LongType,
-      DoubleType, FloatType, ShortType, ByteType, StringType, CalendarIntervalType,
+      DoubleType, FloatType, ShortType, ByteType, StringType(), CalendarIntervalType,
       DayTimeIntervalType(DAY),
       DayTimeIntervalType(DAY, HOUR),
       DayTimeIntervalType(DAY, MINUTE),

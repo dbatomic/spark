@@ -135,7 +135,7 @@ class OrcDeserializer(
       case DoubleType => (ordinal, value) =>
         updater.setDouble(ordinal, value.asInstanceOf[DoubleWritable].get)
 
-      case StringType => (ordinal, value) =>
+      case StringType(_) => (ordinal, value) =>
         updater.set(ordinal, UTF8String.fromBytes(value.asInstanceOf[Text].copyBytes))
 
       case BinaryType => (ordinal, value) =>

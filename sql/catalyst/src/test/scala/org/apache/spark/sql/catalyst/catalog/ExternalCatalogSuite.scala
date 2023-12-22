@@ -246,7 +246,7 @@ abstract class ExternalCatalogSuite extends SparkFunSuite {
     val catalog = newBasicCatalog()
     val newDataSchema = StructType(Seq(
       StructField("col1", IntegerType),
-      StructField("new_field_2", StringType)))
+      StructField("new_field_2", StringType())))
     catalog.alterTableDataSchema("db2", "tbl1", newDataSchema)
     val newTbl1 = catalog.getTable("db2", "tbl1")
     assert(newTbl1.dataSchema == newDataSchema)
@@ -1081,7 +1081,7 @@ abstract class CatalogTestUtils {
             new MetadataBuilder().putString(
               ResolveDefaultColumns.CURRENT_DEFAULT_COLUMN_METADATA_KEY, "42")
               .putString(ResolveDefaultColumns.EXISTS_DEFAULT_COLUMN_METADATA_KEY, "41").build())
-          .add("b", StringType, nullable = false,
+          .add("b", StringType(), nullable = false,
             new MetadataBuilder().putString(
               ResolveDefaultColumns.CURRENT_DEFAULT_COLUMN_METADATA_KEY, "\"abc\"").build())
           // The default value fails to parse.

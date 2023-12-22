@@ -55,6 +55,7 @@ public final class SpecializedGettersReader {
       return obj.getDouble(ordinal);
     }
     if (physicalDataType instanceof PhysicalStringType) {
+      // TODO: Collation support.
       return obj.getUTF8String(ordinal);
     }
     if (physicalDataType instanceof PhysicalDecimalType dt) {

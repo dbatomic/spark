@@ -104,7 +104,7 @@ private[feature] trait StringIndexerBase extends Params with HasHandleInvalid wi
       inputColName: String,
       outputColName: String): StructField = {
     val inputDataType = schema(inputColName).dataType
-    require(inputDataType == StringType || inputDataType.isInstanceOf[NumericType],
+    require(inputDataType == StringType() || inputDataType.isInstanceOf[NumericType],
       s"The input column $inputColName must be either string type or numeric type, " +
         s"but got $inputDataType.")
     require(schema.fields.forall(_.name != outputColName),
@@ -181,12 +181,12 @@ class StringIndexer @Since("1.4.0") (
   private def getSelectedCols(dataset: Dataset[_], inputCols: Seq[String]): Seq[Column] = {
     inputCols.map { colName =>
       val col = dataset.col(colName)
-      if (col.expr.dataType == StringType) {
+      if (col.expr.dataType == StringType()) {
         col
       } else {
         // We don't count for NaN values. Because `StringIndexerAggregator` only processes strings,
         // we replace NaNs with null in advance.
-        new Column(If(col.isNaN.expr, Literal(null), col.expr)).cast(StringType)
+        new Column(If(col.isNaN.expr, Literal(null), col.expr)).cast(StringType())
       }
     }
   }
@@ -446,7 +446,7 @@ class StringIndexerModel (
 
         val indexer = getIndexer(labels.toImmutableArraySeq, labelToIndex)
 
-        outputColumns(i) = indexer(dataset(inputColName).cast(StringType))
+        outputColumns(i) = indexer(dataset(inputColName).cast(StringType()))
           .as(outputColName, metadata)
       }
     }
@@ -594,7 +594,7 @@ class IndexToString @Since("2.2.0") (@Since("1.5.0") override val uid: String)
     val outputColName = $(outputCol)
     require(inputFields.forall(_.name != outputColName),
       s"Output column $outputColName already exists.")
-    val outputFields = inputFields :+ StructField($(outputCol), StringType)
+    val outputFields = inputFields :+ StructField($(outputCol), StringType())
     StructType(outputFields)
   }
 

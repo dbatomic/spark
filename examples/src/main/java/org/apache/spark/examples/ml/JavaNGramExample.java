@@ -50,7 +50,7 @@ public class JavaNGramExample {
     StructType schema = new StructType(new StructField[]{
       new StructField("id", DataTypes.IntegerType, false, Metadata.empty()),
       new StructField(
-        "words", DataTypes.createArrayType(DataTypes.StringType), false, Metadata.empty())
+        "words", DataTypes.createArrayType(DataTypes.CreateStringType("utf8")), false, Metadata.empty())
     });
 
     Dataset<Row> wordDataFrame = spark.createDataFrame(data, schema);

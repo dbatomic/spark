@@ -40,7 +40,6 @@ import org.apache.spark.unsafe.types.UTF8String
 
 class CollectionExpressionsSuite
   extends SparkFunSuite with ExpressionEvalHelper with DataTypeErrorsBase {
-
   implicit def stringToUTF8Str(str: String): UTF8String = UTF8String.fromString(str)
 
   def testSize(sizeOfNull: Any): Unit = {

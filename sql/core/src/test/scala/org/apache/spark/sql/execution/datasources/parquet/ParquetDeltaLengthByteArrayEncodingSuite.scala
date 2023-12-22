@@ -26,7 +26,7 @@ import org.apache.parquet.io.api.Binary
 
 import org.apache.spark.sql.execution.vectorized.{OnHeapColumnVector, WritableColumnVector}
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{IntegerType, StringType}
+import org.apache.spark.sql.types.IntegerType
 
 /**
  * Read tests for vectorized Delta length byte array  reader.

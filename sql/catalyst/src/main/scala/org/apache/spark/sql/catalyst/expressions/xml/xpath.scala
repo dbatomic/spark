@@ -39,7 +39,7 @@ abstract class XPathExtract
   /** XPath expressions are always nullable, e.g. if the xml string is empty. */
   override def nullable: Boolean = true
 
-  override def inputTypes: Seq[AbstractDataType] = Seq(StringType, StringType)
+  override def inputTypes: Seq[AbstractDataType] = Seq(StringType(), StringType())
 
   override def checkInputDataTypes(): TypeCheckResult = {
     if (!path.foldable) {
@@ -47,7 +47,7 @@ abstract class XPathExtract
         errorSubClass = "NON_FOLDABLE_INPUT",
         messageParameters = Map(
           "inputName" -> toSQLId("path"),
-          "inputType" -> toSQLType(StringType),
+          "inputType" -> toSQLType(StringType()),
           "inputExpr" -> toSQLExpr(path)
         )
       )
@@ -221,7 +221,7 @@ case class XPathDouble(xml: Expression, path: Expression) extends XPathExtract {
 // scalastyle:on line.size.limit
 case class XPathString(xml: Expression, path: Expression) extends XPathExtract {
   override def prettyName: String = "xpath_string"
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
 
   override def nullSafeEval(xml: Any, path: Any): Any = {
     val ret = xpathUtil.evalString(xml.asInstanceOf[UTF8String].toString, pathString)
@@ -245,7 +245,7 @@ case class XPathString(xml: Expression, path: Expression) extends XPathExtract {
 // scalastyle:on line.size.limit
 case class XPathList(xml: Expression, path: Expression) extends XPathExtract {
   override def prettyName: String = "xpath"
-  override def dataType: DataType = ArrayType(StringType, containsNull = false)
+  override def dataType: DataType = ArrayType(StringType(), containsNull = false)
 
   override def nullSafeEval(xml: Any, path: Any): Any = {
     val nodeList = xpathUtil.evalNodeList(xml.asInstanceOf[UTF8String].toString, pathString)

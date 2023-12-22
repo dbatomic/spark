@@ -53,6 +53,7 @@ public class PrefixComparators {
 
   public static final class StringPrefixComparator {
     public static long computePrefix(UTF8String value) {
+      // TODO: Make this collation aware!
       return value == null ? 0L : value.getPrefix();
     }
   }

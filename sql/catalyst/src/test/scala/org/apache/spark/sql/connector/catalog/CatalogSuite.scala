@@ -30,11 +30,13 @@ import org.apache.spark.sql.catalyst.util.quoteIdentifier
 import org.apache.spark.sql.connector.catalog.functions.{BoundFunction, ScalarFunction, UnboundFunction}
 import org.apache.spark.sql.connector.expressions.{LogicalExpressions, Transform}
 import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.types.{DataType, DoubleType, IntegerType, LongType, StringType, StructField, StructType, TimestampType}
+import org.apache.spark.sql.types.{DataType, DoubleType, IntegerType, LongType, StructField, StructType, TimestampType}
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
 class CatalogSuite extends SparkFunSuite {
   import CatalogV2Implicits._
+  // hack to make things working -> always use utf8.
+  private val StringType = org.apache.spark.sql.types.StringType("utf8")
 
   private val emptyProps: util.Map[String, String] = Collections.emptyMap[String, String]
   private val emptyTrans: Array[Transform] = Array.empty

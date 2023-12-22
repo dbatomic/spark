@@ -408,8 +408,8 @@ class Analyzer(override val catalogManager: CatalogManager) extends RuleExecutor
           case (CalendarIntervalType, DateType) =>
             DateAddInterval(r, l, ansiEnabled = mode == EvalMode.ANSI)
           case (CalendarIntervalType | _: DayTimeIntervalType, _) => Cast(TimeAdd(r, l), r.dataType)
-          case (DateType, dt) if dt != StringType => DateAdd(l, r)
-          case (dt, DateType) if dt != StringType => DateAdd(r, l)
+          case (DateType, dt) if dt != StringType() => DateAdd(l, r)
+          case (dt, DateType) if dt != StringType() => DateAdd(r, l)
           case _ => a
         }
         case s @ Subtract(l, r, mode) if s.childrenResolved => (l.dataType, r.dataType) match {
@@ -435,7 +435,7 @@ class Analyzer(override val catalogManager: CatalogManager) extends RuleExecutor
           case _ if AnyTimestampTypeExpression.unapply(l) ||
             AnyTimestampTypeExpression.unapply(r) => SubtractTimestamps(l, r)
           case (_, DateType) => SubtractDates(l, r)
-          case (DateType, dt) if dt != StringType => DateSub(l, r)
+          case (DateType, dt) if dt != StringType() => DateSub(l, r)
           case _ => s
         }
         case m @ Multiply(l, r, mode) if m.childrenResolved => (l.dataType, r.dataType) match {
@@ -792,7 +792,7 @@ class Analyzer(override val catalogManager: CatalogManager) extends RuleExecutor
             case n: NamedExpression => n.name
             case _ =>
               val utf8Value =
-                Cast(value, StringType, Some(conf.sessionLocalTimeZone)).eval(EmptyRow)
+                Cast(value, StringType(), Some(conf.sessionLocalTimeZone)).eval(EmptyRow)
               Option(utf8Value).map(_.toString).getOrElse("null")
           }
           if (singleAgg) {
@@ -926,7 +926,7 @@ class Analyzer(override val catalogManager: CatalogManager) extends RuleExecutor
           }
 
         // construct output attributes
-        val variableAttr = AttributeReference(variableColumnName, StringType, nullable = false)()
+        val variableAttr = AttributeReference(variableColumnName, StringType(), nullable = false)()
         val valueAttrs = valueColumnNames.zipWithIndex.map {
           case (valueColumnName, idx) =>
             AttributeReference(
@@ -3722,7 +3722,7 @@ class Analyzer(override val catalogManager: CatalogManager) extends RuleExecutor
 
         case UpCast(child, target: AtomicType, _)
             if conf.getConf(SQLConf.LEGACY_LOOSE_UPCAST) &&
-              child.dataType == StringType =>
+              child.dataType == StringType() =>
           Cast(child, target.asNullable)
 
         case u @ UpCast(child, _, walkedTypePath) if !Cast.canUpCast(child.dataType, u.dataType) =>

@@ -30,6 +30,7 @@ import org.apache.spark.sql.catalyst.optimizer.ConvertToLocalRelation
 import org.apache.spark.sql.internal.{SQLConf, StaticSQLConf}
 
 trait SharedSparkSession extends SQLTestUtils with SharedSparkSessionBase {
+  // protected val StringType = org.apache.spark.sql.types.StringType()
 
   /**
    * Suites extending [[SharedSparkSession]] are sharing resources (e.g. SparkSession) in their

@@ -19,7 +19,7 @@ package org.apache.spark.sql.execution.datasources.json
 
 import org.apache.spark.sql.{QueryTest, Row}
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{StringType, StructType}
+import org.apache.spark.sql.types.StructType
 
 /**
  * Test cases for various [[org.apache.spark.sql.catalyst.json.JSONOptions]].

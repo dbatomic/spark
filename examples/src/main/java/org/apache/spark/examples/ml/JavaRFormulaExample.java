@@ -27,6 +27,7 @@ import org.apache.spark.ml.feature.RFormula;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
@@ -43,7 +44,7 @@ public class JavaRFormulaExample {
     // $example on$
     StructType schema = createStructType(new StructField[]{
       createStructField("id", IntegerType, false),
-      createStructField("country", StringType, false),
+      createStructField("country", DataTypes.CreateStringType("utf8"), false),
       createStructField("hour", IntegerType, false),
       createStructField("clicked", DoubleType, false)
     });

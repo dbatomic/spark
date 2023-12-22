@@ -24,6 +24,7 @@ import org.apache.spark.sql.types.StructType
 
 
 class CatalogSuite extends AnalysisTest {
+  override val StringType = org.apache.spark.sql.types.StringType()
 
   test("desc table when owner is set to null") {
     val table = CatalogTable(

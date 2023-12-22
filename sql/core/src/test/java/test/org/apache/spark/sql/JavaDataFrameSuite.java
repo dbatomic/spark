@@ -181,12 +181,12 @@ public class JavaDataFrameSuite {
       new StructField("b", new ArrayType(IntegerType$.MODULE$, true), true, Metadata.empty()),
       schema.apply("b"));
     ArrayType valueType = new ArrayType(DataTypes.IntegerType, false);
-    MapType mapType = new MapType(DataTypes.StringType, valueType, true);
+    MapType mapType = new MapType(DataTypes.CreateStringType("utf8"), valueType, true);
     Assertions.assertEquals(
       new StructField("c", mapType, true, Metadata.empty()),
       schema.apply("c"));
     Assertions.assertEquals(
-      new StructField("d", new ArrayType(DataTypes.StringType, true), true, Metadata.empty()),
+      new StructField("d", new ArrayType(DataTypes.CreateStringType("utf8"), true), true, Metadata.empty()),
       schema.apply("d"));
     Assertions.assertEquals(new StructField("e", DataTypes.createDecimalType(38,0), true,
       Metadata.empty()), schema.apply("e"));
@@ -251,12 +251,12 @@ public class JavaDataFrameSuite {
   @Test
   public void testCreateStructTypeFromList(){
     List<StructField> fields1 = new ArrayList<>();
-    fields1.add(new StructField("id", DataTypes.StringType, true, Metadata.empty()));
+    fields1.add(new StructField("id", DataTypes.CreateStringType("utf8"), true, Metadata.empty()));
     StructType schema1 = StructType$.MODULE$.apply(fields1);
     Assertions.assertEquals(0, schema1.fieldIndex("id"));
 
     List<StructField> fields2 =
-        Arrays.asList(new StructField("id", DataTypes.StringType, true, Metadata.empty()));
+        Arrays.asList(new StructField("id", DataTypes.CreateStringType("utf8"), true, Metadata.empty()));
     StructType schema2 = StructType$.MODULE$.apply(fields2);
     Assertions.assertEquals(0, schema2.fieldIndex("id"));
   }
@@ -532,7 +532,7 @@ public class JavaDataFrameSuite {
 
   @Test
   public void testUDF() {
-    UserDefinedFunction foo = udf((Integer i, String s) -> i.toString() + s, DataTypes.StringType);
+    UserDefinedFunction foo = udf((Integer i, String s) -> i.toString() + s, DataTypes.CreateStringType("utf8"));
     Dataset<Row> df = spark.table("testData").select(foo.apply(col("key"), col("value")));
     String[] result = df.collectAsList().stream().map(row -> row.getString(0))
       .toArray(String[]::new);

@@ -87,7 +87,7 @@ object SchemaConverters {
           }
           SchemaType(catalystType, nullable = false)
       }
-      case STRING => SchemaType(StringType, nullable = false)
+      case STRING => SchemaType(StringType(), nullable = false)
       case BOOLEAN => SchemaType(BooleanType, nullable = false)
       case BYTES | FIXED => avroSchema.getLogicalType match {
         // For FIXED type, if the precision requires more bytes than fixed size, the logical
@@ -114,7 +114,7 @@ object SchemaConverters {
           SchemaType(catalystType, nullable = false)
       }
 
-      case ENUM => SchemaType(StringType, nullable = false)
+      case ENUM => SchemaType(StringType(), nullable = false)
 
       case NULL => SchemaType(NullType, nullable = true)
 
@@ -146,7 +146,7 @@ object SchemaConverters {
         val schemaType = toSqlTypeHelper(avroSchema.getValueType,
           existingRecordNames, useStableIdForUnionType)
         SchemaType(
-          MapType(StringType, schemaType.dataType, valueContainsNull = schemaType.nullable),
+          MapType(StringType(), schemaType.dataType, valueContainsNull = schemaType.nullable),
           nullable = false)
 
       case UNION =>
@@ -234,7 +234,7 @@ object SchemaConverters {
 
       case FloatType => builder.floatType()
       case DoubleType => builder.doubleType()
-      case StringType => builder.stringType()
+      case StringType(_) => builder.stringType()
       case NullType => builder.nullType()
       case d: DecimalType =>
         val avroType = LogicalTypes.decimal(d.precision, d.scale)
@@ -250,7 +250,7 @@ object SchemaConverters {
       case ArrayType(et, containsNull) =>
         builder.array()
           .items(toAvroType(et, containsNull, recordName, nameSpace))
-      case MapType(StringType, vt, valueContainsNull) =>
+      case MapType(StringType(_), vt, valueContainsNull) =>
         builder.map()
           .values(toAvroType(vt, valueContainsNull, recordName, nameSpace))
       case st: StructType =>

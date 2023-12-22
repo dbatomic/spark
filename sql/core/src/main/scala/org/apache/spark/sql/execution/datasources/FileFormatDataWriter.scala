@@ -222,8 +222,8 @@ abstract class BaseDynamicPartitionDataWriter(
     description.partitionColumns.zipWithIndex.flatMap { case (c, i) =>
       val partitionName = ScalaUDF(
         ExternalCatalogUtils.getPartitionPathString _,
-        StringType,
-        Seq(Literal(c.name), Cast(c, StringType, Option(description.timeZoneId))))
+        StringType(),
+        Seq(Literal(c.name), Cast(c, StringType(), Option(description.timeZoneId))))
       if (i == 0) Seq(partitionName) else Seq(Literal(Path.SEPARATOR), partitionName)
     })
 

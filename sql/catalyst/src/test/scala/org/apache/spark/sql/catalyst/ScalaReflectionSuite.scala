@@ -231,7 +231,7 @@ class ScalaReflectionSuite extends SparkFunSuite {
         StructField("shortField", ShortType, nullable = true),
         StructField("byteField", ByteType, nullable = true),
         StructField("booleanField", BooleanType, nullable = true),
-        StructField("stringField", StringType, nullable = true),
+        StructField("stringField", StringType(), nullable = true),
         StructField("decimalField", DecimalType.SYSTEM_DEFAULT, nullable = true),
         StructField("dateField", DateType, nullable = true),
         StructField("timestampField", TimestampType, nullable = true),
@@ -348,7 +348,7 @@ class ScalaReflectionSuite extends SparkFunSuite {
     assert(schema === Schema(
       StructType(Seq(
         StructField("_1", IntegerType, nullable = false),
-        StructField("_2", StringType, nullable = true))),
+        StructField("_2", StringType(), nullable = true))),
       nullable = true))
   }
 
@@ -386,7 +386,7 @@ class ScalaReflectionSuite extends SparkFunSuite {
       case s: StructType =>
         // Schema should have order: a: Int, b: String, c: Double
         assert(s.fieldNames === Seq("a", "b", "c"))
-        assert(s.fields.map(_.dataType) === Seq(IntegerType, StringType, DoubleType))
+        assert(s.fields.map(_.dataType) === Seq(IntegerType, StringType(), DoubleType))
     }
   }
 
@@ -435,7 +435,7 @@ class ScalaReflectionSuite extends SparkFunSuite {
     import scala.collection.mutable.{LinkedHashMap => LHMap}
     val linkedHashMapSerializer = serializerFor[LHMap[Long, String]]
     assert(linkedHashMapSerializer.dataType ==
-      MapType(LongType, StringType, valueContainsNull = true))
+      MapType(LongType, StringType(), valueContainsNull = true))
     val linkedHashMapDeserializer = deserializerFor[LHMap[Long, String]]
     assert(linkedHashMapDeserializer.dataType == ObjectType(classOf[LHMap[_, _]]))
   }
@@ -505,15 +505,15 @@ class ScalaReflectionSuite extends SparkFunSuite {
 
   test("SPARK-27625: annotated data types") {
     assert(serializerFor[FooWithAnnotation].dataType == StructType(Seq(
-      StructField("f1", StringType),
-      StructField("f2", StringType))))
+      StructField("f1", StringType()),
+      StructField("f2", StringType()))))
     assert(deserializerFor[FooWithAnnotation].dataType == ObjectType(classOf[FooWithAnnotation]))
   }
 
   test("SPARK-32585: Support scala enumeration in ScalaReflection") {
     assert(serializerFor[FooClassWithEnum].dataType == StructType(Seq(
       StructField("i", IntegerType, false),
-      StructField("e", StringType, true))))
+      StructField("e", StringType(), true))))
     assert(deserializerFor[FooClassWithEnum].dataType == ObjectType(classOf[FooClassWithEnum]))
   }
 
@@ -530,8 +530,8 @@ class ScalaReflectionSuite extends SparkFunSuite {
         StructType(Seq(
           StructField("intField", IntegerType, nullable = false),
           StructField("wrappedInt", IntegerType, nullable = false),
-          StructField("strField", StringType),
-          StructField("wrappedStr", StringType)
+          StructField("strField", StringType()),
+          StructField("wrappedStr", StringType())
         )),
         nullable = true))
   }
@@ -550,7 +550,7 @@ class ScalaReflectionSuite extends SparkFunSuite {
       schema === Schema(
         MapType(
           StructType(Seq(StructField("i", IntegerType, false))),
-          StructType(Seq(StructField("s", StringType))),
+          StructType(Seq(StructField("s", StringType()))),
           valueContainsNull = true),
         nullable = true))
   }
@@ -562,7 +562,7 @@ class ScalaReflectionSuite extends SparkFunSuite {
         StructType(
           Seq(
             StructField("_1", StructType(Seq(StructField("i", IntegerType, false)))),
-            StructField("_2", StructType(Seq(StructField("s", StringType))))
+            StructField("_2", StructType(Seq(StructField("s", StringType()))))
           )
         ),
         nullable = true))
@@ -575,8 +575,8 @@ class ScalaReflectionSuite extends SparkFunSuite {
         StructType(
           Seq(
             StructField("_1", StructType(Seq(StructField("i", IntegerType, false)))),
-            StructField("_2", StructType(Seq(StructField("s", StringType)))),
-            StructField("_3", StructType(Seq(StructField("s", StringType))))
+            StructField("_2", StructType(Seq(StructField("s", StringType())))),
+            StructField("_3", StructType(Seq(StructField("s", StringType()))))
           )
         ),
         nullable = true))
@@ -591,8 +591,8 @@ class ScalaReflectionSuite extends SparkFunSuite {
             StructField("_1", StructType(Seq(StructField("i", IntegerType, false)))),
             StructField("_2", StructType(
               Seq(
-                StructField("_1", StructType(Seq(StructField("s", StringType)))),
-                StructField("_2", StructType(Seq(StructField("s", StringType)))))
+                StructField("_1", StructType(Seq(StructField("s", StringType())))),
+                StructField("_2", StructType(Seq(StructField("s", StringType())))))
               )
             )
           )

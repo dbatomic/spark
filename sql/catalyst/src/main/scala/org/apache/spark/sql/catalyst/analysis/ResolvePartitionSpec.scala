@@ -82,7 +82,7 @@ object ResolvePartitionSpec extends Rule[LogicalPlan] {
       val raw = partitionSpec.get(part.name).orNull
       val dt = CharVarcharUtils.replaceCharVarcharWithString(part.dataType)
       if (SQLConf.get.getConf(SQLConf.SKIP_TYPE_VALIDATION_ON_ALTER_PARTITION)) {
-        Cast(Literal.create(raw, StringType), dt, Some(conf.sessionLocalTimeZone)).eval()
+        Cast(Literal.create(raw, StringType()), dt, Some(conf.sessionLocalTimeZone)).eval()
       } else {
         castPartitionSpec(raw, dt, conf).eval()
       }

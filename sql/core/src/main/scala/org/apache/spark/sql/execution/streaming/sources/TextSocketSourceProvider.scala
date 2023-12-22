@@ -105,8 +105,8 @@ class TextSocketTable(host: String, port: Int, numPartitions: Int, includeTimest
 }
 
 object TextSocketReader {
-  val SCHEMA_REGULAR = StructType(Array(StructField("value", StringType)))
-  val SCHEMA_TIMESTAMP = StructType(Array(StructField("value", StringType),
+  val SCHEMA_REGULAR = StructType(Array(StructField("value", StringType())))
+  val SCHEMA_TIMESTAMP = StructType(Array(StructField("value", StringType()),
     StructField("timestamp", TimestampType)))
   val DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 }

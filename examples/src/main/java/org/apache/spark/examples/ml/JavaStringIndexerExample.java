@@ -27,6 +27,7 @@ import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
@@ -51,7 +52,7 @@ public class JavaStringIndexerExample {
     );
     StructType schema = new StructType(new StructField[]{
       createStructField("id", IntegerType, false),
-      createStructField("category", StringType, false)
+      createStructField("category", DataTypes.CreateStringType("utf8"), false)
     });
     Dataset<Row> df = spark.createDataFrame(data, schema);
 

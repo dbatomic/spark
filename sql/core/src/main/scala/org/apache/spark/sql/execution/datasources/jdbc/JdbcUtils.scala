@@ -146,7 +146,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
       case ShortType => Option(JdbcType("INTEGER", java.sql.Types.SMALLINT))
       case ByteType => Option(JdbcType("BYTE", java.sql.Types.TINYINT))
       case BooleanType => Option(JdbcType("BIT(1)", java.sql.Types.BIT))
-      case StringType => Option(JdbcType("TEXT", java.sql.Types.CLOB))
+      case StringType(_) => Option(JdbcType("TEXT", java.sql.Types.CLOB))
       case BinaryType => Option(JdbcType("BLOB", java.sql.Types.BLOB))
       case CharType(n) => Option(JdbcType(s"CHAR($n)", java.sql.Types.CHAR))
       case VarcharType(n) => Option(JdbcType(s"VARCHAR($n)", java.sql.Types.VARCHAR))
@@ -187,7 +187,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
     case java.sql.Types.BLOB => BinaryType
     case java.sql.Types.BOOLEAN => BooleanType
     case java.sql.Types.CHAR => CharType(precision)
-    case java.sql.Types.CLOB => StringType
+    case java.sql.Types.CLOB => StringType()
     case java.sql.Types.DATE => DateType
     case java.sql.Types.DECIMAL if precision != 0 || scale != 0 =>
       DecimalType.bounded(precision, scale)
@@ -195,21 +195,22 @@ object JdbcUtils extends Logging with SQLConfHelper {
     case java.sql.Types.DOUBLE => DoubleType
     case java.sql.Types.FLOAT => FloatType
     case java.sql.Types.INTEGER => if (signed) IntegerType else LongType
-    case java.sql.Types.LONGNVARCHAR => StringType
+    case java.sql.Types.LONGNVARCHAR => StringType()
     case java.sql.Types.LONGVARBINARY => BinaryType
-    case java.sql.Types.LONGVARCHAR => StringType
-    case java.sql.Types.NCHAR => StringType
-    case java.sql.Types.NCLOB => StringType
+    case java.sql.Types.LONGVARCHAR => StringType()
+    case java.sql.Types.NCHAR => StringType()
+
+    case java.sql.Types.NCLOB => StringType()
     case java.sql.Types.NUMERIC if precision != 0 || scale != 0 =>
       DecimalType.bounded(precision, scale)
     case java.sql.Types.NUMERIC => DecimalType.SYSTEM_DEFAULT
-    case java.sql.Types.NVARCHAR => StringType
+    case java.sql.Types.NVARCHAR => StringType()
     case java.sql.Types.REAL => DoubleType
-    case java.sql.Types.REF => StringType
-    case java.sql.Types.ROWID => StringType
+    case java.sql.Types.REF => StringType()
+    case java.sql.Types.ROWID => StringType()
     case java.sql.Types.SMALLINT => IntegerType
-    case java.sql.Types.SQLXML => StringType
-    case java.sql.Types.STRUCT => StringType
+    case java.sql.Types.SQLXML => StringType()
+    case java.sql.Types.STRUCT => StringType()
     case java.sql.Types.TIME => TimestampType
     case java.sql.Types.TIMESTAMP if isTimestampNTZ => TimestampNTZType
     case java.sql.Types.TIMESTAMP => TimestampType
@@ -451,7 +452,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
       (rs: ResultSet, row: InternalRow, pos: Int) =>
         row.setByte(pos, rs.getByte(pos + 1))
 
-    case StringType if metadata.contains("rowid") =>
+    case StringType(_) if metadata.contains("rowid") =>
       (rs: ResultSet, row: InternalRow, pos: Int) =>
         val rawRowId = rs.getRowId(pos + 1)
         if (rawRowId == null) {
@@ -460,7 +461,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
           row.update(pos, UTF8String.fromString(rawRowId.toString))
         }
 
-    case StringType =>
+    case StringType(_) =>
       (rs: ResultSet, row: InternalRow, pos: Int) =>
         // TODO(davies): use getBytes for better performance, if the encoding is UTF-8
         row.update(pos, UTF8String.fromString(rs.getString(pos + 1)))
@@ -516,7 +517,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
               nullSafeConvert(timestamp, DateTimeUtils.fromJavaTimestamp)
             }
 
-        case StringType =>
+        case StringType(_) =>
           (array: Object) =>
             // some underling types are not String such as uuid, inet, cidr, etc.
             array.asInstanceOf[Array[java.lang.Object]]
@@ -598,7 +599,7 @@ object JdbcUtils extends Logging with SQLConfHelper {
       (stmt: PreparedStatement, row: Row, pos: Int) =>
         stmt.setBoolean(pos + 1, row.getBoolean(pos))
 
-    case StringType =>
+    case StringType(_) =>
       (stmt: PreparedStatement, row: Row, pos: Int) =>
         stmt.setString(pos + 1, row.getString(pos))
 

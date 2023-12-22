@@ -91,7 +91,7 @@ object EncoderUtils {
     case _: DayTimeIntervalType => classOf[java.lang.Long]
     case _: YearMonthIntervalType => classOf[java.lang.Integer]
     case BinaryType => classOf[Array[Byte]]
-    case StringType => classOf[UTF8String]
+    case StringType(_) => classOf[UTF8String] // TODO: is everything going to be UTF8?
     case CalendarIntervalType => classOf[CalendarInterval]
     case _: StructType => classOf[InternalRow]
     case _: ArrayType => classOf[ArrayData]
@@ -117,7 +117,7 @@ object EncoderUtils {
     LongType -> classOf[Long],
     FloatType -> classOf[Float],
     DoubleType -> classOf[Double],
-    StringType -> classOf[UTF8String],
+    StringType() -> classOf[UTF8String],
     DateType -> classOf[PhysicalIntegerType.InternalType],
     TimestampType -> classOf[PhysicalLongType.InternalType],
     TimestampNTZType -> classOf[PhysicalLongType.InternalType],

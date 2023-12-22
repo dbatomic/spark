@@ -36,7 +36,7 @@ import org.apache.spark.unsafe.types._
 // scalastyle:on line.size.limit
 case class ParseJson(child: Expression) extends UnaryExpression
   with NullIntolerant with ExpectsInputTypes with CodegenFallback {
-  override def inputTypes: Seq[AbstractDataType] = StringType :: Nil
+  override def inputTypes: Seq[AbstractDataType] = StringType() :: Nil
 
   override def dataType: DataType = VariantType
 

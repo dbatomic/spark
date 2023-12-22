@@ -122,8 +122,8 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     new SparkRuntimeException(
       errorClass = "CAST_INVALID_INPUT",
       messageParameters = Map(
-        "expression" -> toSQLValue(s, StringType),
-        "sourceType" -> toSQLType(StringType),
+        "expression" -> toSQLValue(s, StringType()),
+        "sourceType" -> toSQLType(StringType()),
         "targetType" -> toSQLType(BooleanType),
         "ansiConfig" -> toSQLConf(SQLConf.ANSI_ENABLED.key)),
       context = getQueryContext(context),
@@ -137,8 +137,8 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     new SparkNumberFormatException(
       errorClass = "CAST_INVALID_INPUT",
       messageParameters = Map(
-        "expression" -> toSQLValue(s, StringType),
-        "sourceType" -> toSQLType(StringType),
+        "expression" -> toSQLValue(s, StringType()),
+        "sourceType" -> toSQLType(StringType()),
         "targetType" -> toSQLType(to),
         "ansiConfig" -> toSQLConf(SQLConf.ANSI_ENABLED.key)),
       context = getQueryContext(context),
@@ -153,8 +153,8 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       new SparkIllegalArgumentException(
         errorClass = "CONVERSION_INVALID_INPUT",
         messageParameters = Map(
-          "str" -> toSQLValue(s, StringType),
-          "fmt" -> toSQLValue(fmt, StringType),
+          "str" -> toSQLValue(s, StringType()),
+          "fmt" -> toSQLValue(fmt, StringType()),
           "targetType" -> toSQLType(to),
           "suggestion" -> toSQLId(hint)))
   }
@@ -772,7 +772,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     val errorSubClass = if (pathExists) "EXISTENT_PATH" else "NON_EXISTENT_PATH"
     new SparkIllegalArgumentException(
       errorClass = s"UNSUPPORTED_SAVE_MODE.$errorSubClass",
-      messageParameters = Map("saveMode" -> toSQLValue(saveMode, StringType)))
+      messageParameters = Map("saveMode" -> toSQLValue(saveMode, StringType())))
   }
 
   def cannotClearOutputDirectoryError(staticPrefixPath: Path): Throwable = {
@@ -1263,8 +1263,8 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
         "badRecord" -> recordStr,
         "failFastMode" -> FailFastMode.name,
         "fieldName" -> toSQLId(fieldName),
-        "fieldValue" -> toSQLValue(fieldValue, StringType),
-        "inputType" -> StringType.toString,
+        "fieldValue" -> toSQLValue(fieldValue, StringType()),
+        "inputType" -> StringType().toString,
         "targetType" -> dataType.toString))
   }
 
@@ -1287,7 +1287,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     new SparkRuntimeException(
       errorClass = "CANNOT_PARSE_JSON_FIELD",
       messageParameters = Map(
-        "fieldName" -> toSQLValue(fieldName, StringType),
+        "fieldName" -> toSQLValue(fieldName, StringType()),
         "fieldValue" -> fieldValue,
         "jsonType" -> jsonType.toString(),
         "dataType" -> toSQLType(dataType)))
@@ -1582,7 +1582,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     new SparkException(
       errorClass = "_LEGACY_ERROR_TEMP_2183",
       messageParameters = Map(
-        "key" -> toSQLValue(key, StringType)),
+        "key" -> toSQLValue(key, StringType())),
       cause = null)
   }
 
@@ -2557,7 +2557,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
       messageParameters = Map(
         "parameter" -> toSQLId("regexp"),
         "functionName" -> toSQLId(funcName),
-        "value" -> toSQLValue(pattern, StringType)),
+        "value" -> toSQLValue(pattern, StringType())),
       cause = cause)
   }
 
@@ -2590,7 +2590,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     new SparkRuntimeException(
       errorClass = "LOCATION_ALREADY_EXISTS",
       messageParameters = Map(
-        "location" -> toSQLValue(location.toString, StringType),
+        "location" -> toSQLValue(location.toString, StringType()),
         "identifier" -> toSQLId(tableId.nameParts)))
   }
 
@@ -2717,7 +2717,7 @@ private[sql] object QueryExecutionErrors extends QueryErrorsBase with ExecutionE
     }
     val errorParmsMap = if (errorParms != null) {
       val errorParmsMutable = collection.mutable.Map[String, String]()
-      errorParms.foreach(StringType, StringType, { case (key, value) =>
+      errorParms.foreach(StringType(), StringType(), { case (key, value) =>
         errorParmsMutable += (key.toString ->
           (if (value == null) { "null" } else { value.toString } ))
       })

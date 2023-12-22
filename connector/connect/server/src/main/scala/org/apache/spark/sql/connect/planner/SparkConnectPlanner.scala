@@ -267,7 +267,7 @@ class SparkConnectPlanner(
       .ofRows(session, transformRelation(rel.getInput))
       .showString(rel.getNumRows, rel.getTruncate, rel.getVertical)
     LocalRelation.fromProduct(
-      output = AttributeReference("show_string", StringType, false)() :: Nil,
+      output = AttributeReference("show_string", StringType(), false)() :: Nil,
       data = Tuple1.apply(showString) :: Nil)
   }
 
@@ -276,7 +276,7 @@ class SparkConnectPlanner(
       .ofRows(session, transformRelation(rel.getInput))
       .htmlString(rel.getNumRows, rel.getTruncate)
     LocalRelation.fromProduct(
-      output = AttributeReference("html_string", StringType, false)() :: Nil,
+      output = AttributeReference("html_string", StringType(), false)() :: Nil,
       data = Tuple1.apply(htmlString) :: Nil)
   }
 
@@ -500,7 +500,7 @@ class SparkConnectPlanner(
   private def transformStatSampleBy(rel: proto.StatSampleBy): LogicalPlan = {
     val fractions = rel.getFractionsList.asScala.map { protoFraction =>
       val stratum = transformLiteral(protoFraction.getStratum) match {
-        case Literal(s, StringType) if s != null => s.toString
+        case Literal(s, StringType(_)) if s != null => s.toString
         case literal => literal.value
       }
       (stratum, protoFraction.getFraction)
@@ -1714,7 +1714,7 @@ class SparkConnectPlanner(
         children: collection.Seq[Expression])
         : (String, Option[Array[Byte]], Map[String, String]) = {
       val messageClassName = children(1) match {
-        case Literal(s, StringType) if s != null => s.toString
+        case Literal(s, StringType(_)) if s != null => s.toString
         case other =>
           throw InvalidPlanInput(
             s"MessageClassName in $functionName should be a literal string, but got $other")
@@ -1850,7 +1850,7 @@ class SparkConnectPlanner(
         val children = fun.getArgumentsList.asScala.map(transformExpression)
         val timeCol = children.head
         val sessionWindow = children.last match {
-          case Literal(s, StringType) if s != null => SessionWindow(timeCol, s.toString)
+          case Literal(s, StringType(_)) if s != null => SessionWindow(timeCol, s.toString)
           case other => SessionWindow(timeCol, other)
         }
         Some(
@@ -1887,7 +1887,7 @@ class SparkConnectPlanner(
 
         var schema: DataType = null
         children(1) match {
-          case Literal(s, StringType) if s != null =>
+          case Literal(s, StringType(_)) if s != null =>
             try {
               schema = DataType.fromJson(s.toString)
             } catch {
@@ -2068,7 +2068,7 @@ class SparkConnectPlanner(
   }
 
   private def extractString(expr: Expression, field: String): String = expr match {
-    case Literal(s, StringType) if s != null => s.toString
+    case Literal(s, StringType(_)) if s != null => s.toString
     case other => throw InvalidPlanInput(s"$field should be a literal string, but got $other")
   }
 
@@ -3346,7 +3346,7 @@ class SparkConnectPlanner(
   }
 
   private val emptyLocalRelation = LocalRelation(
-    output = AttributeReference("value", StringType, false)() :: Nil,
+    output = AttributeReference("value", StringType(), false)() :: Nil,
     data = Seq.empty)
 
   private def transformCurrentDatabase(): LogicalPlan = {

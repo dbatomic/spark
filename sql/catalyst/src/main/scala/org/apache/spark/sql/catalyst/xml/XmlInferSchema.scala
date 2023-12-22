@@ -121,7 +121,7 @@ class XmlInferSchema(options: XmlOptions, caseSensitive: Boolean)
       Some(inferObject(parser, rootAttributes))
     } catch {
       case NonFatal(_) if options.parseMode == PermissiveMode =>
-        Some(StructType(Seq(StructField(options.columnNameOfCorruptRecord, StringType))))
+        Some(StructType(Seq(StructField(options.columnNameOfCorruptRecord, StringType()))))
       case NonFatal(_) =>
         None
     }
@@ -145,10 +145,10 @@ class XmlInferSchema(options: XmlOptions, caseSensitive: Boolean)
         case v if isBoolean(v) => BooleanType
         case v if isDate(v) => DateType
         case v if isTimestamp(v) => TimestampType
-        case _ => StringType
+        case _ => StringType()
       }
     } else {
-      StringType
+      StringType()
     }
   }
 
@@ -166,7 +166,7 @@ class XmlInferSchema(options: XmlOptions, caseSensitive: Boolean)
           case _: StartElement => inferObject(parser)
           case _: EndElement if data.isEmpty => NullType
           case _: EndElement if options.nullValue == "" => NullType
-          case _: EndElement => StringType
+          case _: EndElement => StringType()
           case _ => inferField(parser)
         }
       case c: Characters if !c.isWhiteSpace =>
@@ -420,7 +420,7 @@ class XmlInferSchema(options: XmlOptions, caseSensitive: Boolean)
         None
       }
 
-    case NullType => Some(StringType)
+    case NullType => Some(StringType())
     case other => Some(other)
   }
 
@@ -499,7 +499,7 @@ class XmlInferSchema(options: XmlOptions, caseSensitive: Boolean)
         case (_, NullType) => t1
         case (NullType, _) => t2
         // strings and every string is a XML object.
-        case (_, _) => StringType
+        case (_, _) => StringType()
       }
     }
   }

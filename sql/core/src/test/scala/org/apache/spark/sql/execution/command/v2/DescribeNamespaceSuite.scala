@@ -20,7 +20,7 @@ package org.apache.spark.sql.execution.command.v2
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.connector.catalog.SupportsNamespaces
 import org.apache.spark.sql.execution.command
-import org.apache.spark.sql.types.{BooleanType, MetadataBuilder, StringType, StructType}
+import org.apache.spark.sql.types.{BooleanType, MetadataBuilder, StructType}
 import org.apache.spark.util.Utils
 
 /**

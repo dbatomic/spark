@@ -46,7 +46,7 @@ class DummyFileTable(
 
   override def newWriteBuilder(info: LogicalWriteInfo): WriteBuilder = null
 
-  override def supportsDataType(dataType: DataType): Boolean = dataType == StringType
+  override def supportsDataType(dataType: DataType): Boolean = dataType == StringType()
 
   override def fallbackFileFormat: Class[_ <: FileFormat] = classOf[TextFileFormat]
 }

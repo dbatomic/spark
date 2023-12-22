@@ -27,12 +27,12 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.Cross
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules.RuleExecutor
-import org.apache.spark.sql.types.{ArrayType, IntegerType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{ArrayType, IntegerType, StructField, StructType}
 
 class NestedColumnAliasingSuite extends SchemaPruningTest {
 
   import NestedColumnAliasingSuite._
-
+  // hack to make things working -> always use utf8.
   object Optimize extends RuleExecutor[LogicalPlan] {
     val batches = Batch("Nested column pruning", FixedPoint(100),
       ColumnPruning,

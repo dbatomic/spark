@@ -137,7 +137,7 @@ private[sql] class AvroSerializer(
           decimalConversions.toBytes(decimal.toJavaBigDecimal, avroType,
             LogicalTypes.decimal(d.precision, d.scale))
 
-      case (StringType, ENUM) =>
+      case (StringType(_), ENUM) =>
         val enumSymbols: Set[String] = avroType.getEnumSymbols.asScala.toSet
         (getter, ordinal) =>
           val data = getter.getUTF8String(ordinal).toString
@@ -148,7 +148,7 @@ private[sql] class AvroSerializer(
           }
           new EnumSymbol(avroType, data)
 
-      case (StringType, STRING) =>
+      case (StringType(_), STRING) =>
         (getter, ordinal) => new Utf8(getter.getUTF8String(ordinal).getBytes)
 
       case (BinaryType, FIXED) =>
@@ -229,7 +229,7 @@ private[sql] class AvroSerializer(
       case (LongType, UNION) if nonNullUnionTypes(avroType) == Set(INT, LONG) =>
         (getter, ordinal) => getter.getLong(ordinal)
 
-      case (MapType(kt, vt, valueContainsNull), MAP) if kt == StringType =>
+      case (MapType(kt, vt, valueContainsNull), MAP) if kt == StringType() =>
         val valueConverter = newConverter(
           vt, resolveNullableType(avroType.getValueType, valueContainsNull),
           catalystPath :+ "value", avroPath :+ "value")

@@ -103,7 +103,7 @@ private object MsSqlServerDialect extends JdbcDialect {
       sqlType: Int, typeName: String, size: Int, md: MetadataBuilder): Option[DataType] = {
     if (typeName.contains("datetimeoffset")) {
       // String is recommend by Microsoft SQL Server for datetimeoffset types in non-MS clients
-      Option(StringType)
+      Option(StringType())
     } else {
       if (SQLConf.get.legacyMsSqlServerNumericMappingEnabled) {
         None
@@ -123,7 +123,7 @@ private object MsSqlServerDialect extends JdbcDialect {
   override def getJDBCType(dt: DataType): Option[JdbcType] = dt match {
     case TimestampType => Some(JdbcType("DATETIME", java.sql.Types.TIMESTAMP))
     case TimestampNTZType => Some(JdbcType("DATETIME", java.sql.Types.TIMESTAMP))
-    case StringType => Some(JdbcType("NVARCHAR(MAX)", java.sql.Types.NVARCHAR))
+    case StringType(_) => Some(JdbcType("NVARCHAR(MAX)", java.sql.Types.NVARCHAR))
     case BooleanType => Some(JdbcType("BIT", java.sql.Types.BIT))
     case BinaryType => Some(JdbcType("VARBINARY(MAX)", java.sql.Types.VARBINARY))
     case ShortType if !SQLConf.get.legacyMsSqlServerNumericMappingEnabled =>

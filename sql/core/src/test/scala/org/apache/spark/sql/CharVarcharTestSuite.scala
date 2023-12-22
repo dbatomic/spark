@@ -33,7 +33,6 @@ import org.apache.spark.sql.types._
 
 // The base trait for char/varchar tests that need to be run with different table implementations.
 trait CharVarcharTestSuite extends QueryTest with SQLTestUtils {
-
   def format: String
 
   def checkColType(f: StructField, dt: DataType): Unit = {

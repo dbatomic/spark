@@ -153,7 +153,7 @@ object BinaryFileFormat {
    *  - content (BinaryType): The content of the file.
    */
   val schema = StructType(Array(
-    StructField(PATH, StringType, false),
+    StructField(PATH, StringType(), false),
     StructField(MODIFICATION_TIME, TimestampType, false),
     StructField(LENGTH, LongType, false),
     StructField(CONTENT, BinaryType, true)))

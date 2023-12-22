@@ -107,7 +107,7 @@ object EstimationUtils {
     8 + attributes.map { attr =>
       if (attrStats.get(attr).map(_.avgLen.isDefined).getOrElse(false)) {
         attr.dataType match {
-          case StringType =>
+          case StringType(_) =>
             // UTF8String: base + offset + numBytes
             attrStats(attr).avgLen.get + 8 + 4
           case _ =>

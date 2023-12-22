@@ -97,7 +97,7 @@ private[sql] class ProtobufSerializer(
         (getter, ordinal) => getter.getFloat(ordinal)
       case (DoubleType, DOUBLE) =>
         (getter, ordinal) => getter.getDouble(ordinal)
-      case (StringType, ENUM) =>
+      case (StringType(_), ENUM) =>
         val enumSymbols: Set[String] =
           fieldDescriptor.getEnumType.getValues.asScala.map(e => e.toString).toSet
         (getter, ordinal) =>
@@ -123,7 +123,7 @@ private[sql] class ProtobufSerializer(
               enumValues.mkString(", "))
           }
           fieldDescriptor.getEnumType.findValueByNumber(data)
-      case (StringType, STRING) =>
+      case (StringType(_), STRING) =>
         (getter, ordinal) => {
           String.valueOf(getter.getUTF8String(ordinal))
         }

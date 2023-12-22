@@ -39,9 +39,9 @@ import org.apache.spark.sql.streaming.GroupState;
 import org.apache.spark.sql.streaming.GroupStateTimeout;
 import org.apache.spark.sql.streaming.OutputMode;
 import org.apache.spark.sql.streaming.StreamingQuery;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 
-import static org.apache.spark.sql.types.DataTypes.StringType;
 import static org.apache.spark.sql.types.DataTypes.TimestampType;
 import static org.apache.spark.sql.functions.*;
 
@@ -132,8 +132,8 @@ public final class JavaStructuredComplexSessionization {
         .load();
 
     StructType jsonSchema = new StructType()
-        .add("user_id", StringType)
-        .add("event_type", StringType)
+        .add("user_id", DataTypes.CreateStringType("utf8"))
+        .add("event_type", DataTypes.CreateStringType("utf8"))
         .add("timestamp", TimestampType);
 
     long gapDuration = 5 * 1000; // 5 seconds

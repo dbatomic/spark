@@ -254,8 +254,8 @@ object FileFormat {
    * metadata fields for every file format must be *not* nullable.
    */
   val BASE_METADATA_FIELDS: Seq[StructField] = Seq(
-    FileSourceConstantMetadataStructField(FILE_PATH, StringType, nullable = false),
-    FileSourceConstantMetadataStructField(FILE_NAME, StringType, nullable = false),
+    FileSourceConstantMetadataStructField(FILE_PATH, StringType(), nullable = false),
+    FileSourceConstantMetadataStructField(FILE_NAME, StringType(), nullable = false),
     FileSourceConstantMetadataStructField(FILE_SIZE, LongType, nullable = false),
     FileSourceConstantMetadataStructField(FILE_BLOCK_START, LongType, nullable = false),
     FileSourceConstantMetadataStructField(FILE_BLOCK_LENGTH, LongType, nullable = false),

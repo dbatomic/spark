@@ -619,7 +619,7 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
         } else {
           // TODO For v2 commands, we will cast the string back to its actual value,
           //  which is a waste and can be improved in the future.
-          Cast(l, StringType, Some(conf.sessionLocalTimeZone)).eval().toString
+          Cast(l, StringType(), Some(conf.sessionLocalTimeZone)).eval().toString
         }
       case other =>
         throw new IllegalArgumentException(s"Only literals are allowed in the " +
@@ -792,12 +792,12 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
     } else if (transformClause.identifierSeq != null) {
       // Untyped return columns.
       val attrs = visitIdentifierSeq(transformClause.identifierSeq).map { name =>
-        AttributeReference(name, StringType, nullable = true)()
+        AttributeReference(name, StringType(), nullable = true)()
       }
       (attrs, false)
     } else {
-      (Seq(AttributeReference("key", StringType)(),
-        AttributeReference("value", StringType)()), true)
+      (Seq(AttributeReference("key", StringType())(),
+        AttributeReference("value", StringType())()), true)
     }
 
     val plan = visitCommonSelectQueryClausePlan(
@@ -1988,7 +1988,7 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
           case Some(SqlBaseParser.ANY) | Some(SqlBaseParser.SOME) =>
             validate(!ctx.expression.isEmpty, "Expected something between '(' and ')'.", ctx)
             val expressions = expressionList(ctx.expression)
-            if (expressions.forall(_.foldable) && expressions.forall(_.dataType == StringType)) {
+            if (expressions.forall(_.foldable) && expressions.forall(_.dataType == StringType())) {
               // If there are many pattern expressions, will throw StackOverflowError.
               // So we use LikeAny or NotLikeAny instead.
               val patterns = expressions.map(_.eval(EmptyRow).asInstanceOf[UTF8String])
@@ -2004,7 +2004,7 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
           case Some(SqlBaseParser.ALL) =>
             validate(!ctx.expression.isEmpty, "Expected something between '(' and ')'.", ctx)
             val expressions = expressionList(ctx.expression)
-            if (expressions.forall(_.foldable) && expressions.forall(_.dataType == StringType)) {
+            if (expressions.forall(_.foldable) && expressions.forall(_.dataType == StringType())) {
               // If there are many pattern expressions, will throw StackOverflowError.
               // So we use LikeAll or NotLikeAll instead.
               val patterns = expressions.map(_.eval(EmptyRow).asInstanceOf[UTF8String])

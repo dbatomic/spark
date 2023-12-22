@@ -62,7 +62,7 @@ class ArrowWriterSuite extends SparkFunSuite {
             case FloatType => reader.getFloat(rowId)
             case DoubleType => reader.getDouble(rowId)
             case DecimalType.Fixed(precision, scale) => reader.getDecimal(rowId, precision, scale)
-            case StringType => reader.getUTF8String(rowId)
+            case StringType(_) => reader.getUTF8String(rowId)
             case BinaryType => reader.getBinary(rowId)
             case DateType => reader.getInt(rowId)
             case TimestampType => reader.getLong(rowId)
@@ -84,8 +84,8 @@ class ArrowWriterSuite extends SparkFunSuite {
     check(FloatType, Seq(1.0f, 2.0f, null, 4.0f))
     check(DoubleType, Seq(1.0d, 2.0d, null, 4.0d))
     check(DecimalType.SYSTEM_DEFAULT, Seq(Decimal(1), Decimal(2), null, Decimal(4)))
-    check(StringType, Seq("a", "b", null, "d").map(UTF8String.fromString))
-    check(StringType, Seq("a", "b", null, "d").map(UTF8String.fromString), null, true)
+    check(StringType(), Seq("a", "b", null, "d").map(UTF8String.fromString))
+    check(StringType(), Seq("a", "b", null, "d").map(UTF8String.fromString), null, true)
     check(BinaryType, Seq("a".getBytes(), "b".getBytes(), null, "d".getBytes()))
     check(BinaryType, Seq("a".getBytes(), "b".getBytes(), null, "d".getBytes()), null, true)
     check(DateType, Seq(0, 1, 2, null, 4))
@@ -354,7 +354,7 @@ class ArrowWriterSuite extends SparkFunSuite {
 
   test("struct") {
     val schema = new StructType()
-      .add("struct", new StructType().add("i", IntegerType).add("str", StringType))
+      .add("struct", new StructType().add("i", IntegerType).add("str", StringType()))
     val writer = ArrowWriter.create(schema, null)
     assert(writer.schema === schema)
 
@@ -390,7 +390,8 @@ class ArrowWriterSuite extends SparkFunSuite {
 
   test("nested struct") {
     val schema = new StructType().add("struct",
-      new StructType().add("nested", new StructType().add("i", IntegerType).add("str", StringType)))
+      new StructType().add("nested", new StructType()
+        .add("i", IntegerType).add("str", StringType())))
     val writer = ArrowWriter.create(schema, null)
     assert(writer.schema === schema)
 
@@ -446,7 +447,7 @@ class ArrowWriterSuite extends SparkFunSuite {
 
   test("map") {
     val schema = new StructType()
-      .add("map", MapType(IntegerType, StringType), nullable = true)
+      .add("map", MapType(IntegerType, StringType()), nullable = true)
     val writer = ArrowWriter.create(schema, null)
     assert(writer.schema == schema)
 
@@ -489,7 +490,7 @@ class ArrowWriterSuite extends SparkFunSuite {
 
   test("empty map") {
     val schema = new StructType()
-      .add("map", MapType(IntegerType, StringType), nullable = true)
+      .add("map", MapType(IntegerType, StringType()), nullable = true)
     val writer = ArrowWriter.create(schema, null)
     assert(writer.schema == schema)
     writer.write(InternalRow(ArrayBasedMapData(Array(), Array())))
@@ -535,7 +536,7 @@ class ArrowWriterSuite extends SparkFunSuite {
 
   test("nested map") {
     val valueSchema = new StructType()
-      .add("name", StringType)
+      .add("name", StringType())
       .add("age", IntegerType)
 
     val schema = new StructType()

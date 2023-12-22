@@ -96,7 +96,7 @@ object DataTypeTestUtils {
     TimestampType,
     TimestampNTZType,
     DateType,
-    StringType,
+    StringType(),
     BinaryType) ++ dayTimeIntervalTypes ++ yearMonthIntervalTypes
 
   /**
@@ -111,7 +111,7 @@ object DataTypeTestUtils {
     BinaryType,
     BooleanType,
     DateType,
-    StringType,
+    StringType(),
     TimestampType,
     TimestampNTZType) ++ dayTimeIntervalTypes ++ yearMonthIntervalTypes
 

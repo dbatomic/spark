@@ -162,7 +162,7 @@ object AgnosticEncoders {
   // Enums are special leafs because we need to capture the class.
   protected abstract class EnumEncoder[E] extends AgnosticEncoder[E] {
     override def isPrimitive: Boolean = false
-    override def dataType: DataType = StringType
+    override def dataType: DataType = StringType()
   }
   case class ScalaEnumEncoder[T, E](
      parent: Class[T],
@@ -209,7 +209,7 @@ object AgnosticEncoders {
 
   // Nullable leaf encoders
   case object NullEncoder extends LeafEncoder[java.lang.Void](NullType)
-  case object StringEncoder extends LeafEncoder[String](StringType)
+  case object StringEncoder extends LeafEncoder[String](StringType())
   case object BinaryEncoder extends LeafEncoder[Array[Byte]](BinaryType)
   case object ScalaBigIntEncoder extends LeafEncoder[BigInt](DecimalType.BigIntDecimal)
   case object JavaBigIntEncoder extends LeafEncoder[JBigInt](DecimalType.BigIntDecimal)

@@ -65,12 +65,12 @@ class NGram @Since("1.5.0") (@Since("1.5.0") override val uid: String)
   }
 
   override protected def validateInputType(inputType: DataType): Unit = {
-    require(DataTypeUtils.sameType(inputType, ArrayType(StringType)),
-      s"Input type must be ${ArrayType(StringType).catalogString} but got " +
+    require(DataTypeUtils.sameType(inputType, ArrayType(StringType())),
+      s"Input type must be ${ArrayType(StringType()).catalogString} but got " +
         inputType.catalogString)
   }
 
-  override protected def outputDataType: DataType = new ArrayType(StringType, false)
+  override protected def outputDataType: DataType = new ArrayType(StringType(), false)
 
   @Since("3.0.0")
   override def toString: String = {

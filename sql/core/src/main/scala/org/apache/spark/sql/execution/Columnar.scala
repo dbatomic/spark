@@ -265,7 +265,8 @@ private object RowToColumnConverter {
       case FloatType => FloatConverter
       case LongType | TimestampType | TimestampNTZType | _: DayTimeIntervalType => LongConverter
       case DoubleType => DoubleConverter
-      case StringType => StringConverter
+      // TODO: Collation support here.
+      case StringType(_) => StringConverter
       case CalendarIntervalType => CalendarConverter
       case VariantType => VariantConverter
       case at: ArrayType => ArrayConverter(getConverterForType(at.elementType, at.containsNull))

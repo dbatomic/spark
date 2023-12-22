@@ -124,7 +124,7 @@ private[ml] case class ParsedRFormula(label: ColumnRef, terms: Seq[Term]) {
   // the dot operator excludes complex column types
   private def expandDot(schema: StructType): Seq[String] = {
     schema.fields.filter(_.dataType match {
-      case _: NumericType | StringType | BooleanType | _: VectorUDT => true
+      case _: NumericType | StringType(_) | BooleanType | _: VectorUDT => true
       case _ => false
     }).map(_.name).filter(_ != label.value).toImmutableArraySeq
   }

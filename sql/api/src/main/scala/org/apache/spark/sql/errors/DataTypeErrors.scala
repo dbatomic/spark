@@ -228,7 +228,7 @@ private[sql] object DataTypeErrors extends DataTypeErrorsBase {
       errorClass = "CAST_INVALID_INPUT",
       messageParameters = Map(
         "expression" -> convertedValueStr,
-        "sourceType" -> toSQLType(StringType),
+        "sourceType" -> toSQLType(StringType()),
         "targetType" -> toSQLType(to),
         "ansiConfig" -> toSQLConf("spark.sql.ansi.enabled")),
       context = getQueryContext(context),

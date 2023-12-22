@@ -176,7 +176,7 @@ private[hive] class SparkGetColumnsOperation(
     case FloatType => java.sql.Types.FLOAT
     case DoubleType => java.sql.Types.DOUBLE
     case _: DecimalType => java.sql.Types.DECIMAL
-    case StringType => java.sql.Types.VARCHAR
+    case StringType(_) => java.sql.Types.VARCHAR
     case VarcharType(_) => java.sql.Types.VARCHAR
     case CharType(_) => java.sql.Types.CHAR
     case BinaryType => java.sql.Types.BINARY

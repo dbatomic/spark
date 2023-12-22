@@ -45,7 +45,7 @@ object DataTypeProtoConverter {
       case proto.DataType.KindCase.DOUBLE => DoubleType
       case proto.DataType.KindCase.DECIMAL => toCatalystDecimalType(t.getDecimal)
 
-      case proto.DataType.KindCase.STRING => StringType
+      case proto.DataType.KindCase.STRING => StringType()
       case proto.DataType.KindCase.CHAR => CharType(t.getChar.getLength)
       case proto.DataType.KindCase.VAR_CHAR => VarcharType(t.getVarChar.getLength)
 
@@ -170,7 +170,7 @@ object DataTypeProtoConverter {
             proto.DataType.Decimal.newBuilder().setPrecision(precision).setScale(scale).build())
           .build()
 
-      case StringType => ProtoDataTypes.StringType
+      case StringType(_) => ProtoDataTypes.StringType
 
       case CharType(length) =>
         proto.DataType

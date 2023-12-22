@@ -212,7 +212,7 @@ class FeatureHasher(@Since("2.3.0") override val uid: String) extends Transforme
         dataType.isInstanceOf[StringType] ||
         dataType.isInstanceOf[BooleanType],
         s"FeatureHasher requires columns to be of ${NumericType.simpleString}, " +
-          s"${BooleanType.catalogString} or ${StringType.catalogString}. " +
+          s"${BooleanType.catalogString} or ${StringType().catalogString}. " +
           s"Column $fieldName was ${dataType.catalogString}")
     }
     val attrGroup = new AttributeGroup($(outputCol), $(numFeatures))

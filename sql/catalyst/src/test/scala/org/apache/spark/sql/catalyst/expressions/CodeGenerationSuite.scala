@@ -41,7 +41,6 @@ import org.apache.spark.util.ThreadUtils
  * Additional tests for code generation.
  */
 class CodeGenerationSuite extends SparkFunSuite with ExpressionEvalHelper {
-
   test("multithreaded eval") {
     import scala.concurrent._
     import ExecutionContext.Implicits.global

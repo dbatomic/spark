@@ -138,15 +138,16 @@ object AnsiTypeCoercion extends TypeCoercionBase {
   @scala.annotation.tailrec
   private def findWiderTypeForString(dt1: DataType, dt2: DataType): Option[DataType] = {
     (dt1, dt2) match {
-      case (StringType, _: IntegralType) => Some(LongType)
-      case (StringType, _: FractionalType) => Some(DoubleType)
-      case (StringType, NullType) => Some(StringType)
+      case (StringType(_), _: IntegralType) => Some(LongType)
+      case (StringType(_), _: FractionalType) => Some(DoubleType)
+      case (StringType(coll), NullType) => Some(StringType(coll))
       // If a binary operation contains interval type and string, we can't decide which
       // interval type the string should be promoted as. There are many possible interval
       // types, such as year interval, month interval, day interval, hour interval, etc.
-      case (StringType, _: AnsiIntervalType) => None
-      case (StringType, a: AtomicType) => Some(a)
-      case (other, StringType) if other != StringType => findWiderTypeForString(StringType, other)
+      case (StringType(_), _: AnsiIntervalType) => None
+      case (StringType(_), a: AtomicType) => Some(a)
+      case (other, StringType(coll)) if other != StringType(coll) =>
+        findWiderTypeForString(StringType(coll), other)
       case _ => None
     }
   }
@@ -188,21 +189,21 @@ object AnsiTypeCoercion extends TypeCoercionBase {
 
       // This type coercion system will allow implicit converting String type as other
       // primitive types, in case of breaking too many existing Spark SQL queries.
-      case (StringType, a: AtomicType) =>
+      case (StringType(_), a: AtomicType) =>
         Some(a)
 
       // If the target type is any Numeric type, convert the String type as Double type.
-      case (StringType, NumericType) =>
+      case (StringType(_), NumericType) =>
         Some(DoubleType)
 
       // If the target type is any Decimal type, convert the String type as the default
       // Decimal type.
-      case (StringType, DecimalType) =>
+      case (StringType(_), DecimalType) =>
         Some(DecimalType.SYSTEM_DEFAULT)
 
       // If the target type is any timestamp type, convert the String type as the default
       // Timestamp type.
-      case (StringType, AnyTimestampType) =>
+      case (StringType(_), AnyTimestampType) =>
         Some(AnyTimestampType.defaultConcreteType)
 
       case (DateType, AnyTimestampType) =>

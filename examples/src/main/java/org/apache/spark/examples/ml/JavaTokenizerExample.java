@@ -56,7 +56,7 @@ public class JavaTokenizerExample {
 
     StructType schema = new StructType(new StructField[]{
       new StructField("id", DataTypes.IntegerType, false, Metadata.empty()),
-      new StructField("sentence", DataTypes.StringType, false, Metadata.empty())
+      new StructField("sentence", DataTypes.CreateStringType("utf8"), false, Metadata.empty())
     });
 
     Dataset<Row> sentenceDataFrame = spark.createDataFrame(data, schema);

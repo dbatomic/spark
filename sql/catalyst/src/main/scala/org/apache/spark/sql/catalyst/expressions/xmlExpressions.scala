@@ -140,7 +140,7 @@ case class XmlToStructs(
       converter(parser.parse(str))
   }
 
-  override def inputTypes: Seq[AbstractDataType] = StringType :: Nil
+  override def inputTypes: Seq[AbstractDataType] = StringType() :: Nil
 
   override def sql: String = schema match {
     case _: MapType => "entries"
@@ -178,7 +178,7 @@ case class SchemaOfXml(
     child = child,
     options = ExprUtils.convertToMapData(options))
 
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
 
   override def nullable: Boolean = false
 
@@ -222,7 +222,7 @@ case class SchemaOfXml(
           .map(ArrayType(_, containsNull = at.containsNull))
           .getOrElse(ArrayType(StructType(Nil), containsNull = at.containsNull))
       case other: DataType =>
-        xmlInferSchema.canonicalizeType(other).getOrElse(StringType)
+        xmlInferSchema.canonicalizeType(other).getOrElse(StringType())
     }
 
     UTF8String.fromString(dataType.sql)
@@ -305,7 +305,7 @@ case class StructsToXml(
       getAndReset()
   }
 
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
 
   override def withTimeZone(timeZoneId: String): TimeZoneAwareExpression =
     copy(timeZoneId = Option(timeZoneId))

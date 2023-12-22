@@ -139,7 +139,8 @@ case class CountMinSketchAgg(
       child.dataType match {
         // For string type, we can get bytes of our `UTF8String` directly, and call the `addBinary`
         // instead of `addString` to avoid unnecessary conversion.
-        case StringType => buffer.addBinary(value.asInstanceOf[UTF8String].getBytes)
+        // TODO: Raw byte approach should work regardless of collation?
+        case StringType(_) => buffer.addBinary(value.asInstanceOf[UTF8String].getBytes)
         case _ => buffer.add(value)
       }
     }
@@ -168,7 +169,7 @@ case class CountMinSketchAgg(
     copy(inputAggBufferOffset = newInputAggBufferOffset)
 
   override def inputTypes: Seq[AbstractDataType] = {
-    Seq(TypeCollection(IntegralType, StringType, BinaryType), DoubleType, DoubleType, IntegerType)
+    Seq(TypeCollection(IntegralType, StringType(), BinaryType), DoubleType, DoubleType, IntegerType)
   }
 
   override def nullable: Boolean = false

@@ -32,9 +32,9 @@ import org.apache.spark.unsafe.types.CalendarInterval
 
 class ColumnTypeSuite extends SparkFunSuite {
   private val DEFAULT_BUFFER_SIZE = 512
-  private val MAP_TYPE = MAP(PhysicalMapType(IntegerType, StringType, true))
+  private val MAP_TYPE = MAP(PhysicalMapType(IntegerType, StringType(), true))
   private val ARRAY_TYPE = ARRAY(PhysicalArrayType(IntegerType, true))
-  private val STRUCT_TYPE = STRUCT(PhysicalStructType(Array(StructField("a", StringType))))
+  private val STRUCT_TYPE = STRUCT(PhysicalStructType(Array(StructField("a", StringType()))))
 
   test("defaultSize") {
     val checks = Map(

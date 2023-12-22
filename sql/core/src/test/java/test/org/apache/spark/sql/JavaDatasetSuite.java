@@ -29,6 +29,7 @@ import javax.annotation.Nonnull;
 import org.apache.spark.api.java.Optional;
 import org.apache.spark.sql.streaming.GroupStateTimeout;
 import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.types.DataTypes;
 import scala.Tuple2;
 import scala.Tuple3;
 import scala.Tuple4;
@@ -1063,11 +1064,13 @@ public class JavaDatasetSuite implements Serializable {
       .add("a", BooleanType, false)
       .add("b", IntegerType, false)
       .add("c", BinaryType)
-      .add("d", createArrayType(StringType))
-      .add("e", createArrayType(StringType))
+      .add("d", createArrayType(DataTypes.CreateStringType("utf8")))
+      .add("e", createArrayType(DataTypes.CreateStringType("utf8")))
       .add("f", createArrayType(LongType))
-      .add("g", createMapType(IntegerType, StringType))
-      .add("h",createMapType(createArrayType(LongType), createMapType(StringType, StringType)));
+      .add("g", createMapType(IntegerType, DataTypes.CreateStringType("utf8")))
+      .add("h",createMapType(createArrayType(LongType), createMapType(
+                      DataTypes.CreateStringType("utf8"),
+                      DataTypes.CreateStringType("utf8"))));
     Dataset<SimpleJavaBean> ds3 = spark.createDataFrame(Arrays.asList(row1, row2), schema)
       .as(Encoders.bean(SimpleJavaBean.class));
     Assertions.assertEquals(data, ds3.collectAsList());
@@ -1221,7 +1224,7 @@ public class JavaDatasetSuite implements Serializable {
 
     StructType schema = new StructType()
       .add("f", new StructType()
-        .add("a", StringType, true)
+        .add("a", DataTypes.CreateStringType("utf8"), true)
         .add("b", IntegerType, true), true);
 
     // Shouldn't throw runtime exception since it passes nullability check.

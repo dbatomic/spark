@@ -25,7 +25,7 @@ import org.apache.spark.{SparkException, SparkFunSuite}
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.expressions.codegen.CodegenContext
 import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.types.{DecimalType, IntegerType, StringType}
+import org.apache.spark.sql.types.{DecimalType, IntegerType}
 
 class ScalaUDFSuite extends SparkFunSuite with ExpressionEvalHelper {
 

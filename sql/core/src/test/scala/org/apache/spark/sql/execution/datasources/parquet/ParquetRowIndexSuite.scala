@@ -33,7 +33,7 @@ import org.apache.spark.sql.execution.datasources.v2.parquet.ParquetDataSourceV2
 import org.apache.spark.sql.functions.{col, max, min}
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{LongType, StringType}
+import org.apache.spark.sql.types.LongType
 import org.apache.spark.tags.SlowSQLTest
 import org.apache.spark.util.ArrayImplicits._
 

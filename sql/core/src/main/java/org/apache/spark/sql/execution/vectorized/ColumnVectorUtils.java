@@ -147,7 +147,7 @@ public class ColumnVectorUtils {
         dst.appendFloat((Float) o);
       } else if (t == DataTypes.DoubleType) {
         dst.appendDouble((Double) o);
-      } else if (t == DataTypes.StringType) {
+      } else if (t == DataTypes.CreateStringType("utf8")) {
         byte[] b =((String)o).getBytes(StandardCharsets.UTF_8);
         dst.appendByteArray(b, 0, b.length);
       } else if (t == DataTypes.BinaryType) {

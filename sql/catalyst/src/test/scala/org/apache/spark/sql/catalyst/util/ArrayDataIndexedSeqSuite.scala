@@ -66,7 +66,7 @@ class ArrayDataIndexedSeqSuite extends SparkFunSuite {
 
   private def testArrayData(): Unit = {
     val elementTypes = Seq(BooleanType, ByteType, ShortType, IntegerType, LongType, FloatType,
-      DoubleType, DecimalType.USER_DEFAULT, StringType, BinaryType, DateType, TimestampType,
+      DoubleType, DecimalType.USER_DEFAULT, StringType(), BinaryType, DateType, TimestampType,
       CalendarIntervalType, new ExamplePointUDT())
     val arrayTypes = elementTypes.flatMap { elementType =>
       Seq(ArrayType(elementType, containsNull = false), ArrayType(elementType, containsNull = true))

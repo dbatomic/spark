@@ -75,7 +75,6 @@ class ExamplePointUDT extends UserDefinedType[ExamplePoint] {
 }
 
 class RowEncoderSuite extends CodegenInterpretedPlanTest {
-
   private val structOfString = new StructType().add("str", StringType)
   private val structOfUDT = new StructType().add("udt", new ExamplePointUDT, false)
   private val arrayOfString = ArrayType(StringType)

@@ -25,6 +25,9 @@ import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.{CalendarInterval, UTF8String, VariantVal}
 
 class GenerateUnsafeProjectionSuite extends SparkFunSuite {
+  // hack to make things working -> always use utf8.
+  private val StringType = org.apache.spark.sql.types.StringType("utf8")
+
   test("Test unsafe projection string access pattern") {
     val dataType = (new StructType).add("a", StringType)
     val exprs = BoundReference(0, dataType, nullable = true) :: Nil

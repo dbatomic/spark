@@ -298,8 +298,8 @@ class ParquetToSparkSchemaConverter(
       case BINARY =>
         typeAnnotation match {
           case _: StringLogicalTypeAnnotation | _: EnumLogicalTypeAnnotation |
-               _: JsonLogicalTypeAnnotation => StringType
-          case null if assumeBinaryIsString => StringType
+               _: JsonLogicalTypeAnnotation => StringType()
+          case null if assumeBinaryIsString => StringType()
           case null => BinaryType
           case _: BsonLogicalTypeAnnotation => BinaryType
           case _: DecimalLogicalTypeAnnotation => makeDecimalType()
@@ -544,7 +544,7 @@ class SparkToParquetSchemaConverter(
       case DoubleType =>
         Types.primitive(DOUBLE, repetition).named(field.name)
 
-      case StringType =>
+      case StringType(_) =>
         Types.primitive(BINARY, repetition)
           .as(LogicalTypeAnnotation.stringType()).named(field.name)
 

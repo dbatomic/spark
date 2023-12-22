@@ -58,7 +58,7 @@ class NamedExpressionSuite extends SparkFunSuite {
       .putString(nonInheritableMetadataKey, "value1")
       .putString("key", "value2")
       .build()
-    val structType = StructType(Seq(StructField("value", StringType, metadata = metadata)))
+    val structType = StructType(Seq(StructField("value", StringType(), metadata = metadata)))
     val alias = Alias(GetStructField(AttributeReference("a", structType)(), 0), "my-alias")(
       nonInheritableMetadataKeys = Seq(nonInheritableMetadataKey))
     assert(!alias.metadata.contains(nonInheritableMetadataKey))

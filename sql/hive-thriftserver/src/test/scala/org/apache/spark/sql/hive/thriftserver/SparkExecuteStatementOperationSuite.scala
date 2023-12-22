@@ -33,7 +33,7 @@ import org.apache.spark.SparkFunSuite
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.sql.hive.thriftserver.ui.HiveThriftServer2EventManager
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{IntegerType, NullType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{IntegerType, NullType, StructField, StructType}
 
 class SparkExecuteStatementOperationSuite extends SparkFunSuite with SharedSparkSession {
 

@@ -40,7 +40,7 @@ public class RowBasedKeyValueBatchSuite {
   private TestMemoryManager memoryManager;
   private TaskMemoryManager taskMemoryManager;
   private StructType keySchema = new StructType().add("k1", DataTypes.LongType)
-          .add("k2", DataTypes.StringType);
+          .add("k2", DataTypes.CreateStringType("utf8"));
   private StructType fixedKeySchema = new StructType().add("k1", DataTypes.LongType)
           .add("k2", DataTypes.LongType);
   private StructType valueSchema = new StructType().add("count", DataTypes.LongType)

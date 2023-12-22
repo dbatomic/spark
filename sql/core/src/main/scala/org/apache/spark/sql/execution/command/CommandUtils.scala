@@ -408,7 +408,7 @@ object CommandUtils extends Logging {
       case DoubleType | FloatType => fixedLenTypeStruct
       case BooleanType => fixedLenTypeStruct
       case _: DatetimeType => fixedLenTypeStruct
-      case BinaryType | StringType =>
+      case BinaryType | StringType(_) =>
         // For string and binary type, we don't compute min, max or histogram
         val nullLit = Literal(null, col.dataType)
         struct(

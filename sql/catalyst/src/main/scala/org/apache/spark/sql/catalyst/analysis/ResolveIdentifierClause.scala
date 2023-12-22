@@ -47,7 +47,7 @@ object ResolveIdentifierClause extends Rule[LogicalPlan] with AliasHelper with E
         messageParameters = Map(
           "name" -> "IDENTIFIER",
           "expr" -> expr.sql))
-      case e if e.dataType != StringType => expr.failAnalysis(
+      case e if e.dataType != StringType() => expr.failAnalysis(
         errorClass = "NOT_A_CONSTANT_STRING.WRONG_TYPE",
         messageParameters = Map(
           "name" -> "IDENTIFIER",

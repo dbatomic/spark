@@ -106,7 +106,7 @@ object LiteralGenerator {
   }
 
   lazy val stringLiteralGen: Gen[Literal] =
-    for { s <- Arbitrary.arbString.arbitrary } yield Literal.create(s, StringType)
+    for { s <- Arbitrary.arbString.arbitrary } yield Literal.create(s, StringType())
 
   lazy val binaryLiteralGen: Gen[Literal] =
     for { ab <- Gen.listOf[Byte](Arbitrary.arbByte.arbitrary) }
@@ -199,7 +199,7 @@ object LiteralGenerator {
       case TimestampType => timestampLiteralGen
       case TimestampNTZType => timestampNTZLiteralGen
       case BooleanType => booleanLiteralGen
-      case StringType => stringLiteralGen
+      case StringType(_) => stringLiteralGen
       case BinaryType => binaryLiteralGen
       case CalendarIntervalType => calendarIntervalLiterGen
       case DecimalType.Fixed(precision, scale) => decimalLiteralGen(precision, scale)

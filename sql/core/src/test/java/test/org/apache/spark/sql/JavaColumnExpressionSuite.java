@@ -21,6 +21,8 @@ import java.util.*;
 
 import com.google.common.collect.Maps;
 
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,7 +61,7 @@ public class JavaColumnExpressionSuite {
       RowFactory.create(3, "z"));
     StructType schema = createStructType(Arrays.asList(
       createStructField("a", IntegerType, false),
-      createStructField("b", StringType, false)));
+      createStructField("b", DataTypes.CreateStringType("utf8"), false)));
     Dataset<Row> df = spark.createDataFrame(rows, schema);
     // Test with different types of collections
     Assertions.assertArrayEquals(

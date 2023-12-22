@@ -160,8 +160,8 @@ class StaxXmlGenerator(
 
   def writeElement(dt: DataType, v: Any, options: XmlOptions): Unit = (dt, v) match {
     case (_, null) | (NullType, _) => gen.writeCharacters(options.nullValue)
-    case (StringType, v: UTF8String) => gen.writeCharacters(v.toString)
-    case (StringType, v: String) => gen.writeCharacters(v)
+    case (StringType(_), v: UTF8String) => gen.writeCharacters(v.toString)
+    case (StringType(_), v: String) => gen.writeCharacters(v)
     case (TimestampType, v: Timestamp) =>
       gen.writeCharacters(timestampFormatter.format(v.toInstant()))
     case (TimestampType, v: Long) =>

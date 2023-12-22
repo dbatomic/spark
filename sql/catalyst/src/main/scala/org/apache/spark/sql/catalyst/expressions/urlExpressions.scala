@@ -54,16 +54,16 @@ case class UrlEncode(child: Expression)
   override def replacement: Expression =
     StaticInvoke(
       UrlCodec.getClass,
-      StringType,
+      StringType(),
       "encode",
       Seq(child, Literal("UTF-8")),
-      Seq(StringType, StringType))
+      Seq(StringType(), StringType()))
 
   override protected def withNewChildInternal(newChild: Expression): Expression = {
     copy(child = newChild)
   }
 
-  override def inputTypes: Seq[AbstractDataType] = Seq(StringType)
+  override def inputTypes: Seq[AbstractDataType] = Seq(StringType())
 
   override def prettyName: String = "url_encode"
 }
@@ -91,16 +91,16 @@ case class UrlDecode(child: Expression)
   override def replacement: Expression =
     StaticInvoke(
       UrlCodec.getClass,
-      StringType,
+      StringType(),
       "decode",
       Seq(child, Literal("UTF-8")),
-      Seq(StringType, StringType))
+      Seq(StringType(), StringType()))
 
   override protected def withNewChildInternal(newChild: Expression): Expression = {
     copy(child = newChild)
   }
 
-  override def inputTypes: Seq[AbstractDataType] = Seq(StringType)
+  override def inputTypes: Seq[AbstractDataType] = Seq(StringType())
 
   override def prettyName: String = "url_decode"
 }
@@ -154,8 +154,8 @@ case class ParseUrl(children: Seq[Expression], failOnError: Boolean = SQLConf.ge
   def this(children: Seq[Expression]) = this(children, SQLConf.get.ansiEnabled)
 
   override def nullable: Boolean = true
-  override def inputTypes: Seq[DataType] = Seq.fill(children.size)(StringType)
-  override def dataType: DataType = StringType
+  override def inputTypes: Seq[DataType] = Seq.fill(children.size)(StringType())
+  override def dataType: DataType = StringType()
   override def prettyName: String = "parse_url"
 
   // If the url is a constant, cache the URL object so that we don't need to convert url

@@ -37,6 +37,9 @@ import org.apache.spark.unsafe.types.UTF8String
  */
 class GenerateUnsafeRowJoinerSuite extends SparkFunSuite {
 
+  // hack to make things working -> always use utf8.
+  private val StringType = org.apache.spark.sql.types.StringType("utf8")
+
   private val fixed = Seq(IntegerType)
   private val variable = Seq(IntegerType, StringType)
 

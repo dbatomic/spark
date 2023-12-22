@@ -317,7 +317,7 @@ class SparkMetadataOperationSuite extends HiveThriftServer2TestBase {
 
         val colSize = rowSet.getInt("COLUMN_SIZE")
         schema(pos).dataType match {
-          case StringType | BinaryType | _: ArrayType | _: MapType | _: VarcharType =>
+          case StringType(_) | BinaryType | _: ArrayType | _: MapType | _: VarcharType =>
             assert(colSize === 0)
           case o => assert(colSize === o.defaultSize)
         }

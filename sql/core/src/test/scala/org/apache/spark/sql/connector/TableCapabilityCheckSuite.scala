@@ -203,7 +203,7 @@ class TableCapabilityCheckSuite extends AnalysisTest with SharedSparkSession {
 }
 
 private object TableCapabilityCheckSuite {
-  val schema: StructType = new StructType().add("id", LongType).add("data", StringType)
+  val schema: StructType = new StructType().add("id", LongType).add("data", StringType())
 }
 
 private case object TestRelation extends LeafNode with NamedRelation {

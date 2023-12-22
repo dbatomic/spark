@@ -32,7 +32,6 @@ import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.ByteArray
 
 class ConstantFoldingSuite extends PlanTest {
-
   object Optimize extends RuleExecutor[LogicalPlan] {
     val batches =
       Batch("AnalysisNodes", Once,

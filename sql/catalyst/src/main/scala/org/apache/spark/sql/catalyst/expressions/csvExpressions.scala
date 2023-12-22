@@ -145,7 +145,7 @@ case class CsvToStructs(
     converter(parser.parse(csv))
   }
 
-  override def inputTypes: Seq[AbstractDataType] = StringType :: Nil
+  override def inputTypes: Seq[AbstractDataType] = StringType() :: Nil
 
   override def prettyName: String = "from_csv"
 
@@ -176,7 +176,7 @@ case class SchemaOfCsv(
     child = child,
     options = ExprUtils.convertToMapData(options))
 
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
 
   override def nullable: Boolean = false
 
@@ -280,7 +280,7 @@ case class StructsToCsv(
     (row: Any) => UTF8String.fromString(gen.writeToString(row.asInstanceOf[InternalRow]))
   }
 
-  override def dataType: DataType = StringType
+  override def dataType: DataType = StringType()
 
   override def withTimeZone(timeZoneId: String): TimeZoneAwareExpression =
     copy(timeZoneId = Option(timeZoneId))

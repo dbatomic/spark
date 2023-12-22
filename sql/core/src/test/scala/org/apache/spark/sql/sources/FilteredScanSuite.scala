@@ -46,7 +46,7 @@ case class SimpleFilteredScan(from: Int, to: Int)(@transient val sparkSession: S
     StructType(
       StructField("a", IntegerType, nullable = false) ::
       StructField("b", IntegerType, nullable = false) ::
-      StructField("c", StringType, nullable = false) :: Nil)
+      StructField("c", StringType(), nullable = false) :: Nil)
 
   override def unhandledFilters(filters: Array[Filter]): Array[Filter] = {
     def unhandled(filter: Filter): Boolean = {

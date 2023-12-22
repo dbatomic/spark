@@ -78,7 +78,7 @@ case class BloomFilterAggregate(
             "exprName" -> "estimatedNumItems or numBits"
           )
         )
-      case (LongType | IntegerType | ShortType | ByteType | StringType, LongType, LongType) =>
+      case (LongType | IntegerType | ShortType | ByteType | StringType(_), LongType, LongType) =>
         if (!estimatedNumItemsExpression.foldable) {
           DataTypeMismatch(
             errorSubClass = "NON_FOLDABLE_INPUT",
@@ -156,7 +156,7 @@ case class BloomFilterAggregate(
     case IntegerType => IntUpdater
     case ShortType => ShortUpdater
     case ByteType => ByteUpdater
-    case StringType => BinaryUpdater
+    case StringType(_) => BinaryUpdater
   }
 
   override def first: Expression = child

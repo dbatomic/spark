@@ -94,8 +94,8 @@ object UnboundStringSelfFunction extends UnboundFunction {
 }
 
 object StringSelfFunction extends ScalarFunction[UTF8String] {
-  override def inputTypes(): Array[DataType] = Array(StringType)
-  override def resultType(): DataType = StringType
+  override def inputTypes(): Array[DataType] = Array(StringType())
+  override def resultType(): DataType = StringType()
   override def name(): String = "string_self"
   override def canonicalName(): String = name()
   override def toString: String = name()
@@ -111,8 +111,8 @@ object UnboundTruncateFunction extends UnboundFunction {
 }
 
 object TruncateFunction extends ScalarFunction[UTF8String] {
-  override def inputTypes(): Array[DataType] = Array(StringType, IntegerType)
-  override def resultType(): DataType = StringType
+  override def inputTypes(): Array[DataType] = Array(StringType(), IntegerType)
+  override def resultType(): DataType = StringType()
   override def name(): String = "truncate"
   override def canonicalName(): String = name()
   override def toString: String = name()

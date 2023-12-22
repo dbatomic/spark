@@ -33,8 +33,8 @@ import org.apache.spark.util.ArrayImplicits._
 class RowTest extends AnyFunSpec with Matchers {
 
   val schema = StructType(
-    StructField("col1", StringType) ::
-    StructField("col2", StringType) ::
+    StructField("col1", StringType()) ::
+    StructField("col2", StringType()) ::
     StructField("col3", IntegerType) :: Nil)
   val values = Array("value1", "value2", 1)
   val valuesWithoutCol3 = Array[Any](null, "value2", null)
@@ -98,7 +98,7 @@ class RowTest extends AnyFunSpec with Matchers {
     }
 
     it("json should convert a mutable array to JSON") {
-      val schema = new StructType().add(StructField("list", ArrayType(StringType)))
+      val schema = new StructType().add(StructField("list", ArrayType(StringType())))
       val values = ArraySeq("1", "2", "3")
       val row = new GenericRowWithSchema(Array(values), schema)
       val expectedList = JArray(JString("1") :: JString("2") :: JString("3") :: Nil)

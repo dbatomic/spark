@@ -308,7 +308,7 @@ class V2PredicateSuite extends SparkFunSuite {
   }
 
   test("StringStartsWith") {
-    val literal = LiteralValue(UTF8String.fromString("str"), StringType)
+    val literal = LiteralValue(UTF8String.fromString("str"), StringType())
     val predicate1 = new Predicate("STARTS_WITH",
       Array[Expression](ref("a"), literal))
     val predicate2 = new Predicate("STARTS_WITH",
@@ -325,7 +325,7 @@ class V2PredicateSuite extends SparkFunSuite {
   }
 
   test("StringEndsWith") {
-    val literal = LiteralValue(UTF8String.fromString("str"), StringType)
+    val literal = LiteralValue(UTF8String.fromString("str"), StringType())
     val predicate1 = new Predicate("ENDS_WITH",
       Array[Expression](ref("a"), literal))
     val predicate2 = new Predicate("ENDS_WITH",
@@ -342,7 +342,7 @@ class V2PredicateSuite extends SparkFunSuite {
   }
 
   test("StringContains") {
-    val literal = LiteralValue(UTF8String.fromString("str"), StringType)
+    val literal = LiteralValue(UTF8String.fromString("str"), StringType())
     val predicate1 = new Predicate("CONTAINS",
       Array[Expression](ref("a"), literal))
     val predicate2 = new Predicate("CONTAINS",

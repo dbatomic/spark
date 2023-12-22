@@ -30,7 +30,7 @@ import org.apache.spark.sql.catalyst.util.HadoopCompressionCodec.{BZIP2, DEFLATE
 import org.apache.spark.sql.execution.datasources.CommonFileDataSourceSuite
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{StringType, StructType}
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.util.Utils
 
 abstract class TextSuite extends QueryTest with SharedSparkSession with CommonFileDataSourceSuite {

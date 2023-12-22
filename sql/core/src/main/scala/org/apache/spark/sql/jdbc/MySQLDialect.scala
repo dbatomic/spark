@@ -97,11 +97,11 @@ private case object MySQLDialect extends JdbcDialect with SQLConfHelper {
       Option(BooleanType)
     } else if ("TINYTEXT".equalsIgnoreCase(typeName)) {
       // TINYTEXT is Types.VARCHAR(63) from mysql jdbc, but keep it AS-IS for historical reason
-      Some(StringType)
+      Some(StringType())
     } else if (sqlType == Types.VARCHAR && typeName.equals("JSON")) {
       // Some MySQL JDBC drivers converts JSON type into Types.VARCHAR with a precision of -1.
       // Explicitly converts it into StringType here.
-      Some(StringType)
+      Some(StringType())
     } else if (sqlType == Types.TINYINT && typeName.equals("TINYINT")) {
       Some(ByteType)
     } else None
@@ -185,7 +185,7 @@ private case object MySQLDialect extends JdbcDialect with SQLConfHelper {
     // See SPARK-35446: MySQL treats REAL as a synonym to DOUBLE by default
     // We override getJDBCType so that FloatType is mapped to FLOAT instead
     case FloatType => Option(JdbcType("FLOAT", java.sql.Types.FLOAT))
-    case StringType => Option(JdbcType("LONGTEXT", java.sql.Types.LONGVARCHAR))
+    case StringType(_) => Option(JdbcType("LONGTEXT", java.sql.Types.LONGVARCHAR))
     case ByteType => Option(JdbcType("TINYINT", java.sql.Types.TINYINT))
     case _ => JdbcUtils.getCommonJDBCType(dt)
   }

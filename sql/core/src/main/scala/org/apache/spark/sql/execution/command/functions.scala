@@ -96,7 +96,7 @@ case class DescribeFunctionCommand(
     isExtended: Boolean) extends LeafRunnableCommand {
 
   override val output: Seq[Attribute] = {
-    val schema = StructType(Array(StructField("function_desc", StringType, nullable = false)))
+    val schema = StructType(Array(StructField("function_desc", StringType(), nullable = false)))
     toAttributes(schema)
   }
 

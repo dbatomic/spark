@@ -21,7 +21,7 @@ import scala.jdk.CollectionConverters._
 
 import org.apache.spark.sql.internal.SqlApiConf
 import org.apache.spark.sql.test.{QueryTest, SQLHelper}
-import org.apache.spark.sql.types.{StringType, StructType}
+import org.apache.spark.sql.types.StructType
 
 class DataFrameNaFunctionSuite extends QueryTest with SQLHelper {
   private def createDF(): DataFrame = {

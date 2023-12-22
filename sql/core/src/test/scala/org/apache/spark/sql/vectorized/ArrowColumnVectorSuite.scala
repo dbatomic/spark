@@ -225,7 +225,7 @@ class ArrowColumnVectorSuite extends SparkFunSuite {
 
   test("string") {
     val allocator = ArrowUtils.rootAllocator.newChildAllocator("string", 0, Long.MaxValue)
-    val vector = ArrowUtils.toArrowField("string", StringType, nullable = true, null)
+    val vector = ArrowUtils.toArrowField("string", StringType(), nullable = true, null)
       .createVector(allocator).asInstanceOf[VarCharVector]
     vector.allocateNew()
 
@@ -237,7 +237,7 @@ class ArrowColumnVectorSuite extends SparkFunSuite {
     vector.setValueCount(11)
 
     val columnVector = new ArrowColumnVector(vector)
-    assert(columnVector.dataType === StringType)
+    assert(columnVector.dataType === StringType())
     assert(columnVector.hasNull)
     assert(columnVector.numNulls === 1)
 
@@ -252,7 +252,7 @@ class ArrowColumnVectorSuite extends SparkFunSuite {
 
   test("large_string") {
     val allocator = ArrowUtils.rootAllocator.newChildAllocator("string", 0, Long.MaxValue)
-    val vector = ArrowUtils.toArrowField("string", StringType, nullable = true, null, true)
+    val vector = ArrowUtils.toArrowField("string", StringType(), nullable = true, null, true)
       .createVector(allocator).asInstanceOf[LargeVarCharVector]
     vector.allocateNew()
 
@@ -264,7 +264,7 @@ class ArrowColumnVectorSuite extends SparkFunSuite {
     vector.setValueCount(11)
 
     val columnVector = new ArrowColumnVector(vector)
-    assert(columnVector.dataType === StringType)
+    assert(columnVector.dataType === StringType())
     assert(columnVector.hasNull)
     assert(columnVector.numNulls === 1)
 

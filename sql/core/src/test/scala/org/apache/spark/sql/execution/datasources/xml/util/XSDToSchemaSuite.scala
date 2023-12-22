@@ -23,7 +23,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.execution.datasources.xml.TestUtils._
 import org.apache.spark.sql.execution.datasources.xml.XSDToSchema
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{ArrayType, DecimalType, FloatType, LongType, StringType}
+import org.apache.spark.sql.types.{ArrayType, DecimalType, FloatType, LongType}
 
 class XSDToSchemaSuite extends SharedSparkSession {
 

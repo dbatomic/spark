@@ -38,7 +38,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.streaming._
 import org.apache.spark.sql.test.{SharedSparkSession, TestSparkSession}
-import org.apache.spark.sql.types.{BinaryType, DataType, IntegerType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{BinaryType, DataType, IntegerType, StructField, StructType}
 import org.apache.spark.util.ArrayImplicits._
 
 abstract class KafkaSinkSuiteBase extends QueryTest with SharedSparkSession with KafkaTest {

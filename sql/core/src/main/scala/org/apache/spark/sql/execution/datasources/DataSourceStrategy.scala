@@ -547,13 +547,13 @@ object DataSourceStrategy
       Some(sources.IsNull(name))
     case expressions.IsNotNull(pushableColumn(name)) =>
       Some(sources.IsNotNull(name))
-    case expressions.StartsWith(pushableColumn(name), Literal(v: UTF8String, StringType)) =>
+    case expressions.StartsWith(pushableColumn(name), Literal(v: UTF8String, StringType(_))) =>
       Some(sources.StringStartsWith(name, v.toString))
 
-    case expressions.EndsWith(pushableColumn(name), Literal(v: UTF8String, StringType)) =>
+    case expressions.EndsWith(pushableColumn(name), Literal(v: UTF8String, StringType(_))) =>
       Some(sources.StringEndsWith(name, v.toString))
 
-    case expressions.Contains(pushableColumn(name), Literal(v: UTF8String, StringType)) =>
+    case expressions.Contains(pushableColumn(name), Literal(v: UTF8String, StringType(_))) =>
       Some(sources.StringContains(name, v.toString))
 
     case expressions.Literal(true, BooleanType) =>

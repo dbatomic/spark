@@ -33,7 +33,7 @@ class FakeExternalSourceOne extends RelationProvider with DataSourceRegister {
       override def sqlContext: SQLContext = cont
 
       override def schema: StructType =
-        StructType(Seq(StructField("stringType", StringType, nullable = false)))
+        StructType(Seq(StructField("stringType", StringType(), nullable = false)))
     }
 }
 

@@ -317,7 +317,7 @@ case class Not(child: Filter) extends Filter {
 case class StringStartsWith(attribute: String, value: String) extends Filter {
   override def references: Array[String] = Array(attribute)
   override def toV2: Predicate = new Predicate("STARTS_WITH",
-    Array(toV2Column(attribute), LiteralValue(UTF8String.fromString(value), StringType)))
+    Array(toV2Column(attribute), LiteralValue(UTF8String.fromString(value), StringType())))
 }
 
 /**
@@ -333,7 +333,7 @@ case class StringStartsWith(attribute: String, value: String) extends Filter {
 case class StringEndsWith(attribute: String, value: String) extends Filter {
   override def references: Array[String] = Array(attribute)
   override def toV2: Predicate = new Predicate("ENDS_WITH",
-    Array(toV2Column(attribute), LiteralValue(UTF8String.fromString(value), StringType)))
+    Array(toV2Column(attribute), LiteralValue(UTF8String.fromString(value), StringType())))
 }
 
 /**
@@ -349,7 +349,7 @@ case class StringEndsWith(attribute: String, value: String) extends Filter {
 case class StringContains(attribute: String, value: String) extends Filter {
   override def references: Array[String] = Array(attribute)
   override def toV2: Predicate = new Predicate("CONTAINS",
-    Array(toV2Column(attribute), LiteralValue(UTF8String.fromString(value), StringType)))
+    Array(toV2Column(attribute), LiteralValue(UTF8String.fromString(value), StringType())))
 }
 
 /**

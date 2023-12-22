@@ -380,8 +380,8 @@ private[parquet] class ParquetRowConverter(
         throw QueryExecutionErrors.cannotCreateParquetConverterForDecimalTypeError(
           t, parquetType.toString)
 
-      case StringType =>
-        new ParquetStringConverter(updater)
+        // TODO: anything special for parquet string conversion?
+      case StringType(_) => new ParquetStringConverter(updater)
 
       // As long as the parquet type is INT64 timestamp, whether logical annotation
       // `isAdjustedToUTC` is false or true, it will be read as Spark's TimestampLTZ type

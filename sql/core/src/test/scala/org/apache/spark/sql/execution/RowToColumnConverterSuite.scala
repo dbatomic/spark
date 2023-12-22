@@ -91,7 +91,7 @@ class RowToColumnConverterSuite extends SparkFunSuite {
   }
 
   test("map column") {
-    val mapType = MapType(IntegerType, StringType)
+    val mapType = MapType(IntegerType, StringType())
     val schema = StructType(Seq(StructField("m", mapType)))
     val rows = (0 until 100).map { i =>
       InternalRow(new ArrayBasedMapData(
@@ -108,7 +108,7 @@ class RowToColumnConverterSuite extends SparkFunSuite {
   }
 
   test("non-nullable map column with null values") {
-    val mapType = MapType(IntegerType, StringType, valueContainsNull = true)
+    val mapType = MapType(IntegerType, StringType(), valueContainsNull = true)
     val schema = StructType(Seq(StructField("m", mapType, nullable = false)))
     val rows = (0 until 100).map { i =>
       InternalRow(new ArrayBasedMapData(

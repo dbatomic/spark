@@ -71,7 +71,7 @@ class DataTypeAstBuilder extends SqlBaseParserBaseVisitor[AnyRef] {
       case (TIMESTAMP, Nil) => SqlApiConf.get.timestampType
       case (TIMESTAMP_NTZ, Nil) => TimestampNTZType
       case (TIMESTAMP_LTZ, Nil) => TimestampType
-      case (STRING, Nil) => StringType
+      case (STRING, Nil) => StringType()
       case (CHARACTER | CHAR, length :: Nil) => CharType(length.getText.toInt)
       case (VARCHAR, length :: Nil) => VarcharType(length.getText.toInt)
       case (BINARY, Nil) => BinaryType

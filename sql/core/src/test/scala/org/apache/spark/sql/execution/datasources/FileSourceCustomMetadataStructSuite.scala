@@ -27,7 +27,7 @@ import org.apache.spark.sql.catalyst.expressions.{Expression, FileSourceConstant
 import org.apache.spark.sql.execution.datasources.parquet.ParquetFileFormat
 import org.apache.spark.sql.functions.{col, lit, when}
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{IntegerType, LongType, StructField, StructType}
 import org.apache.spark.unsafe.types.UTF8String
 
 /** Verifies the ability for a FileFormat to define custom metadata types */

@@ -773,7 +773,7 @@ object CatalogColumnStat extends Logging {
       case DoubleType => s.toDouble
       case _: DecimalType => Decimal(s)
       // This version of Spark does not use min/max for binary/string types so we ignore it.
-      case BinaryType | StringType => null
+      case BinaryType | StringType(_) => null
       case _ =>
         throw QueryCompilationErrors.columnStatisticsDeserializationNotSupportedError(
           name, dataType)

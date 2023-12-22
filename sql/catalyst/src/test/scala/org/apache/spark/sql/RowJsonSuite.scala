@@ -71,7 +71,7 @@ class RowJsonSuite extends SparkFunSuite {
   testJson(BigDecimal("1092.88"), DecimalType(10, 2), JDecimal(BigDecimal("1092.88")))
   testJson(Decimal("782.0003"), DecimalType(7, 4), JDecimal(BigDecimal("782.0003")))
   testJson(new java.math.BigDecimal("-77.89"), DecimalType(4, 2), JDecimal(BigDecimal("-77.89")))
-  testJson("hello world", StringType, JString("hello world"))
+  testJson("hello world", StringType(), JString("hello world"))
   testJson("BinaryType", Array('a'.toByte, 'b'.toByte), BinaryType, JString("YWI="))
   testJson(Date.valueOf("2019-04-22"), DateType, JString("2019-04-22"))
   testJson(LocalDate.of(2018, 5, 14), DateType, JString("2018-05-14"))
@@ -98,12 +98,12 @@ class RowJsonSuite extends SparkFunSuite {
 
   testJson(
     Map("a" -> "b", "c" -> "d", "e" -> null),
-    MapType(StringType, StringType, valueContainsNull = true),
+    MapType(StringType(), StringType(), valueContainsNull = true),
     JObject("a" -> JString("b"), "c" -> JString("d"), "e" -> JNull))
 
   testJson(
     Map(1 -> "b", 2 -> "d", 3 -> null),
-    MapType(IntegerType, StringType, valueContainsNull = true),
+    MapType(IntegerType, StringType(), valueContainsNull = true),
     JArray(
       JObject("key" -> JLong(1), "value" -> JString("b")) ::
       JObject("key" -> JLong(2), "value" -> JString("d")) ::

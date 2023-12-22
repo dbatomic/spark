@@ -27,7 +27,6 @@ import org.apache.spark.unsafe.types.UTF8String
 
 // A test suite to check analysis behaviors of `TryCast`.
 class TryCastSuite extends CastWithAnsiOnSuite {
-
   override def evalMode: EvalMode.Value = EvalMode.TRY
 
   override def cast(v: Any, targetType: DataType, timeZoneId: Option[String] = None): Cast = {

@@ -35,7 +35,6 @@ import org.apache.spark.unsafe.types.UTF8String
  * Test suite for data type casting expression [[Cast]] with ANSI mode enabled.
  */
 class CastWithAnsiOnSuite extends CastSuiteBase with QueryErrorsBase {
-
   override def evalMode: EvalMode.Value = EvalMode.ANSI
 
   private def isTryCast = evalMode == EvalMode.TRY

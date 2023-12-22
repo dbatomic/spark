@@ -187,7 +187,7 @@ class CanonicalizeSuite extends SparkFunSuite {
 
   test("SPARK-38030: Canonicalization should not remove nullability of AttributeReference" +
     " dataType") {
-    val structType = StructType(Seq(StructField("name", StringType, nullable = false)))
+    val structType = StructType(Seq(StructField("name", StringType(), nullable = false)))
     val attr = AttributeReference("col", structType)()
     // AttributeReference dataType should not be converted to nullable
     assert(attr.canonicalized.dataType === structType)

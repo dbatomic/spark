@@ -41,8 +41,8 @@ case class SetCommand(kv: Option[(String, Option[String])])
 
   private def keyValueOutput: Seq[Attribute] = {
     val schema = StructType(Array(
-      StructField("key", StringType, nullable = false),
-        StructField("value", StringType, nullable = false)))
+      StructField("key", StringType(), nullable = false),
+        StructField("value", StringType(), nullable = false)))
     toAttributes(schema)
   }
 
@@ -145,10 +145,10 @@ case class SetCommand(kv: Option[(String, Option[String])])
         }
       }
       val schema = StructType(Array(
-        StructField("key", StringType, nullable = false),
-          StructField("value", StringType, nullable = false),
-          StructField("meaning", StringType, nullable = false),
-          StructField("Since version", StringType, nullable = false)))
+        StructField("key", StringType(), nullable = false),
+          StructField("value", StringType(), nullable = false),
+          StructField("meaning", StringType(), nullable = false),
+          StructField("Since version", StringType(), nullable = false)))
       (toAttributes(schema), runFunc)
 
     // Queries the deprecated "mapred.reduce.tasks" property.

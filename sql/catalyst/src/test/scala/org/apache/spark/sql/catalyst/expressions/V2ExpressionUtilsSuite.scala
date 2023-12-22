@@ -33,7 +33,7 @@ class V2ExpressionUtilsSuite extends SparkFunSuite {
     val exc = intercept[AnalysisException] {
       V2ExpressionUtils.toCatalystOrdering(
         Array(supportedV2Sort, unsupportedV2Sort),
-        LocalRelation.apply(AttributeReference("a", StringType)()))
+        LocalRelation.apply(AttributeReference("a", StringType())()))
     }
     assert(exc.message.contains("v2Fun(a) ASC NULLS FIRST is not currently supported"))
   }

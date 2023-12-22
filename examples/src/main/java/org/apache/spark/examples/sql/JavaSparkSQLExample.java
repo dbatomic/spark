@@ -306,7 +306,7 @@ public class JavaSparkSQLExample {
     // Generate the schema based on the string of schema
     List<StructField> fields = new ArrayList<>();
     for (String fieldName : schemaString.split(" ")) {
-      StructField field = DataTypes.createStructField(fieldName, DataTypes.StringType, true);
+      StructField field = DataTypes.createStructField(fieldName, DataTypes.CreateStringType("utf8"), true);
       fields.add(field);
     }
     StructType schema = DataTypes.createStructType(fields);

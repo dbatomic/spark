@@ -43,7 +43,6 @@ class ReflectDynamicClass {
  * Test suite for [[CallMethodViaReflection]] and its companion object.
  */
 class CallMethodViaReflectionSuite extends SparkFunSuite with ExpressionEvalHelper {
-
   import CallMethodViaReflection._
 
   // Get rid of the $ so we are getting the companion object's name.

@@ -497,7 +497,7 @@ class JoinEstimationSuite extends StatsEstimationTestBase {
         AttributeReference("cdec", DecimalType.SYSTEM_DEFAULT)() -> ColumnStat(
           distinctCount = Some(1), min = Some(dec), max = Some(dec),
           nullCount = Some(0), avgLen = Some(16), maxLen = Some(16)),
-        AttributeReference("cstring", StringType)() -> ColumnStat(distinctCount = Some(1),
+        AttributeReference("cstring", StringType())() -> ColumnStat(distinctCount = Some(1),
           min = None, max = None, nullCount = Some(0), avgLen = Some(3), maxLen = Some(3)),
         AttributeReference("cbinary", BinaryType)() -> ColumnStat(distinctCount = Some(1),
           min = None, max = None, nullCount = Some(0), avgLen = Some(3), maxLen = Some(3)),

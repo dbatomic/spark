@@ -26,7 +26,6 @@ import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types._
 
 class SimplifyCastsSuite extends PlanTest {
-
   object Optimize extends RuleExecutor[LogicalPlan] {
     val batches = Batch("SimplifyCasts", FixedPoint(50), SimplifyCasts) :: Nil
   }

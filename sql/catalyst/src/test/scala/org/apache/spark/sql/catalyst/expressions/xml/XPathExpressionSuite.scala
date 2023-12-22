@@ -20,13 +20,11 @@ package org.apache.spark.sql.catalyst.expressions.xml
 import org.apache.spark.SparkFunSuite
 import org.apache.spark.sql.catalyst.analysis.TypeCheckResult.DataTypeMismatch
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.types.StringType
 
 /**
  * Test suite for various xpath functions.
  */
 class XPathExpressionSuite extends SparkFunSuite with ExpressionEvalHelper {
-
   /** A helper function that tests null and error behaviors for xpath expressions. */
   private def testNullAndErrorBehavior[T <: AnyRef](testExpr: (String, String, T) => Unit): Unit = {
     // null input should lead to null output

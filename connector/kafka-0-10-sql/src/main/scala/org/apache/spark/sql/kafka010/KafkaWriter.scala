@@ -75,7 +75,7 @@ private[kafka010] object KafkaWriter extends Logging {
 
   def topicExpression(schema: Seq[Attribute], topic: Option[String] = None): Expression = {
     topic.map(Literal(_)).getOrElse(
-      expression(schema, TOPIC_ATTRIBUTE_NAME, Seq(StringType)) {
+      expression(schema, TOPIC_ATTRIBUTE_NAME, Seq(StringType())) {
         throw new IllegalStateException(s"topic option required when no " +
           s"'${TOPIC_ATTRIBUTE_NAME}' attribute is present. Use the " +
           s"${KafkaSourceProvider.TOPIC_OPTION_KEY} option for setting a topic.")
@@ -84,13 +84,13 @@ private[kafka010] object KafkaWriter extends Logging {
   }
 
   def keyExpression(schema: Seq[Attribute]): Expression = {
-    expression(schema, KEY_ATTRIBUTE_NAME, Seq(StringType, BinaryType)) {
+    expression(schema, KEY_ATTRIBUTE_NAME, Seq(StringType(), BinaryType)) {
       Literal(null, BinaryType)
     }
   }
 
   def valueExpression(schema: Seq[Attribute]): Expression = {
-    expression(schema, VALUE_ATTRIBUTE_NAME, Seq(StringType, BinaryType)) {
+    expression(schema, VALUE_ATTRIBUTE_NAME, Seq(StringType(), BinaryType)) {
       throw new IllegalStateException(s"Required attribute '${VALUE_ATTRIBUTE_NAME}' not found")
     }
   }

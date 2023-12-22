@@ -57,7 +57,7 @@ object ExprUtils extends QueryErrorsBase {
 
   def convertToMapData(exp: Expression): Map[String, String] = exp match {
     case m: CreateMap
-      if m.dataType.acceptsType(MapType(StringType, StringType, valueContainsNull = false)) =>
+      if m.dataType.acceptsType(MapType(StringType(), StringType(), valueContainsNull = false)) =>
       val arrayMap = m.eval().asInstanceOf[ArrayBasedMapData]
       ArrayBasedMapData.toScalaMap(arrayMap).map { case (key, value) =>
         key.toString -> value.toString
@@ -77,7 +77,7 @@ object ExprUtils extends QueryErrorsBase {
       columnNameOfCorruptRecord: String): Unit = {
     schema.getFieldIndex(columnNameOfCorruptRecord).foreach { corruptFieldIndex =>
       val f = schema(corruptFieldIndex)
-      if (f.dataType != StringType || !f.nullable) {
+      if (f.dataType != StringType() || !f.nullable) {
         throw QueryCompilationErrors.invalidFieldTypeForCorruptRecordError()
       }
     }
@@ -110,7 +110,7 @@ object ExprUtils extends QueryErrorsBase {
    */
   def checkJsonSchema(schema: DataType): TypeCheckResult = {
     val isInvalid = schema.existsRecursively {
-      case MapType(keyType, _, _) if keyType != StringType => true
+      case MapType(keyType, _, _) if keyType != StringType() => true
       case _ => false
     }
     if (isInvalid) {
@@ -133,7 +133,7 @@ object ExprUtils extends QueryErrorsBase {
   def checkXmlSchema(schema: DataType): TypeCheckResult = {
     val isInvalid = schema.existsRecursively {
       // XML field names must be StringType
-      case MapType(keyType, _, _) if keyType != StringType => true
+      case MapType(keyType, _, _) if keyType != StringType() => true
       case _ => false
     }
     if (isInvalid) {

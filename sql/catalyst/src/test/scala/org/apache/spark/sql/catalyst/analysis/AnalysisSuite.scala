@@ -50,6 +50,7 @@ import org.apache.spark.sql.util.CaseInsensitiveStringMap
 
 class AnalysisSuite extends AnalysisTest with Matchers {
   import org.apache.spark.sql.catalyst.analysis.TestRelations._
+  override val StringType = org.apache.spark.sql.types.StringType()
 
   test("fail for unresolved plan") {
     intercept[AnalysisException] {

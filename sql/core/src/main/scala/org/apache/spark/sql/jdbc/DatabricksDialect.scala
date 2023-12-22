@@ -47,7 +47,7 @@ private case object DatabricksDialect extends JdbcDialect {
   override def getJDBCType(dt: DataType): Option[JdbcType] = dt match {
     case BooleanType => Some(JdbcType("BOOLEAN", java.sql.Types.BOOLEAN))
     case DoubleType => Some(JdbcType("DOUBLE", java.sql.Types.DOUBLE))
-    case StringType => Some(JdbcType("STRING", java.sql.Types.VARCHAR))
+    case StringType(_) => Some(JdbcType("STRING", java.sql.Types.VARCHAR))
     case BinaryType => Some(JdbcType("BINARY", java.sql.Types.BINARY))
     case _ => None
   }

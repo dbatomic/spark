@@ -4276,7 +4276,7 @@ class Dataset[T] private[sql](
     EvaluatePython.registerPicklers()
     val numRows = _numRows.max(0).min(ByteArrayMethods.MAX_ROUNDED_ARRAY_LENGTH - 1)
     val rows = getRows(numRows, truncate).map(_.toArray).toArray
-    val toJava: (Any) => Any = EvaluatePython.toJava(_, ArrayType(ArrayType(StringType)))
+    val toJava: (Any) => Any = EvaluatePython.toJava(_, ArrayType(ArrayType(StringType())))
     val iter: Iterator[Array[Byte]] = new SerDeUtil.AutoBatchedPickler(
       rows.iterator.map(toJava))
     PythonRDD.serveIterator(iter, "serve-GetRows")

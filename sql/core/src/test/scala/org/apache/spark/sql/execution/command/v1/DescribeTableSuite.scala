@@ -23,7 +23,6 @@ import org.apache.spark.sql.{AnalysisException, QueryTest, Row}
 import org.apache.spark.sql.connector.catalog.CatalogManager.SESSION_CATALOG_NAME
 import org.apache.spark.sql.execution.command
 import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.types.StringType
 
 /**
  * This base suite contains unified tests for the `DESCRIBE TABLE` command that checks V1

@@ -78,7 +78,7 @@ object EvaluatePython {
 
     case (d: Decimal, _) => d.toJavaBigDecimal
 
-    case (s: UTF8String, StringType) => s.toString
+    case (s: UTF8String, StringType(_)) => s.toString
 
     case (other, _) => other
   }
@@ -145,7 +145,7 @@ object EvaluatePython {
         case c: Int => c.toLong
       }
 
-    case StringType => (obj: Any) => nullSafeConvert(obj) {
+    case StringType(_) => (obj: Any) => nullSafeConvert(obj) {
       case _ => UTF8String.fromString(obj.toString)
     }
 

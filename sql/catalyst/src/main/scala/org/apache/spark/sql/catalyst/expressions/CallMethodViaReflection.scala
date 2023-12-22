@@ -77,12 +77,12 @@ case class CallMethodViaReflection(
       )
     } else {
       val unexpectedParameter = children.zipWithIndex.collectFirst {
-        case (e, 0) if !(e.dataType == StringType && e.foldable) =>
+        case (e, 0) if !(e.dataType == StringType() && e.foldable) =>
           DataTypeMismatch(
             errorSubClass = "NON_FOLDABLE_INPUT",
             messageParameters = Map(
               "inputName" -> toSQLId("class"),
-              "inputType" -> toSQLType(StringType),
+              "inputType" -> toSQLType(StringType()),
               "inputExpr" -> toSQLExpr(children.head)
             )
           )
@@ -90,12 +90,12 @@ case class CallMethodViaReflection(
           DataTypeMismatch(
             errorSubClass = "UNEXPECTED_NULL",
             messageParameters = Map("exprName" -> toSQLId("class")))
-        case (e, 1) if !(e.dataType == StringType && e.foldable) =>
+        case (e, 1) if !(e.dataType == StringType() && e.foldable) =>
           DataTypeMismatch(
             errorSubClass = "NON_FOLDABLE_INPUT",
             messageParameters = Map(
               "inputName" -> toSQLId("method"),
-              "inputType" -> toSQLType(StringType),
+              "inputType" -> toSQLType(StringType()),
               "inputExpr" -> toSQLExpr(children(1))
             )
           )
@@ -110,7 +110,7 @@ case class CallMethodViaReflection(
               "paramIndex" -> (idx + 1).toString,
               "requiredType" -> toSQLType(
                 TypeCollection(BooleanType, ByteType, ShortType,
-                  IntegerType, LongType, FloatType, DoubleType, StringType)),
+                  IntegerType, LongType, FloatType, DoubleType, StringType())),
               "inputSql" -> toSQLExpr(e),
               "inputType" -> toSQLType(e.dataType))
           )
@@ -134,7 +134,7 @@ case class CallMethodViaReflection(
   }
 
   override def nullable: Boolean = true
-  override val dataType: DataType = StringType
+  override val dataType: DataType = StringType()
   override protected def initializeInternal(partitionIndex: Int): Unit = {}
 
   override protected def evalInternal(input: InternalRow): Any = {
@@ -190,7 +190,7 @@ object CallMethodViaReflection {
     LongType -> Seq(classOf[java.lang.Long], classOf[Long]),
     FloatType -> Seq(classOf[java.lang.Float], classOf[Float]),
     DoubleType -> Seq(classOf[java.lang.Double], classOf[Double]),
-    StringType -> Seq(classOf[String])
+    StringType() -> Seq(classOf[String])
   )
 
   /**
