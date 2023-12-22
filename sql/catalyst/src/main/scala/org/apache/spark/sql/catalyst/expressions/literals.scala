@@ -236,8 +236,7 @@ object Literal {
           }
         case PhysicalNullType => true
         case PhysicalShortType => v.isInstanceOf[Short]
-        // TODO: Literals are always UTF8?
-        case PhysicalStringType => v.isInstanceOf[UTF8String]
+        case PhysicalStringType(_) => v.isInstanceOf[UTF8String]
         case PhysicalVariantType => v.isInstanceOf[VariantVal]
         case st: PhysicalStructType =>
           v.isInstanceOf[InternalRow] && {

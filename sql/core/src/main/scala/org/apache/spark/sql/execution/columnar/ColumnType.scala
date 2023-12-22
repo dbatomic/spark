@@ -492,7 +492,9 @@ private[columnar] trait DirectCopyColumnType[JvmType] extends ColumnType[JvmType
 }
 
 private[columnar] object STRING // TODO: Collation support here.
-  extends NativeColumnType(PhysicalStringType, 8) with DirectCopyColumnType[UTF8String] {
+// TODO: Once we collation aware column types extend this.
+  extends NativeColumnType(PhysicalStringType("utf8"), 8)
+    with DirectCopyColumnType[UTF8String] {
 
   override def actualSize(row: InternalRow, ordinal: Int): Int = {
     row.getUTF8String(ordinal).numBytes() + 4

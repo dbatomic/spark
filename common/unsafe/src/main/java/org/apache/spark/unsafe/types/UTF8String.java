@@ -56,6 +56,10 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
   private long offset;
   private int numBytes;
 
+  // TODO: Not sure if overhead is going to be too big to keep this as part of UTF8String.
+  // TODO: Investigate what Collator is under the hood (or ICU equivalent).
+  private Collator collator;
+
   public Object getBaseObject() { return base; }
   public long getBaseOffset() { return offset; }
 
@@ -1392,17 +1396,14 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
 
   @Override
   public int compareTo(@Nonnull final UTF8String other) {
-    // Just a prototype. Instead of doing proper byte by byte compare.
-    // here we rely back on Java's String comparison. We need proper plan here!
+    return ByteArray.compareBinary(
+      base, offset, numBytes, other.base, other.offset, other.numBytes);
+  }
 
-    // TODO: Don't do this every time.
-    var collatorCaseInsensitive =
-        java.text.Collator.getInstance(java.util.Locale.forLanguageTag("sr"));
-    // Primary -> case-insensitive
-    // Secondary -> case-sensitive, accent-insensitive
-    // Tertiary -> case-sensitive, accent-sensitive
-    collatorCaseInsensitive.setStrength(Collator.PRIMARY);
-    return collatorCaseInsensitive.compare(this.toString(), other.toString());
+  public int compareToCollation(@Nonnull final UTF8String other, Collator collator) {
+    // Here we do toString (UTF16 conversion) every time, which is expensive.
+    // We should stay in UTF8 and do collation aware comparison with it.
+    return collator.compare(this.toString(), other.toString());
   }
 
   public int compare(final UTF8String other) {
@@ -1412,11 +1413,8 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
   @Override
   public boolean equals(final Object other) {
     if (other instanceof UTF8String o) {
-      if (numBytes != o.numBytes) {
-        return false;
-      }
-      return compareTo(o) == 0;
-      // return ByteArrayMethods.arrayEquals(base, offset, o.base, o.offset, numBytes);
+      // TODO: Collation aware equals. We can't do byte by byte comparison...
+      return ByteArrayMethods.arrayEquals(base, offset, o.base, o.offset, numBytes);
     } else {
       return false;
     }

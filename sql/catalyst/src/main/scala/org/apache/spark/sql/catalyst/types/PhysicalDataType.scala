@@ -17,6 +17,8 @@
 
 package org.apache.spark.sql.catalyst.types
 
+import java.text.Collator
+
 import scala.reflect.runtime.universe.TypeTag
 import scala.reflect.runtime.universe.typeTag
 
@@ -40,9 +42,9 @@ object PhysicalDataType {
     case ShortType => PhysicalShortType
     case IntegerType => PhysicalIntegerType
     case LongType => PhysicalLongType
-    case VarcharType(_) => PhysicalStringType
-    case CharType(_) => PhysicalStringType
-    case StringType(collation) => PhysicalStringType
+    case VarcharType(_) => new PhysicalStringType("utf8") // TODO: Worry about collation later.
+    case CharType(_) => new PhysicalStringType("utf8")
+    case StringType(collation) => new PhysicalStringType(collation)
     case FloatType => PhysicalFloatType
     case DoubleType => PhysicalDoubleType
     case DecimalType.Fixed(p, s) => PhysicalDecimalType(p, s)
@@ -258,15 +260,41 @@ class PhysicalShortType() extends PhysicalIntegralType with PhysicalPrimitiveTyp
 }
 case object PhysicalShortType extends PhysicalShortType
 
-class PhysicalStringType(val collation: String = "utf8") extends PhysicalDataType {
+case class PhysicalStringType(val collation: String = "utf8") extends PhysicalDataType {
   // The companion object and this class is separated so the companion object also subclasses
   // this type. Otherwise, the companion object would be of type "StringType$" in byte code.
   // Defined with a private constructor so the companion object is the only possible instantiation.
-  private[sql] type InternalType = UTF8String // TODO: Do we need different storage type?
-  private[sql] val ordering = implicitly[Ordering[InternalType]]
+  private[sql] type InternalType = UTF8String // TODO: Everything will still be encoded as UTF8
+  // regardless of collation.
+  private[sql] val ordering = collation match {
+    case "utf8" => implicitly[Ordering[InternalType]]
+    case _ => collationAwareOrdering
+  }
+
+  private[sql] lazy val collationAwareOrdering: Ordering[UTF8String] = new Ordering[UTF8String] {
+    // TODO: Collators should probably be cached. We don't want to go through this everytime...
+    // TODO: See how would this map to ICU4j.
+    val collator: Collator = collation.split("-") match {
+      case Array(language, strength) =>
+        val collator = Collator.getInstance(java.util.Locale.forLanguageTag(language))
+        collator.setStrength(strength match {
+          case "primary" => Collator.PRIMARY
+          case "secondary" => Collator.SECONDARY
+          case "tertiary" => Collator.TERTIARY
+          case "identical" => Collator.IDENTICAL
+          case _ => throw QueryExecutionErrors.orderedOperationUnsupportedByDataTypeError(
+            "PhysicalStringType")
+        })
+        collator
+      case _ => throw QueryExecutionErrors.orderedOperationUnsupportedByDataTypeError(
+        "PhysicalStringType")
+    }
+
+    override def compare(x: UTF8String, y: UTF8String): Int = x.compareToCollation(y, collator)
+  }
+
   @transient private[sql] lazy val tag = typeTag[InternalType]
 }
-case object PhysicalStringType extends PhysicalStringType("utf8")
 
 case class PhysicalArrayType(
     elementType: DataType, containsNull: Boolean) extends PhysicalDataType {

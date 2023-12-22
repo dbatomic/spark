@@ -18,7 +18,7 @@
 package org.apache.spark.sql.catalyst
 
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.types._
+import org.apache.spark.sql.catalyst.types.{PhysicalStringType, _}
 import org.apache.spark.sql.catalyst.util.{ArrayData, MapData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.{CalendarInterval, UTF8String}
@@ -141,7 +141,7 @@ object InternalRow {
         case PhysicalFloatType => (input, ordinal) => input.getFloat(ordinal)
         case PhysicalDoubleType => (input, ordinal) => input.getDouble(ordinal)
         // TODO: Collation support.
-        case PhysicalStringType => (input, ordinal) => input.getUTF8String(ordinal)
+        case PhysicalStringType(_) => (input, ordinal) => input.getUTF8String(ordinal)
         case PhysicalBinaryType => (input, ordinal) => input.getBinary(ordinal)
         case PhysicalCalendarIntervalType => (input, ordinal) => input.getInterval(ordinal)
         case t: PhysicalDecimalType => (input, ordinal) =>
