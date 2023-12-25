@@ -30,7 +30,7 @@ class CollationSuite extends QueryTest
     assert(sql("select collation(collate('aaa', 'sr-pr'))").collect()(0).getString(0) == "sr-pr")
   }
 
-  test("collation comparison") {
+  test("collation comparison literals") {
     // Collation pre-read - https://docs.oracle.com/javase/8/docs/api/java/text/Collator.html
     // You can set a Collator's strength property to determine the level of difference considered
     // significant in comparisons.
@@ -74,5 +74,58 @@ class CollationSuite extends QueryTest
       .collect().head.getBoolean(0))
     assert(sql("select collate('ЉЗШЂ', 'sr-tr') = collate('ЉЗШЂ', 'sr-tr')")
       .collect().head.getBoolean(0))
+  }
+
+  test("collation comparison rows") {
+    // Case-insensitive
+    val ret = sql("""
+      SELECT collate(name, 'sr-pr') FROM
+      VALUES('Павле'), ('Зоја'), ('Ивона'), ('Александар'),
+      ('ПАВЛЕ'), ('ЗОЈА'), ('ИВОНА'), ('АЛЕКСАНДАР')
+       as data(name)
+      ORDER BY collate(name, 'sr-pr')
+      """).collect().map(r => r.getString(0))
+
+    assert(ret === Array("АЛЕКСАНДАР", "Александар",
+      "ЗОЈА", "Зоја", "ИВОНА", "Ивона", "ПАВЛЕ", "Павле"))
+  }
+
+  test("group by simple") {
+    val q = sql("""
+      SELECT count(DISTINCT col1) FROM
+      VALUES (collate('a', 'sr-pr')), (collate('A', 'sr-pr'))
+      """)
+
+    q.show()
+
+    // q.explain(true)
+  }
+
+
+  test("collation and group by") {
+    // this doesn't work
+    val q = sql("""
+      with t as (
+        SELECT collate(c, 'sr-pr') as c
+        FROM VALUES
+          ('aaa'), ('bbb'), ('AAA'), ('BBB')
+         as data(c)
+       )
+       select count(*), collation(c) from t  group by c
+      """)
+
+    q.explain(true)
+    // q.show()
+
+    // this works, collation is properly passed.
+    // sql("""
+    //   with t as (
+    //     SELECT collate(c, 'sr-pr') as c
+    //     FROM VALUES
+    //       ('aaa'), ('bbb'), ('AAA'), ('BBB')
+    //      as data(c)
+    //    )
+    //    select collation(c) from t  group by c
+    //   """).show()
   }
 }
