@@ -158,9 +158,9 @@ case class SortPrefix(child: SortOrder) extends UnaryExpression {
       val dVal = raw.asInstanceOf[java.lang.Number].doubleValue()
       DoublePrefixComparator.computePrefix(dVal)
     }
-    case StringType(_) => (raw) =>
-      // TODO: This comparator will be collation sensitive!!!
-      StringPrefixComparator.computePrefix(raw.asInstanceOf[UTF8String])
+    case StringType("utf8") => (raw) =>
+        StringPrefixComparator.computePrefix(raw.asInstanceOf[UTF8String])
+    case StringType(_) => (_) => 0L // no prefix if this is string with collation.
     case BinaryType => (raw) =>
       BinaryPrefixComparator.computePrefix(raw.asInstanceOf[Array[Byte]])
     case dt: DecimalType if dt.precision <= Decimal.MAX_LONG_DIGITS =>
@@ -207,8 +207,8 @@ case class SortPrefix(child: SortOrder) extends UnaryExpression {
         s"(long) $input"
       case FloatType | DoubleType =>
         s"$DoublePrefixCmp.computePrefix((double)$input)"
-        // Collation aware!
-      case StringType(_) => s"$StringPrefixCmp.computePrefix($input)"
+      case StringType("utf8") => s"$StringPrefixCmp.computePrefix($input)"
+      case StringType(_) => "0L"
       case BinaryType => s"$BinaryPrefixCmp.computePrefix($input)"
       case dt: DecimalType if dt.precision < Decimal.MAX_LONG_DIGITS =>
         s"$input.toUnscaledLong()"
