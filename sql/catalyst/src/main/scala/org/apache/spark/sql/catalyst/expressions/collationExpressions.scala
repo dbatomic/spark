@@ -32,6 +32,8 @@ case class Collate(inputString: Expression, collation: Expression)
 
   override def dataType: DataType = StringType(collationEval.toString)
 
+  override def foldable: Boolean = false
+
   // TODO: For now collate accepts only "utf8" default collation.
   // It should work from other collations as well.
   override def inputTypes: Seq[AbstractDataType] = Seq(StringType("utf8"), StringType("utf8"))
@@ -40,7 +42,12 @@ case class Collate(inputString: Expression, collation: Expression)
     newLeft: Expression, newRight: Expression): Expression = copy(newLeft, newRight)
 
   // Just pass through.
-  override def eval(input: InternalRow): Any = left.eval(input)
+  override def eval(input: InternalRow): Any = {
+    val str = left.eval(input).asInstanceOf[UTF8String]
+    val enc = right.eval().asInstanceOf[UTF8String]
+    str.injectCustomComparator(enc.toString)
+    str
+  }
 }
 
 case class Collation(child: Expression) extends UnaryExpression with CodegenFallback {

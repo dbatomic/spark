@@ -26,8 +26,10 @@ class CollationSuite extends QueryTest
 
   test("collate keyword") {
     // Serbian case insensitive ordering
-    assert(sql("select collate('aaa', 'sr-pr')").collect().head.getString(0) == "aaa")
+    assert(sql("select collate('aaa', 'sr-pr')").collect()(0).getString(0) == "aaa")
     assert(sql("select collation(collate('aaa', 'sr-pr'))").collect()(0).getString(0) == "sr-pr")
+    assert(sql("select collate('aaa', 'sr-pr') = collate('AAA', 'sr-pr')")
+      .collect()(0).getBoolean(0))
   }
 
   test("collation comparison literals") {
@@ -86,17 +88,20 @@ class CollationSuite extends QueryTest
       ORDER BY collate(name, 'sr-pr')
       """).collect().map(r => r.getString(0))
 
-    assert(ret === Array("АЛЕКСАНДАР", "Александар",
-      "ЗОЈА", "Зоја", "ИВОНА", "Ивона", "ПАВЛЕ", "Павле"))
+    assert(ret === Array(
+      "Александар", "АЛЕКСАНДАР", "Зоја", "ЗОЈА", "Ивона", "ИВОНА", "Павле", "ПАВЛЕ"))
   }
 
   test("agg simple") {
     assert(sql("""
-      SELECT count(DISTINCT col1) FROM
-      VALUES (collate('a', 'sr-pr')), (collate('A', 'sr-pr'))
+      WITH t AS (
+        SELECT collate(col1, 'sr-pr') as c
+        FROM
+        VALUES ('a'), ('A')
+      )
+      SELECT count(DISTINCT c) FROM t
       """).collect()(0).get(0) == 1)
   }
-
 
   test("collation and group by") {
     val res = sql(
@@ -149,5 +154,43 @@ class CollationSuite extends QueryTest
        select count(*), c from t  group by c
       """).collect().map(r => (r.getLong(0), r.getString(1)))
     assert(res4 === Array((1, "ccc"), (1, "ććć"), (1, "ččč"), (1, "ČČČ")))
+  }
+
+  test("views should propagate collation") {
+    sql(
+      """
+        SELECT collate(c, 'sr-pr') as c
+        FROM VALUES
+          ('ććć'), ('ccc'), ('ččč'), ('ČČČ')
+         as data(c)
+      """).createOrReplaceTempView("V")
+
+    assert(sql("SELECT collation(c) FROM V").collect().head.getString(0) == "sr-pr")
+  }
+
+  test("in operator") {
+    sql(
+      """
+        SELECT collate(c, 'sr-pr') as c
+        FROM VALUES
+          ('ććć'), ('ccc'), ('ččč'), ('ČČČ')
+         as data(c)
+      """).createOrReplaceTempView("V")
+
+    assert(sql("SELECT collate('CCC', 'sr-pr') IN (SELECT c FROM V)").collect().head.getBoolean(0))
+  }
+
+  test("join operator") {
+    // TODO: This still doesn't work.
+    // In physical plan we get BroadcastHashJoin which still isn't collation aware.
+    sql(
+      """
+        SELECT collate(c, 'sr-pr') as c
+        FROM VALUES
+          ('ććć'), ('ccc'), ('ččč'), ('ČČČ')
+         as data(c)
+      """).createOrReplaceTempView("V")
+
+    sql("SELECT * FROM V a JOIN V b ON a.c = b.c").explain(true)
   }
 }
