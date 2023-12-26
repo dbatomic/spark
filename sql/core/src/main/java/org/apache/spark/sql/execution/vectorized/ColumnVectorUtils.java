@@ -73,9 +73,16 @@ public class ColumnVectorUtils {
         col.setFloat(row.getFloat(fieldIdx));
       } else if (pdt instanceof PhysicalDoubleType) {
         col.setDouble(row.getDouble(fieldIdx));
-      } else if (pdt instanceof PhysicalStringType) {
-        UTF8String v = row.getUTF8String(fieldIdx);
-        col.setUtf8String(v);
+      } else if (pdt instanceof PhysicalStringType pst) {
+        if (pst.collation().equals("utf8"))
+        {
+          UTF8String v = row.getUTF8String(fieldIdx);
+          col.setUtf8String(v);
+        } else {
+            UTF8String v = row.getUTF8String(fieldIdx);
+            v.injectCustomComparator(pst.collationAwareOrdering());
+            col.setUtf8String(v);
+        }
       } else if (pdt instanceof PhysicalDecimalType dt) {
         Decimal d = row.getDecimal(fieldIdx, dt.precision(), dt.scale());
         if (dt.precision() <= Decimal.MAX_INT_DIGITS()) {

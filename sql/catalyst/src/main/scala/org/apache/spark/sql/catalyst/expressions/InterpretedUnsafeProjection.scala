@@ -162,13 +162,9 @@ object InterpretedUnsafeProjection {
         case PhysicalBinaryType => (v, i) => writer.write(i, v.getBinary(i))
 
         // TODO: Collation support
-        case PhysicalStringType(collation) if collation == "utf8"
-          => (v, i) => writer.write(i, v.getUTF8String(i))
-        case PhysicalStringType(collation) =>
-          throw SparkException.internalError(
-            s"The data type '${dt.typeName}' using collation '${collation}' is not supported in " +
-              "generating a writer function for a struct field, array " +
-              "element, map key or map value.")
+        case PhysicalStringType("utf8") => (v, i) => writer.write(i, v.getUTF8String(i))
+        case phy @ PhysicalStringType(_) => (v, i) =>
+          writer.write(i, v.getUTF8String(i).injectCustomComparator(phy.collationAwareOrdering))
         case PhysicalVariantType => (v, i) => writer.write(i, v.getVariant(i))
 
         case PhysicalStructType(fields) =>

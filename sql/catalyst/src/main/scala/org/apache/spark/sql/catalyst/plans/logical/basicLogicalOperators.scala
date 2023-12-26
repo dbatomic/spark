@@ -1221,8 +1221,11 @@ object Aggregate {
   }
 
   def supportsHashAggregate(aggregateBufferAttributes: Seq[Attribute]): Boolean = {
-    val aggregationBufferSchema = DataTypeUtils.fromAttributes(aggregateBufferAttributes)
-    isAggregateBufferMutable(aggregationBufferSchema)
+    // Disabling hash agg for now since some work is needed there for non-deterministic collations.
+    // Work has already been done for sort aggs.
+    false
+    // val aggregationBufferSchema = DataTypeUtils.fromAttributes(aggregateBufferAttributes)
+    // isAggregateBufferMutable(aggregationBufferSchema)
   }
 
   def supportsObjectHashAggregate(aggregateExpressions: Seq[AggregateExpression]): Boolean = {

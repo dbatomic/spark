@@ -90,42 +90,64 @@ class CollationSuite extends QueryTest
       "ЗОЈА", "Зоја", "ИВОНА", "Ивона", "ПАВЛЕ", "Павле"))
   }
 
-  test("group by simple") {
-    val q = sql("""
+  test("agg simple") {
+    assert(sql("""
       SELECT count(DISTINCT col1) FROM
       VALUES (collate('a', 'sr-pr')), (collate('A', 'sr-pr'))
-      """)
-
-    q.show()
-
-    // q.explain(true)
+      """).collect()(0).get(0) == 1)
   }
 
 
   test("collation and group by") {
-    // this doesn't work
-    val q = sql("""
+    val res = sql(
+      """
       with t as (
         SELECT collate(c, 'sr-pr') as c
         FROM VALUES
           ('aaa'), ('bbb'), ('AAA'), ('BBB')
          as data(c)
        )
-       select count(*), collation(c) from t  group by c
-      """)
+       select count(*), c from t  group by c
+      """).collect().map(r => (r.getLong(0), r.getString(1)))
+    assert(res === Array((2, "aaa"), (2, "bbb")))
 
-    q.explain(true)
-    // q.show()
+    // accents. All of these will end up in the same group.
+    val res2 = sql(
+      """
+      with t as (
+        SELECT collate(c, 'sr-pr') as c
+        FROM VALUES
+          ('ććć'), ('ccc'), ('ččč'), ('ČČČ')
+         as data(c)
+       )
+       select count(*), c from t  group by c
+      """).collect().map(r => (r.getLong(0), r.getString(1)))
+    assert(res2 === Array((4, "ććć")))
 
-    // this works, collation is properly passed.
-    // sql("""
-    //   with t as (
-    //     SELECT collate(c, 'sr-pr') as c
-    //     FROM VALUES
-    //       ('aaa'), ('bbb'), ('AAA'), ('BBB')
-    //      as data(c)
-    //    )
-    //    select collation(c) from t  group by c
-    //   """).show()
+    // Now look at the secondary characteristics. Look at accents but ignore case.
+    val res3 = sql(
+      """
+      with t as (
+        SELECT collate(c, 'sr-se') as c
+        FROM VALUES
+          ('ććć'), ('ccc'), ('ččč'), ('ČČČ')
+         as data(c)
+       )
+       select count(*), c from t  group by c
+      """).collect().map(r => (r.getLong(0), r.getString(1)))
+    assert(res3 === Array((1, "ccc"), (1, "ććć"), (2, "ččč")))
+
+    // Now teriary characteristics. Look at accents and case.
+    val res4 = sql(
+      """
+      with t as (
+        SELECT collate(c, 'sr-tr') as c
+        FROM VALUES
+          ('ććć'), ('ccc'), ('ččč'), ('ČČČ')
+         as data(c)
+       )
+       select count(*), c from t  group by c
+      """).collect().map(r => (r.getLong(0), r.getString(1)))
+    assert(res4 === Array((1, "ccc"), (1, "ććć"), (1, "ččč"), (1, "ČČČ")))
   }
 }

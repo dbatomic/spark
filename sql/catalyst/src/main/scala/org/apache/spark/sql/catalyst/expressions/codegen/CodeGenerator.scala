@@ -1641,12 +1641,9 @@ object CodeGenerator extends Logging {
         case t: PhysicalDecimalType => s"$input.getDecimal($ordinal, ${t.precision}, ${t.scale})"
         case _: PhysicalMapType => s"$input.getMap($ordinal)"
         case PhysicalNullType => "null"
-        case PhysicalStringType(collation) if collation == "utf8"
-          => s"$input.getUTF8String($ordinal)"
-        case PhysicalStringType(collation) =>
-          // TODO: What is the proper thing to do here?
-          s"$input.getUTF8String($ordinal)"
-          // throw new IllegalArgumentException(s"code gen with collation: $dataType")
+        case PhysicalStringType("utf8") => s"$input.getUTF8String($ordinal)"
+        case phy @ PhysicalStringType(_) =>
+          s"$input.getUTF8String($ordinal).injectCustomComparator(\"${phy.collation}\")"
         case t: PhysicalStructType => s"$input.getStruct($ordinal, ${t.fields.length})"
         case PhysicalVariantType => s"$input.getVariant($ordinal)"
         case _ => s"($jt)$input.get($ordinal, null)"

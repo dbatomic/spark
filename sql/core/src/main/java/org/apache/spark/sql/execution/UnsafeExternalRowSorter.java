@@ -251,7 +251,9 @@ public final class UnsafeExternalRowSorter {
       // into the row.
       row1.pointTo(baseObj1, baseOff1, 0);
       row2.pointTo(baseObj2, baseOff2, 0);
-      return ordering.compare(row1, row2);
+      var ret = ordering.compare(row1, row2);
+      System.out.println("Calling compare on unsafe external row - ret:"  + ret);
+      return ret;
     }
   }
 }

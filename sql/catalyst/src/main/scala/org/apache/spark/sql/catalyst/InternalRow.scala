@@ -140,8 +140,9 @@ object InternalRow {
         case PhysicalLongType => (input, ordinal) => input.getLong(ordinal)
         case PhysicalFloatType => (input, ordinal) => input.getFloat(ordinal)
         case PhysicalDoubleType => (input, ordinal) => input.getDouble(ordinal)
-        // TODO: Collation support.
-        case PhysicalStringType(_) => (input, ordinal) => input.getUTF8String(ordinal)
+        case PhysicalStringType("utf8") => (input, ordinal) => input.getUTF8String(ordinal)
+        case phy @ PhysicalStringType(_) => (input, ordinal) =>
+          input.getUTF8String(ordinal).injectCustomComparator(phy.collationAwareOrdering)
         case PhysicalBinaryType => (input, ordinal) => input.getBinary(ordinal)
         case PhysicalCalendarIntervalType => (input, ordinal) => input.getInterval(ordinal)
         case t: PhysicalDecimalType => (input, ordinal) =>

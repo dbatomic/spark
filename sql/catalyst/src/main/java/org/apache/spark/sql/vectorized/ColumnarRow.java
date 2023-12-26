@@ -72,9 +72,15 @@ public final class ColumnarRow extends InternalRow {
           row.setFloat(i, getFloat(i));
         } else if (pdt instanceof PhysicalDoubleType) {
           row.setDouble(i, getDouble(i));
-        } else if (pdt instanceof PhysicalStringType) {
-          // TODO -> collation support.
-          row.update(i, getUTF8String(i).copy());
+        } else if (pdt instanceof PhysicalStringType pst) {
+          if (pst.collation().equals("utf8"))
+          {
+            row.update(i, getUTF8String(i).copy());
+          }
+          else
+          {
+            row.update(i, getUTF8String(i).injectCustomComparator(pst.collationAwareOrdering()));
+          }
         } else if (pdt instanceof PhysicalBinaryType) {
           row.update(i, getBinary(i));
         } else if (pdt instanceof PhysicalDecimalType t) {

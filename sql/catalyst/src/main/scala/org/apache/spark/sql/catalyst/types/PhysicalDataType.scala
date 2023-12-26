@@ -260,17 +260,18 @@ class PhysicalShortType() extends PhysicalIntegralType with PhysicalPrimitiveTyp
 }
 case object PhysicalShortType extends PhysicalShortType
 
-case class PhysicalStringType(val collation: String = "utf8") extends PhysicalDataType {
+case class PhysicalStringType(collation: String = "utf8") extends PhysicalDataType {
   // The companion object and this class is separated so the companion object also subclasses
   // this type. Otherwise, the companion object would be of type "StringType$" in byte code.
   // Defined with a private constructor so the companion object is the only possible instantiation.
-  private[sql] type InternalType = UTF8String // TODO: Everything will still be encoded as UTF8
+  private[sql] type InternalType = UTF8String
   // regardless of collation.
-  private[sql] val ordering = collation match {
+  @transient private[sql] val ordering = collation match {
     case "utf8" => implicitly[Ordering[InternalType]]
     case _ => collationAwareOrdering
   }
 
+  @transient
   private[sql] lazy val collationAwareOrdering: Ordering[UTF8String] = new Ordering[UTF8String] {
     // TODO: Collators should probably be cached. We don't want to go through this everytime...
     // TODO: See how would this map to ICU4j.
@@ -290,7 +291,12 @@ case class PhysicalStringType(val collation: String = "utf8") extends PhysicalDa
         "PhysicalStringType")
     }
 
-    override def compare(x: UTF8String, y: UTF8String): Int = x.compareToCollation(y, collator)
+    override def compare(x: UTF8String, y: UTF8String): Int = {
+      // noinspection ScalaStyle
+      println("CollationAwareOrdering.compare, comparing " + x + " and " + y + " with collator " +
+        collator + " and strength " + collator.getStrength)
+      x.compareToCollation(y, collator)
+    }
   }
 
   @transient private[sql] lazy val tag = typeTag[InternalType]

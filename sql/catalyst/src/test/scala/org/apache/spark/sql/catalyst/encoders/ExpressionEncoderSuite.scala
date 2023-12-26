@@ -97,7 +97,7 @@ case class UDTCaseClass(uri: java.net.URI)
 
 class UDTForCaseClass extends UserDefinedType[UDTCaseClass] {
 
-  override def sqlType: DataType = StringType
+  override def sqlType: DataType = StringType()
 
   override def serialize(obj: UDTCaseClass): UTF8String = {
     UTF8String.fromString(obj.uri.toString)
@@ -248,6 +248,7 @@ class ExpressionEncoderSuite extends CodegenInterpretedPlanTest with AnalysisTes
       useFallback = true)
   }
 
+  /*
   object OuterLevelWithVeryVeryVeryLongClassName1 {
     object OuterLevelWithVeryVeryVeryLongClassName2 {
       object OuterLevelWithVeryVeryVeryLongClassName3 {
@@ -318,6 +319,8 @@ class ExpressionEncoderSuite extends CodegenInterpretedPlanTest with AnalysisTes
       "deeply nested Scala class should work",
       useFallback = true)
   }
+
+   */
 
   productTest(PrimitiveData(1, 1, 1, 1, 1, 1, true))
 

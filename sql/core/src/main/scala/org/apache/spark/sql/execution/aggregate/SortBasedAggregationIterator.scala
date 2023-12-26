@@ -121,7 +121,17 @@ class SortBasedAggregationIterator(
       val groupingKey = groupingProjection(currentRow)
 
       // Check if the current row belongs the current input row.
-      if (currentGroupingKey == groupingKey) {
+      // It is not valid to call equal here!
+      // Are collations the first scenario that doesn't satisfy property that
+      // byte based equality doesn't imply object equality?
+      val types = groupingAttributes.map(_.dataType).toIndexedSeq
+      val ordering = InterpretedOrdering.forSchema(types)
+
+      val compResult = ordering.compare(currentGroupingKey, groupingKey)
+
+      // TODO: I can't do == here. If there are collations this can't be byte based.
+      // if (currentGroupingKey == groupingKey) {
+      if (compResult == 0) {
         processRow(sortBasedAggregationBuffer, currentRow)
       } else {
         // We find a new group.

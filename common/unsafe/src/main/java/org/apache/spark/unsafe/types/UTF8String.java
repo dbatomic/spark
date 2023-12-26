@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.Collator;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -56,12 +57,55 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
   private long offset;
   private int numBytes;
 
-  // TODO: Not sure if overhead is going to be too big to keep this as part of UTF8String.
-  // TODO: Investigate what Collator is under the hood (or ICU equivalent).
-  private Collator collator;
+  // TODO: This IMO is not an optimal approach.
+  // Comparator should be provided by PhysicalStringType and
+  // UTF8String should be used only for storage (i.e. remove Comparable<> interface).
+  // Given that InternalRow/CodeGen relies on pure UTF8String I am injecting
+  // this custom comparator here for now.
+  private transient Comparator<UTF8String> customComparator = null;
 
   public Object getBaseObject() { return base; }
   public long getBaseOffset() { return offset; }
+
+  public UTF8String injectCustomComparator(Comparator<UTF8String> comparator) {
+    this.customComparator = comparator;
+    return this;
+  }
+
+  public UTF8String injectCustomComparator(String collationName)
+  {
+    if (collationName.equals("utf8"))
+    {
+      customComparator = null;
+    }
+    else
+    {
+      var split = collationName.split("-");
+      if (split.length != 2)
+      {
+          throw new RuntimeException("Invalid collation name: " + collationName);
+      }
+
+      var name = split[0];
+      var strength = split[1];
+      var collator = Collator.getInstance(java.util.Locale.forLanguageTag(name));
+
+      if (strength.equals("pr")) {
+        collator.setStrength(Collator.PRIMARY);
+      } else if (strength.equals("se")) {
+        collator.setStrength(Collator.SECONDARY);
+      } else if (strength.equals("tr")) {
+        collator.setStrength(Collator.TERTIARY);
+      } else if (strength.equals("identical")) {
+        collator.setStrength(Collator.IDENTICAL);
+      } else {
+        throw new RuntimeException("Invalid collation strength: " + strength);
+      }
+
+      customComparator = (a, b) -> collator.compare(a.toString(), b.toString());
+    }
+    return this;
+  }
 
   /**
    * A char in UTF-8 encoding can take 1-4 bytes depending on the first byte which
@@ -178,6 +222,9 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    * bytes in this string.
    */
   public void writeToMemory(Object target, long targetOffset) {
+    if (this.customComparator != null) {
+        throw new RuntimeException("writeToMemory() is not supported when custom comparator is injected");
+    }
     Platform.copyMemory(base, offset, target, targetOffset, numBytes);
   }
 
@@ -198,6 +245,9 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    */
   @Nonnull
   public ByteBuffer getByteBuffer() {
+    if (this.customComparator != null) {
+      throw new RuntimeException("getByteBuffer() is not supported when custom comparator is injected");
+    }
     if (base instanceof byte[] bytes && offset >= BYTE_ARRAY_OFFSET) {
 
       // the offset includes an object header... this is only needed for unsafe copies
@@ -244,6 +294,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    * Returns the number of code points in it.
    */
   public int numChars() {
+    // TODO: This needs to be collation aware.
     int len = 0;
     for (int i = 0; i < numBytes; i += numBytesForFirstByte(getByte(i))) {
       len += 1;
@@ -255,13 +306,27 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    * Returns a 64-bit integer that can be used as the prefix used in sorting.
    */
   public long getPrefix() {
+    if (customComparator != null)
+    {
+      throw new RuntimeException("getPrefix() is not supported when custom comparator is injected");
+    }
     return ByteArray.getPrefix(base, offset, numBytes);
+  }
+
+  public byte[] getBytes() {
+    return getBytes(false);
   }
 
   /**
    * Returns the underline bytes, will be a copy of it if it's part of another array.
    */
-  public byte[] getBytes() {
+  public byte[] getBytes(boolean customComparatorAllowed) {
+    if (customComparator != null && !customComparatorAllowed)
+    {
+      // You don't want to mess with bytes directly when there is a custom comparator.
+      throw new RuntimeException("getBytes() is not supported when custom comparator is injected");
+    }
+
     // avoid copy if `base` is `byte[]`
     if (offset == BYTE_ARRAY_OFFSET && base instanceof byte[] bytes
       && bytes.length == numBytes) {
@@ -508,7 +573,8 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
     int len = end - start + 1;
     byte[] newBytes = new byte[len];
     copyMemory(base, offset + start, newBytes, BYTE_ARRAY_OFFSET, len);
-    return UTF8String.fromBytes(newBytes);
+    var utfStr = UTF8String.fromBytes(newBytes);
+    return utfStr.injectCustomComparator(this.customComparator);
   }
 
   /**
@@ -1380,7 +1446,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
 
   @Override
   public String toString() {
-    return new String(getBytes(), StandardCharsets.UTF_8);
+    return new String(getBytes(true), StandardCharsets.UTF_8);
   }
 
   @Override
@@ -1396,8 +1462,18 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
 
   @Override
   public int compareTo(@Nonnull final UTF8String other) {
-    return ByteArray.compareBinary(
-      base, offset, numBytes, other.base, other.offset, other.numBytes);
+    if (this.customComparator == null) {
+      System.out.println("compareTo default");
+      var res = ByteArray.compareBinary(
+              base, offset, numBytes, other.base, other.offset, other.numBytes);
+      System.out.println("compareTo custom - result: " + res + " - " + this + " - " + other);
+      return res;
+    }
+    else {
+      var res = this.customComparator.compare(this, other);
+      System.out.println("compareTo custom - result: " + res + " - " + this + " - " + other);
+      return res;
+    }
   }
 
   public int compareToCollation(@Nonnull final UTF8String other, Collator collator) {
@@ -1413,8 +1489,15 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
   @Override
   public boolean equals(final Object other) {
     if (other instanceof UTF8String o) {
-      // TODO: Collation aware equals. We can't do byte by byte comparison...
-      return ByteArrayMethods.arrayEquals(base, offset, o.base, o.offset, numBytes);
+      if (this.customComparator == null) {
+        var ret = ByteArrayMethods.arrayEquals(base, offset, o.base, o.offset, numBytes);
+        System.out.println("equals default result: " + ret + " - " + this + " - " + o);
+        return ret;
+      }
+      else {
+        System.out.println("equals custom");
+        return this.customComparator.compare(this, o) == 0;
+      }
     } else {
       return false;
     }
@@ -1581,6 +1664,10 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
 
   @Override
   public int hashCode() {
+    if (this.customComparator != null)
+    {
+      throw new UnsupportedOperationException("hashCode is not supported for custom comparator");
+    }
     return Murmur3_x86_32.hashUnsafeBytes(base, offset, numBytes, 42);
   }
 
@@ -1596,6 +1683,10 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    * https://en.wikipedia.org/wiki/Soundex
    */
   public UTF8String soundex() {
+    if (this.customComparator != null)
+    {
+      throw new UnsupportedOperationException("hashCode is not supported for custom comparator");
+    }
     if (numBytes == 0) {
       return EMPTY_UTF8;
     }
@@ -1654,7 +1745,7 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
 
   @Override
   public void write(Kryo kryo, Output out) {
-    byte[] bytes = getBytes();
+    byte[] bytes = getBytes(true);
     out.writeInt(bytes.length);
     out.write(bytes);
   }

@@ -19,6 +19,7 @@ package org.apache.spark.sql.catalyst.expressions;
 
 import org.apache.spark.sql.catalyst.types.*;
 import org.apache.spark.sql.types.*;
+import org.apache.spark.unsafe.types.UTF8String;
 
 public final class SpecializedGettersReader {
   private SpecializedGettersReader() {}
@@ -54,9 +55,15 @@ public final class SpecializedGettersReader {
     if (physicalDataType instanceof PhysicalDoubleType) {
       return obj.getDouble(ordinal);
     }
-    if (physicalDataType instanceof PhysicalStringType) {
-      // TODO: Collation support.
-      return obj.getUTF8String(ordinal);
+    if (physicalDataType instanceof PhysicalStringType pst) {
+        if (pst.collation().equals("utf8"))
+      {
+        obj.getUTF8String(ordinal);
+      }
+      else
+      {
+        return obj.getUTF8String(ordinal).injectCustomComparator(pst.collationAwareOrdering());
+      }
     }
     if (physicalDataType instanceof PhysicalDecimalType dt) {
       return obj.getDecimal(ordinal, dt.precision(), dt.scale());

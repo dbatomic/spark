@@ -140,7 +140,7 @@ case class CountMinSketchAgg(
         // For string type, we can get bytes of our `UTF8String` directly, and call the `addBinary`
         // instead of `addString` to avoid unnecessary conversion.
         // TODO: Raw byte approach should work regardless of collation?
-        case StringType(_) => buffer.addBinary(value.asInstanceOf[UTF8String].getBytes)
+        case StringType("utf8") => buffer.addBinary(value.asInstanceOf[UTF8String].getBytes)
         case _ => buffer.add(value)
       }
     }

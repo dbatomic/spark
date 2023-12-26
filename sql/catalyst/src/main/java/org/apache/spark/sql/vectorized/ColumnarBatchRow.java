@@ -65,9 +65,19 @@ public final class ColumnarBatchRow extends InternalRow {
           row.setFloat(i, getFloat(i));
         } else if (pdt instanceof PhysicalDoubleType) {
           row.setDouble(i, getDouble(i));
-        } else if (pdt instanceof PhysicalStringType) {
-          // TODO: collation support.
-          row.update(i, getUTF8String(i).copy());
+        } else if (pdt instanceof PhysicalStringType pst) {
+          // TODO: Add a way to quickly check if this is default collation.
+          if (pst.collation().equals("utf8"))
+          {
+            row.update(i, getUTF8String(i).copy());
+          }
+          else
+          {
+            // TODO: Do I need this here? Copy should inherit it anyhow?
+            UTF8String utf8String = getUTF8String(i).copy();
+            utf8String.injectCustomComparator(pst.collationAwareOrdering());
+            row.update(i, utf8String);
+          }
         } else if (pdt instanceof PhysicalBinaryType) {
           row.update(i, getBinary(i));
         } else if (pdt instanceof PhysicalDecimalType t) {
