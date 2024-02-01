@@ -26,7 +26,7 @@ import org.apache.spark.annotation.Stable
  * @param collationId The id of collation for this StringType.
  */
 @Stable
-class StringType private(val collationId: Int) extends AtomicType {
+class StringType private(val collationId: Int) extends AtomicType with Serializable {
   /**
    * The default size of a value of the StringType is 20 bytes.
    */
