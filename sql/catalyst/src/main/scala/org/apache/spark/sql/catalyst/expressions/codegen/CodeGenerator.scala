@@ -39,7 +39,7 @@ import org.apache.spark.sql.catalyst.encoders.HashableWeakReference
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.codegen.Block._
 import org.apache.spark.sql.catalyst.types._
-import org.apache.spark.sql.catalyst.util.{ArrayData, MapData, SQLOrderingUtil, UnsafeRowUtils}
+import org.apache.spark.sql.catalyst.util.{ArrayData, CollationFactory, MapData, SQLOrderingUtil, UnsafeRowUtils}
 import org.apache.spark.sql.catalyst.util.DateTimeConstants.NANOS_PER_MILLIS
 import org.apache.spark.sql.errors.QueryExecutionErrors
 import org.apache.spark.sql.internal.SQLConf
@@ -1489,15 +1489,17 @@ object CodeGenerator extends Logging {
       classOf[TaskContext].getName,
       classOf[TaskKilledException].getName,
       classOf[InputMetrics].getName,
+      classOf[CollationFactory].getName,
       QueryExecutionErrors.getClass.getName.stripSuffix("$")
     )
     evaluator.setExtendedClass(classOf[GeneratedClass])
 
-    logDebug({
-      // Only add extra debugging info to byte code when we are going to print the source code.
-      evaluator.setDebuggingInformation(true, true, false)
-      s"\n${CodeFormatter.format(code)}"
-    })
+    // noinspection ScalaStyle
+    // println({
+    //   // Only add extra debugging info to byte code when we are going to print the source code.
+    //   evaluator.setDebuggingInformation(true, true, false)
+    //   s"\n${CodeFormatter.format(code)}"
+    // })
 
     val codeStats = try {
       evaluator.cook("generated.java", code.body)

@@ -71,6 +71,8 @@ case class Collate(child: Expression, collationName: String)
   override def dataType: DataType = StringType(collationId)
   override def inputTypes: Seq[AbstractDataType] = Seq(StringType)
 
+  override def foldable: Boolean = false
+
   override protected def withNewChildInternal(
     newChild: Expression): Expression = copy(newChild)
 

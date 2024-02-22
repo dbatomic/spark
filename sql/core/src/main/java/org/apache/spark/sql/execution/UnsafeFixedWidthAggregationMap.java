@@ -26,6 +26,9 @@ import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.catalyst.expressions.UnsafeProjection;
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow;
 import org.apache.spark.sql.catalyst.plans.logical.Aggregate$;
+import org.apache.spark.sql.catalyst.util.CollationFactory;
+import org.apache.spark.sql.types.StringType;
+import org.apache.spark.sql.types.StringType$;
 import org.apache.spark.sql.types.StructType;
 import org.apache.spark.unsafe.KVIterator;
 import org.apache.spark.unsafe.Platform;
@@ -63,6 +66,8 @@ public final class UnsafeFixedWidthAggregationMap {
    */
   private final UnsafeRow currentAggregationBuffer;
 
+  private final boolean isBinaryHashSupported;
+
   /**
    * @return true if UnsafeFixedWidthAggregationMap supports aggregation buffers with the given
    *         schema, false otherwise.
@@ -95,6 +100,13 @@ public final class UnsafeFixedWidthAggregationMap {
     this.map = new BytesToBytesMap(
       taskContext.taskMemoryManager(), initialCapacity, pageSizeBytes);
 
+    boolean binaryOpSupport = true;
+    for (int idx = 0; idx < this.groupingKeySchema.length(); idx++) {
+      binaryOpSupport &= UnsafeRow.isBinaryStable(this.groupingKeySchema.apply(idx).dataType());
+    }
+
+    this.isBinaryHashSupported = binaryOpSupport;
+
     // Initialize the buffer for aggregation value
     final UnsafeProjection valueProjection = UnsafeProjection.create(aggregationBufferSchema);
     this.emptyAggregationBuffer = valueProjection.apply(emptyAggregationBuffer).getBytes();
@@ -119,7 +131,12 @@ public final class UnsafeFixedWidthAggregationMap {
   }
 
   public UnsafeRow getAggregationBufferFromUnsafeRow(UnsafeRow key) {
-    return getAggregationBufferFromUnsafeRow(key, key.hashCode());
+    if (this.isBinaryHashSupported) {
+      return getAggregationBufferFromUnsafeRow(key, key.hashCode());
+    } else {
+      // TODO. Hardcoding hash...
+      return getAggregationBufferFromUnsafeRow(key, 42);
+    }
   }
 
   public UnsafeRow getAggregationBufferFromUnsafeRow(UnsafeRow key, int hash) {

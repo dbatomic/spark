@@ -1428,11 +1428,12 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
    */
   @Override
   public boolean equals(final Object other) {
-    if (other instanceof UTF8String o) {
-      return binaryEquals(o);
-    } else {
-      return false;
-    }
+    throw new RuntimeException("Can't call equals on UTF8String!!!");
+    // if (other instanceof UTF8String o) {
+    //   return binaryEquals(o);
+    // } else {
+    //   return false;
+    // }
   }
 
   /**
@@ -1612,6 +1613,11 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
 
   @Override
   public int hashCode() {
+    throw new RuntimeException("Can't call hashCode on UTF8String!!!");
+    // return Murmur3_x86_32.hashUnsafeBytes(base, offset, numBytes, 42);
+  }
+
+  public int binaryHashCode() {
     return Murmur3_x86_32.hashUnsafeBytes(base, offset, numBytes, 42);
   }
 

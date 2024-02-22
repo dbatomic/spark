@@ -81,7 +81,7 @@ public final class CollationFactory {
       this.isBinaryCollation = isBinaryCollation;
 
       if (isBinaryCollation) {
-        this.equalsFunction = UTF8String::equals;
+        this.equalsFunction = UTF8String::binaryEquals;
       } else {
         this.equalsFunction = (s1, s2) -> this.comparator.compare(s1, s2) == 0;
       }
@@ -114,7 +114,7 @@ public final class CollationFactory {
       null,
       UTF8String::binaryCompare,
       "1.0",
-      s -> (long)s.hashCode(),
+      s -> (long)s.binaryHashCode(),
       true);
 
     // Case-insensitive UTF8 binary collation.
@@ -124,7 +124,7 @@ public final class CollationFactory {
       null,
       (s1, s2) -> s1.toLowerCase().binaryCompare(s2.toLowerCase()),
       "1.0",
-      (s) -> (long)s.toLowerCase().hashCode(),
+      (s) -> (long)s.toLowerCase().binaryHashCode(),
       false);
 
     // UNICODE case sensitive comparison (ROOT locale, in ICU).

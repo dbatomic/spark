@@ -72,10 +72,10 @@ object StringUtils extends Logging {
   def getHexString(bytes: Array[Byte]): String = bytes.map("%02X".format(_)).mkString("[", " ", "]")
 
   private[this] val trueStrings =
-    Set("t", "true", "y", "yes", "1").map(UTF8String.fromString)
+    Seq("t", "true", "y", "yes", "1").map(UTF8String.fromString)
 
   private[this] val falseStrings =
-    Set("f", "false", "n", "no", "0").map(UTF8String.fromString)
+    Seq("f", "false", "n", "no", "0").map(UTF8String.fromString)
 
   private[spark] def orderSuggestedIdentifiersBySimilarity(
       baseString: String,

@@ -30,6 +30,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.SparkUnsupportedOperationException;
 import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.catalyst.types.*;
+import org.apache.spark.sql.catalyst.util.CollationFactory;
 import org.apache.spark.sql.types.*;
 import org.apache.spark.unsafe.Platform;
 import org.apache.spark.unsafe.array.ByteArrayMethods;
@@ -93,6 +94,18 @@ public final class UnsafeRow extends InternalRow implements Externalizable, Kryo
     PhysicalDataType pdt = PhysicalDataType.apply(dt);
     return pdt instanceof PhysicalPrimitiveType || pdt instanceof PhysicalDecimalType ||
       pdt instanceof PhysicalCalendarIntervalType;
+  }
+
+  /**
+   * Indicates that binary equality and hash against an UnsafeRow guarantee logical
+   * equality and hash.
+   */
+  public static boolean isBinaryStable(DataType dt) {
+    if (dt instanceof StringType st) {
+      return CollationFactory.fetchCollation(st.collationId()).isBinaryCollation;
+    } else {
+      return true;
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -541,15 +554,17 @@ public final class UnsafeRow extends InternalRow implements Externalizable, Kryo
 
   @Override
   public int hashCode() {
+    // throw new RuntimeException("Can't do hash code on unsafe row");
     return Murmur3_x86_32.hashUnsafeWords(baseObject, baseOffset, sizeInBytes, 42);
   }
 
   @Override
   public boolean equals(Object other) {
     if (other instanceof UnsafeRow o) {
-      return (sizeInBytes == o.sizeInBytes) &&
-        ByteArrayMethods.arrayEquals(baseObject, baseOffset, o.baseObject, o.baseOffset,
-          sizeInBytes);
+      throw new RuntimeException("Can't do equals on unsafe row");
+      // return (sizeInBytes == o.sizeInBytes) &&
+      //   ByteArrayMethods.arrayEquals(baseObject, baseOffset, o.baseObject, o.baseOffset,
+      //     sizeInBytes);
     }
     return false;
   }

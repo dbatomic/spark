@@ -417,6 +417,7 @@ trait Row extends Serializable {
   }
 
   override def equals(o: Any): Boolean = {
+    throw new RuntimeException("Can't do direct comparison in Row.scala")
     if (!o.isInstanceOf[Row]) return false
     val other = o.asInstanceOf[Row]
 
@@ -463,6 +464,7 @@ trait Row extends Serializable {
   }
 
   override def hashCode: Int = {
+    throw new RuntimeException("Can't do direct hash code in Row.scala")
     // Using Scala's Seq hash code implementation.
     var n = 0
     var h = MurmurHash3.seqSeed

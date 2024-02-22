@@ -117,6 +117,8 @@ trait SharedSparkSessionBase
     }
   }
 
+  // TODO: Set partition count to 1!!!
+
   /**
    * Make sure the [[TestSparkSession]] is initialized before any tests are run.
    */

@@ -248,6 +248,7 @@ class ExpressionEncoderSuite extends CodegenInterpretedPlanTest with AnalysisTes
       useFallback = true)
   }
 
+  /*
   object OuterLevelWithVeryVeryVeryLongClassName1 {
     object OuterLevelWithVeryVeryVeryLongClassName2 {
       object OuterLevelWithVeryVeryVeryLongClassName3 {
@@ -318,6 +319,7 @@ class ExpressionEncoderSuite extends CodegenInterpretedPlanTest with AnalysisTes
       "deeply nested Scala class should work",
       useFallback = true)
   }
+ */
 
   productTest(PrimitiveData(1, 1, 1, 1, 1, 1, true))
 

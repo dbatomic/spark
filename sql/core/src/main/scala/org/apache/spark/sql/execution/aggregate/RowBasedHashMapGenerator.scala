@@ -147,9 +147,13 @@ class RowBasedHashMapGenerator(
        |  long h = hash(${groupingKeys.map(_.name).mkString(", ")});
        |  int step = 0;
        |  int idx = (int) h & (numBuckets - 1);
+       |  System.out.println("ATOMIC FOI: Entering findOrInsert");
+       |  System.out.println("ATOMIC FOI: args: " + ${groupingKeys.map(_.name).mkString(", ")});
+       |  System.out.println("ATOMIC FOI: hash: " + h);
        |  while (step < maxSteps) {
        |    // Return bucket index if it's either an empty slot or already contains the key
        |    if (buckets[idx] == -1) {
+       |      System.out.println("ATOMIC FOI: Empty slot - first insert. idx: " + idx);
        |      if (numRows < capacity && !isBatchFull) {
        |        agg_rowWriter.reset();
        |        $resetNullBits
@@ -173,12 +177,14 @@ class RowBasedHashMapGenerator(
        |        return null;
        |      }
        |    } else if (equals(idx, ${groupingKeys.map(_.name).mkString(", ")})) {
+       |      System.out.println("ATOMIC FOI: Hit the equals block. idx: " + idx);
        |      return batch.getValueRow(buckets[idx]);
        |    }
        |    idx = (idx + 1) & (numBuckets - 1);
        |    step++;
        |  }
        |  // Didn't find it
+       |  System.out.println("ATOMIC FOI: Didn't find it. idx: " + idx);
        |  return null;
        |}
      """.stripMargin

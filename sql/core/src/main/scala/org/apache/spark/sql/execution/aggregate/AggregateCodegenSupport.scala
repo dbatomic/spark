@@ -84,6 +84,9 @@ trait AggregateCodegenSupport
     // ImperativeAggregate are not supported right now
     isMutableAggBuffer &&
       !aggregateExpressions.exists(_.aggregateFunction.isInstanceOf[ImperativeAggregate])
+
+    // let's force this for debugging!
+    false
   }
 
   override def inputRDDs(): Seq[RDD[InternalRow]] = {

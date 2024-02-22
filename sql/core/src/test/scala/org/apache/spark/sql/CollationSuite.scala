@@ -18,10 +18,12 @@
 package org.apache.spark.sql
 
 import org.apache.spark.SparkException
+
 import org.apache.spark.sql.catalyst.ExtendedAnalysisException
 import org.apache.spark.sql.catalyst.util.CollationFactory
 import org.apache.spark.sql.test.SharedSparkSession
-import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.util.ArrayImplicits.SparkArrayOps
 
 class CollationSuite extends QueryTest with SharedSparkSession {
   test("collate returns proper type") {
@@ -173,5 +175,69 @@ class CollationSuite extends QueryTest with SharedSparkSession {
           sql(s"select collate('$left', '$collationName') < collate('$right', '$collationName')"),
           Row(expected))
     }
+  }
+
+  test("shuffle respects collation") {
+    val in = Array[Row](Row.apply("bbb"), Row.apply("BBB"), Row.apply("aaa"), Row.apply("AAA"))
+      .toImmutableArraySeq
+    val schema = StructType(StructField("col", StringType(1)) :: Nil)
+    val df = spark.createDataFrame(sparkContext.parallelize(in), schema)
+
+    df.repartition(5, df.col("col")).explain(true)
+
+    df.repartition(5, df.col("col")).foreachPartition((p: Iterator[Row]) => {
+      p.map(r => r.getString(0)).toArray match {
+        case Array("bbb", "BBB") => // ok
+        case Array("aaa", "AAA") => // ok
+        case Array() => // ok
+        case _ => assert(false, s"Invalid partition - ${p.mkString(",")} ")
+      }
+      ()
+    })
+  }
+
+  test("agg single partition") {
+    val in = Array[Row](Row.apply("aaa"), Row.apply("AAA"), Row.apply("bbb")).toImmutableArraySeq
+    val schema = StructType(StructField("col", StringType(1)) :: Nil)
+    val df = spark.createDataFrame(sparkContext.parallelize(in), schema)
+
+    // This is fine!
+    // |col|count|
+    // +---+-----+
+    // |bbb|    1|
+    // |aaa|    2|
+    // +---+-----+
+    df.repartition(10, df.col("col")).groupBy(df.col("col")).count().show()
+
+    // This is not ok!
+    // +---+-----+
+    // |col|count|
+    // +---+-----+
+    // |aaa|    1|
+    // |bbb|    1|
+    // |AAA|    1|
+    // +---+-----+
+    df.groupBy(df.col("col")).count().show()
+  }
+
+  test("understanding distribute by") {
+    sql("""
+  WITH t AS (
+  SELECT collate(col1, 'UCS_BASIC_LCASE') as c
+  FROM VALUES ('aaa'), ('AAA')
+)
+SELECT COUNT(*), c FROM t GROUP BY c
+""").show()
+  }
+
+  test("aggregates respect collation") {
+    checkAnswer(sql(
+      """
+      WITH t AS (
+      SELECT collate(col1, 'UCS_BASIC_LCASE') as c
+      FROM VALUES ('aaa'), ('AAA')
+  )
+  SELECT COUNT(*), c FROM t GROUP BY c
+  """), Seq(Row(2, "aaa")))
   }
 }

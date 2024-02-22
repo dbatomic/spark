@@ -149,6 +149,8 @@ trait BaseGenericInternalRow extends InternalRow {
               val b = java.lang.Double.doubleToLongBits(d)
               (b ^ (b >>> 32)).toInt
             case a: Array[Byte] => java.util.Arrays.hashCode(a)
+            // TODO: This doesn't respect collation!!!
+            case u: UTF8String => u.binaryHashCode()
             case other => other.hashCode()
           }
         }

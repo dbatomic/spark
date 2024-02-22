@@ -405,11 +405,28 @@ abstract class HashExpression[E] extends Expression {
     s"$result = $hasherClassName.hashInt($input.months, $microsecondsHash);"
   }
 
-  protected def genHashString(input: String, result: String): String = {
-    val baseObject = s"$input.getBaseObject()"
-    val baseOffset = s"$input.getBaseOffset()"
-    val numBytes = s"$input.numBytes()"
-    s"$result = $hasherClassName.hashUnsafeBytes($baseObject, $baseOffset, $numBytes, $result);"
+  protected def genHashString(
+   ctx: CodegenContext, input: String, result: String, stringType: StringType): String = {
+    // TODO: These bytes are from UnsafeRow representation.
+    // Hence, this is not doing the right thing!
+    if (stringType.isDefaultCollation) {
+      val baseObject = s"$input.getBaseObject()"
+      val baseOffset = s"$input.getBaseOffset()"
+      val numBytes = s"$input.numBytes()"
+      s"$result = $hasherClassName.hashUnsafeBytes($baseObject, $baseOffset, $numBytes, $result);"
+    } else {
+
+      s"""
+        System.out.println("ATOMIC SAYS: Input is" + $input);
+        long abcHash = CollationFactory.fetchCollation(${stringType.collationId})
+          .hashFunction.applyAsLong($input);
+        System.out.println("ATOMIC SAYS: hash is" + abcHash);
+        $result = (int)abcHash;
+      """
+    }
+    // genHashLong(s"CollationFactory.fetchCollation(${stringType.collationId})" +
+    //     s".hashFunction.applyAsLong($input)", result)
+    // }
   }
 
   protected def genHashForMap(
@@ -491,7 +508,7 @@ abstract class HashExpression[E] extends Expression {
     case _: DayTimeIntervalType => genHashLong(input, result)
     case _: YearMonthIntervalType => genHashInt(input, result)
     case BinaryType => genHashBytes(input, result)
-    case StringType => genHashString(input, result)
+    case st: StringType => genHashString(ctx, input, result, st)
     case ArrayType(et, containsNull) => genHashForArray(ctx, input, result, et, containsNull)
     case MapType(kt, vt, valueContainsNull) =>
       genHashForMap(ctx, input, result, kt, vt, valueContainsNull)
@@ -545,8 +562,11 @@ abstract class InterpretedHashFunction {
       case c: CalendarInterval => hashInt(c.months, hashInt(c.days, hashLong(c.microseconds, seed)))
       case a: Array[Byte] =>
         hashUnsafeBytes(a, Platform.BYTE_ARRAY_OFFSET, a.length, seed)
-      case s: UTF8String =>
+      case s: UTF8String if dataType.asInstanceOf[StringType].isDefaultCollation =>
+        // TODO: Need to account for collation!!!
         hashUnsafeBytes(s.getBaseObject, s.getBaseOffset, s.numBytes(), seed)
+    case s: UTF8String =>
+        42
 
       case array: ArrayData =>
         val elementType = dataType match {
@@ -788,11 +808,22 @@ case class HiveHash(children: Seq[Expression]) extends HashExpression[Int] {
       $result = (int) ${HiveHashFunction.getClass.getName.stripSuffix("$")}.hashTimestamp($input);
      """
 
-  override protected def genHashString(input: String, result: String): String = {
-    val baseObject = s"$input.getBaseObject()"
-    val baseOffset = s"$input.getBaseOffset()"
-    val numBytes = s"$input.numBytes()"
-    s"$result = $hasherClassName.hashUnsafeBytes($baseObject, $baseOffset, $numBytes);"
+  override protected def genHashString(
+    ctx: CodegenContext, input: String, result: String, stringType: StringType): String = {
+    if (stringType.isDefaultCollation) {
+      val baseObject = s"$input.getBaseObject()"
+      val baseOffset = s"$input.getBaseOffset()"
+      val numBytes = s"$input.numBytes()"
+      s"$result = $hasherClassName.hashUnsafeBytes($baseObject, $baseOffset, $numBytes);"
+    } else {
+      s"""
+          println("ATOMIC SAYS: Input is" + $input);
+          long abcHash = CollationFactory.fetchCollation(${stringType.collationId})
+            .hashFunction.applyAsLong($input);
+          println("ATOMIC SAYS: hash is" + abcHash);
+          $result = abcHash;
+      """
+    }
   }
 
   override protected def genHashForArray(

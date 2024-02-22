@@ -659,7 +659,10 @@ case class HashAggregateExec(
       s"""
          |// generate grouping key
          |${unsafeRowKeyCode.code}
-         |int $unsafeRowKeyHash = ${unsafeRowKeyCode.value}.hashCode();
+         |// int $unsafeRowKeyHash = ${unsafeRowKeyCode.value}.hashCode();
+         |int $unsafeRowKeyHash = 42;
+         |         | // ATOMIC TODO: for collations we can't rely on unsafe key hash.
+         | // Or why would we ever rely on it?
          |if ($checkFallbackForBytesToBytesMap) {
          |  // try to get the buffer from hash map
          |  $unsafeRowBuffer =
