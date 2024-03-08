@@ -106,48 +106,58 @@ public final class CollationFactory {
     }
   }
 
-  private static final Collation[] collationTable = new Collation[4];
+  // private static final ThreadLocal<Collation[]> collationTable = new ThreadLocal<>(Collation[4]);
+  private static final ThreadLocal<Collation[]> collationTable = new ThreadLocal<>() {
+    @Override
+    protected Collation[] initialValue() {
+      var collationTable = new Collation[4];
+
+      // Binary comparison. This is the default collation.
+      // No custom comparators will be used for this collation.
+      // Instead, we rely on byte for byte comparison.
+      collationTable[0] = new Collation(
+              "UCS_BASIC",
+              null,
+              UTF8String::binaryCompare,
+              "1.0",
+              s -> (long)s.hashCode(),
+              true);
+
+      // Case-insensitive UTF8 binary collation.
+      // TODO: Do in place comparisons instead of creating new strings.
+      collationTable[1] = new Collation(
+              "UCS_BASIC_LCASE",
+              null,
+              (s1, s2) -> s1.toLowerCase().binaryCompare(s2.toLowerCase()),
+              "1.0",
+              (s) -> (long)s.toLowerCase().hashCode(),
+              false);
+
+      // UNICODE case sensitive comparison (ROOT locale, in ICU).
+      collationTable[2] = new Collation(
+              "UNICODE", Collator.getInstance(ULocale.ROOT), "153.120.0.0", true);
+      collationTable[2].collator.setStrength(Collator.TERTIARY);
+
+      // UNICODE case-insensitive comparison (ROOT locale, in ICU + Secondary strength).
+      collationTable[3] = new Collation(
+              "UNICODE_CI", Collator.getInstance(ULocale.ROOT), "153.120.0.0", false);
+      collationTable[3].collator.setStrength(Collator.SECONDARY);
+
+      return collationTable;
+    }
+  };
+
   private static final HashMap<String, Integer> collationNameToIdMap = new HashMap<>();
+
+  static {
+    collationNameToIdMap.put("UCS_BASIC", 0);
+    collationNameToIdMap.put("UCS_BASIC_LCASE", 1);
+    collationNameToIdMap.put("UNICODE", 2);
+    collationNameToIdMap.put("UNICODE_CI", 3);
+  }
 
   public static final int DEFAULT_COLLATION_ID = 0;
   public static final int LOWERCASE_COLLATION_ID = 1;
-
-  static {
-    // Binary comparison. This is the default collation.
-    // No custom comparators will be used for this collation.
-    // Instead, we rely on byte for byte comparison.
-    collationTable[0] = new Collation(
-      "UCS_BASIC",
-      null,
-      UTF8String::binaryCompare,
-      "1.0",
-      s -> (long)s.hashCode(),
-      true);
-
-    // Case-insensitive UTF8 binary collation.
-    // TODO: Do in place comparisons instead of creating new strings.
-    collationTable[1] = new Collation(
-      "UCS_BASIC_LCASE",
-      null,
-      (s1, s2) -> s1.toLowerCase().binaryCompare(s2.toLowerCase()),
-      "1.0",
-      (s) -> (long)s.toLowerCase().hashCode(),
-      false);
-
-    // UNICODE case sensitive comparison (ROOT locale, in ICU).
-    collationTable[2] = new Collation(
-      "UNICODE", Collator.getInstance(ULocale.ROOT), "153.120.0.0", true);
-    collationTable[2].collator.setStrength(Collator.TERTIARY);
-
-    // UNICODE case-insensitive comparison (ROOT locale, in ICU + Secondary strength).
-    collationTable[3] = new Collation(
-      "UNICODE_CI", Collator.getInstance(ULocale.ROOT), "153.120.0.0", false);
-    collationTable[3].collator.setStrength(Collator.SECONDARY);
-
-    for (int i = 0; i < collationTable.length; i++) {
-      collationNameToIdMap.put(collationTable[i].collationName, i);
-    }
-  }
 
   /**
    * Auxiliary methods for collation aware string operations.
@@ -171,7 +181,7 @@ public final class CollationFactory {
     if (collationNameToIdMap.containsKey(normalizedName)) {
       return collationNameToIdMap.get(normalizedName);
     } else {
-      Collation suggestion = Collections.min(List.of(collationTable), Comparator.comparingInt(
+      Collation suggestion = Collections.min(List.of(collationTable.get()), Comparator.comparingInt(
         c -> UTF8String.fromString(c.collationName).levenshteinDistance(
           UTF8String.fromString(normalizedName))));
 
@@ -185,11 +195,11 @@ public final class CollationFactory {
   }
 
   public static Collation fetchCollation(int collationId) {
-    return collationTable[collationId];
+    return collationTable.get()[collationId];
   }
 
   public static Collation fetchCollation(String collationName) throws SparkException {
     int collationId = collationNameToId(collationName);
-    return collationTable[collationId];
+    return collationTable.get()[collationId];
   }
 }

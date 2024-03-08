@@ -388,30 +388,34 @@ class CollationSuite extends DatasourceV2SQLBase with AdaptiveSparkPlanHelper {
   }
 
   test("aggregates count respects collation") {
-    Seq(
-      ("ucs_basic", Seq("AAA", "aaa"), Seq(Row(1, "AAA"), Row(1, "aaa"))),
-      ("ucs_basic", Seq("aaa", "aaa"), Seq(Row(2, "aaa"))),
-      ("ucs_basic", Seq("aaa", "bbb"), Seq(Row(1, "aaa"), Row(1, "bbb"))),
-      ("ucs_basic_lcase", Seq("aaa", "aaa"), Seq(Row(2, "aaa"))),
-      ("ucs_basic_lcase", Seq("AAA", "aaa"), Seq(Row(2, "AAA"))),
-      ("ucs_basic_lcase", Seq("aaa", "bbb"), Seq(Row(1, "aaa"), Row(1, "bbb"))),
-      ("unicode", Seq("AAA", "aaa"), Seq(Row(1, "AAA"), Row(1, "aaa"))),
-      ("unicode", Seq("aaa", "aaa"), Seq(Row(2, "aaa"))),
-      ("unicode", Seq("aaa", "bbb"), Seq(Row(1, "aaa"), Row(1, "bbb"))),
-      ("unicode_CI", Seq("aaa", "aaa"), Seq(Row(2, "aaa"))),
-      ("unicode_CI", Seq("AAA", "aaa"), Seq(Row(2, "AAA"))),
-      ("unicode_CI", Seq("aaa", "bbb"), Seq(Row(1, "aaa"), Row(1, "bbb")))
-    ).foreach {
-      case (collationName: String, input: Seq[String], expected: Seq[Row]) =>
-        checkAnswer(sql(
-          s"""
-          with t as (
-          select collate(col1, '$collationName') as c
-          from
-          values ${input.map(s => s"('$s')").mkString(", ")}
-        )
-        SELECT COUNT(*), c FROM t GROUP BY c
-        """), expected)
+    for (i <- 1 to 100) {
+      Seq(
+        // ("ucs_basic", Seq("AAA", "aaa"), Seq(Row(1, "AAA"), Row(1, "aaa"))),
+        // ("ucs_basic", Seq("aaa", "aaa"), Seq(Row(2, "aaa"))),
+        // ("ucs_basic", Seq("aaa", "bbb"), Seq(Row(1, "aaa"), Row(1, "bbb"))),
+        // ("ucs_basic_lcase", Seq("aaa", "aaa"), Seq(Row(2, "aaa"))),
+        // ("ucs_basic_lcase", Seq("AAA", "aaa"), Seq(Row(2, "AAA"))),
+        // ("ucs_basic_lcase", Seq("aaa", "bbb"), Seq(Row(1, "aaa"), Row(1, "bbb"))),
+        ("unicode", Seq("AAA", "aaa"), Seq(Row(1, "AAA"), Row(1, "aaa"))),
+        ("unicode", Seq("aaa", "aaa"), Seq(Row(2, "aaa"))),
+        ("unicode", Seq("aaa", "bbb"), Seq(Row(1, "aaa"), Row(1, "bbb"))),
+        ("unicode_CI", Seq("aaa", "aaa"), Seq(Row(2, "aaa"))),
+        ("unicode_CI", Seq("AAA", "aaa"), Seq(Row(2, "AAA"))),
+        ("unicode_CI", Seq("aaa", "bbb"), Seq(Row(1, "aaa"), Row(1, "bbb")))
+      ).foreach {
+        case (collationName: String, input: Seq[String], expected: Seq[Row]) =>
+          // noinspection ScalaStyle
+          println("pass " + i)
+          checkAnswer(sql(
+            s"""
+            with t as (
+            select collate(col1, '$collationName') as c
+            from
+            values ${input.map(s => s"('$s')").mkString(", ")}
+          )
+          SELECT COUNT(*), c FROM t GROUP BY c
+          """), expected)
+      }
     }
   }
 
