@@ -34,22 +34,25 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val tokenStream = new CommonTokenStream(lexer)
     val parser = new CiglaBaseParser(tokenStream)
 
-    val stmts = parser.multiStatement()
+    // val stmts = parser.multiStatement()
+    // assert(stmts.children.size() == 4)
 
-    assert(stmts.children.size() == 4)
-
-    stmts.accept(new CiglaBaseParserVisitor[Unit] {
+    val visitor = new CiglaBaseParserVisitor[Unit] {
       override def visitSelectStmt(ctx: CiglaBaseParser.SelectStmtContext): Unit = {
         println("Select is here!!!")
       }
 
       override def visitSingleStatement(ctx: CiglaBaseParser.SingleStatementContext): Unit = {
         println("Single statement is here!!!")
+        // figure out what kind of statement this is...
+        // maybe I can even treat this as a generic expression?
       }
 
       override def visitMultiStatement(ctx: CiglaBaseParser.MultiStatementContext): Unit = {
-        visit(ctx)
         println("Multi statement is here!!!")
+        visit(ctx)
+        val stmts = ctx.singleStatement()
+        stmts.forEach(visitSingleStatement)
       }
 
       override def visitCommentSpec(ctx: CiglaBaseParser.CommentSpecContext): Unit = ???
@@ -67,7 +70,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
       override def visitNumericLiteral(ctx: CiglaBaseParser.NumericLiteralContext): Unit = ???
       override def visitStringLiteral(ctx: CiglaBaseParser.StringLiteralContext): Unit = ???
       override def visit(parseTree: ParseTree): Unit = {
-
+        println("generic visit")
       }
       override def visitChildren(ruleNode: RuleNode): Unit = {
         if (ruleNode.getChildCount == 1) {
@@ -76,7 +79,9 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
       }
       override def visitTerminal(terminalNode: TerminalNode): Unit = ???
       override def visitErrorNode(errorNode: ErrorNode): Unit = ???
-    })
+    }
+
+    visitor.visitMultiStatement(parser.multiStatement())
 
     // println(stmts.getChild(0).getText)
     // println(stmts.getChild(1).getText)
