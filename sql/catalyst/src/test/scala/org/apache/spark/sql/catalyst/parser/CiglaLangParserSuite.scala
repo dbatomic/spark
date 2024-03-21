@@ -38,12 +38,17 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     // assert(stmts.children.size() == 4)
 
     val visitor = new CiglaBaseParserVisitor[Unit] {
-      override def visitSelectStmt(ctx: CiglaBaseParser.SelectStmtContext): Unit = {
-        println("Select is here!!!")
-      }
-
       override def visitSingleStatement(ctx: CiglaBaseParser.SingleStatementContext): Unit = {
         println("Single statement is here!!!")
+
+        // use index to get original text.
+        val start = ctx.start.getStartIndex
+        val stop = ctx.stop.getStopIndex
+
+        val command = batch.substring(start, stop + 1)
+        println("Command found is: " + command)
+
+        // insert query text of original string!
         // figure out what kind of statement this is...
         // maybe I can even treat this as a generic expression?
       }

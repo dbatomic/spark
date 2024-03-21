@@ -4,17 +4,13 @@ options { tokenVocab = CiglaBaseLexer; }
 
 
 singleStatement
-    : selectStmt
+    : SELECT multipartIdentifier
+    | SELECT constant
+    | INSERT constant
     ;
 
 multiStatement
     : (singleStatement SEMICOLON)*
-    ;
-
-selectStmt
-    : SELECT multipartIdentifier
-    | SELECT constant
-    | INSERT constant
     ;
 
 commentSpec
