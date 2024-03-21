@@ -8,11 +8,13 @@ singleStatement
     ;
 
 multiStatement
-    : singleStatement SEMICOLON*
+    : (singleStatement SEMICOLON)*
     ;
 
 selectStmt
     : SELECT multipartIdentifier
+    | SELECT constant
+    | INSERT constant
     ;
 
 commentSpec
@@ -47,4 +49,15 @@ quotedIdentifier
 
 backQuotedIdentifier
     : BACKQUOTED_IDENTIFIER
+    ;
+
+number
+    : MINUS? INTEGER_VALUE            #integerLiteral
+    ;
+
+constant
+    : NULL                                                                                     #nullLiteral
+    | COLON identifier                                                                         #namedParameterLiteral
+    | number                                                                                   #numericLiteral
+    | stringLit+                                                                               #stringLiteral
     ;
