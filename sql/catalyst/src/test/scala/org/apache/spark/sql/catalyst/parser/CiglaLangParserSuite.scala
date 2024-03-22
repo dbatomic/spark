@@ -18,10 +18,8 @@
 package org.apache.spark.sql.catalyst.parser
 
 import scala.collection.mutable.ArrayBuffer
-import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
-import org.antlr.v4.runtime.tree.{ErrorNode, ParseTree, RuleNode, TerminalNode}
 import org.apache.spark.SparkFunSuite
 
 import org.apache.spark.sql.catalyst.plans.SQLHelper
@@ -46,32 +44,13 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val tokenStream = new CommonTokenStream(lexer)
     val parser = new CiglaBaseParser(tokenStream)
 
-    val visitor = new CiglaBaseParserVisitor[AnyRef] {
-      override def visitSingleStatement(ctx: CiglaBaseParser.SingleStatementContext): SingleStatement  = {
-        val start = ctx.start.getStartIndex
-        val stop = ctx.stop.getStopIndex
-        val command = batch.substring(start, stop + 1)
-        SingleStatement(command)
-      }
+    val astBuilder = CiglaLangBuilder(batch)
+    val tree = astBuilder.visitMultiStatement(parser.multiStatement())
 
-      override def visitMultiStatement(ctx: CiglaBaseParser.MultiStatementContext): MultiStatement  = {
-        val stmts = ctx.singleStatement()
-        MultiStatement(stmts.asScala.map(visitSingleStatement).asInstanceOf[ArrayBuffer[SingleStatement]])
-      }
-
-      override def visit(parseTree: ParseTree): AnyRef = ???
-      override def visitChildren(ruleNode: RuleNode): AnyRef = ???
-      override def visitTerminal(terminalNode: TerminalNode): AnyRef = ???
-      override def visitErrorNode(errorNode: ErrorNode): AnyRef = ???
-      override def visitStatementBody(ctx: CiglaBaseParser.StatementBodyContext): AnyRef = ???
-      override def visitStringLitOrIdentifierOrConstant(
-        ctx: CiglaBaseParser.StringLitOrIdentifierOrConstantContext): AnyRef = ???
+    batch.split(";").zip(tree.statements).foreach {
+      case (expected, actual) => assert(expected.trim === actual.command.trim)
     }
 
-    val tree = visitor.visitMultiStatement(parser.multiStatement())
-
-    batch.split(";").zip(tree.statements).foreach { case (expected, actual) =>
-      assert(expected.trim === actual.command.trim)
-    }
+    // TODO: how to execute these commands?
   }
 }
