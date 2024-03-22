@@ -49,9 +49,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
       override def visitSingleStatement(ctx: CiglaBaseParser.SingleStatementContext): SingleStatement  = {
         val start = ctx.start.getStartIndex
         val stop = ctx.stop.getStopIndex
-
         val command = batch.substring(start, stop + 1)
-
         SingleStatement(command)
       }
 
