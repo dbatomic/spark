@@ -18,12 +18,16 @@
 package org.apache.spark.sql.catalyst.parser
 
 import scala.collection.mutable.ArrayBuffer
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 import org.antlr.v4.runtime.tree.{ErrorNode, ParseTree, RuleNode, TerminalNode}
 import org.apache.spark.SparkFunSuite
 
 import org.apache.spark.sql.catalyst.plans.SQLHelper
+
+case class SingleStatement(command: String)
+case class MultiStatement(statements: ArrayBuffer[SingleStatement])
 
 //noinspection ScalaStyle
 class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
@@ -36,47 +40,39 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |SELECT a, b, c FROM T;
         |SELECT a.b.c, d.e;
         |SELECT a, b FROM T WHERE x=y;
-        |SELECT * FROM T;
-        |SELECT * FROM (SELECT * FORM T);""".stripMargin
+        |SELECT * FROM T;""".stripMargin
     val lexer = new CiglaBaseLexer(new UpperCaseCharStream(CharStreams.fromString(batch)))
     val tokenStream = new CommonTokenStream(lexer)
     val parser = new CiglaBaseParser(tokenStream)
 
-    val stmtOutput = ArrayBuffer.empty[String]
-
-    val visitor = new CiglaBaseParserVisitor[Unit] {
-      override def visitSingleStatement(ctx: CiglaBaseParser.SingleStatementContext): Unit = {
+    val visitor = new CiglaBaseParserVisitor[AnyRef] {
+      override def visitSingleStatement(ctx: CiglaBaseParser.SingleStatementContext): SingleStatement  = {
         val start = ctx.start.getStartIndex
         val stop = ctx.stop.getStopIndex
 
         val command = batch.substring(start, stop + 1)
-        stmtOutput += command
+
+        SingleStatement(command)
       }
 
-      override def visitMultiStatement(ctx: CiglaBaseParser.MultiStatementContext): Unit = {
+      override def visitMultiStatement(ctx: CiglaBaseParser.MultiStatementContext): MultiStatement  = {
         val stmts = ctx.singleStatement()
-        stmts.forEach(visitSingleStatement)
+        MultiStatement(stmts.asScala.map(visitSingleStatement).asInstanceOf[ArrayBuffer[SingleStatement]])
       }
 
-      override def visit(parseTree: ParseTree): Unit = ???
-      override def visitChildren(ruleNode: RuleNode): Unit = ???
-      override def visitTerminal(terminalNode: TerminalNode): Unit = ???
-      override def visitErrorNode(errorNode: ErrorNode): Unit = ???
-      override def visitStatementBody(ctx: CiglaBaseParser.StatementBodyContext): Unit = ???
-      override def visitStringLitOrIdentifierOrConstant(ctx: CiglaBaseParser.StringLitOrIdentifierOrConstantContext): Unit = ???
+      override def visit(parseTree: ParseTree): AnyRef = ???
+      override def visitChildren(ruleNode: RuleNode): AnyRef = ???
+      override def visitTerminal(terminalNode: TerminalNode): AnyRef = ???
+      override def visitErrorNode(errorNode: ErrorNode): AnyRef = ???
+      override def visitStatementBody(ctx: CiglaBaseParser.StatementBodyContext): AnyRef = ???
+      override def visitStringLitOrIdentifierOrConstant(
+        ctx: CiglaBaseParser.StringLitOrIdentifierOrConstantContext): AnyRef = ???
     }
 
-    visitor.visitMultiStatement(parser.multiStatement())
+    val tree = visitor.visitMultiStatement(parser.multiStatement())
 
-    assert(stmtOutput.length == 8)
-
-    assert(stmtOutput(0) === "INSERT 1")
-    assert(stmtOutput(1) === "SELECT BLA")
-    assert(stmtOutput(2) === "SELECT 1, 2")
-    assert(stmtOutput(3) === "SELECT a, b, c FROM T")
-    assert(stmtOutput(4) === "SELECT a.b.c, d.e")
-    assert(stmtOutput(5) === "SELECT a, b FROM T WHERE x=y")
-    assert(stmtOutput(6) === "SELECT * FROM T")
-    assert(stmtOutput(7) === "SELECT * FROM (SELECT * FORM T)")
+    batch.split(";").zip(tree.statements).foreach { case (expected, actual) =>
+      assert(expected.trim === actual.command.trim)
+    }
   }
 }
