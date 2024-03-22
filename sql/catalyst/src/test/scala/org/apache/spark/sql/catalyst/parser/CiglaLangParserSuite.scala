@@ -31,7 +31,9 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val batch =
       """
         |INSERT 1;
-        |SELECT BLA;""".stripMargin
+        |SELECT BLA;
+        |SELECT 1, 2;
+        |SELECT a, b, c FROM T;""".stripMargin
     val lexer = new CiglaBaseLexer(new UpperCaseCharStream(CharStreams.fromString(batch)))
     val tokenStream = new CommonTokenStream(lexer)
     val parser = new CiglaBaseParser(tokenStream)
@@ -53,20 +55,6 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         stmts.forEach(visitSingleStatement)
       }
 
-      // I don't ever want to visit these... Update parser not to generate them...
-      override def visitStringLitOrIdentifier(ctx: CiglaBaseParser.StringLitOrIdentifierContext): Unit = ???
-      override def visitStringLit(ctx: CiglaBaseParser.StringLitContext): Unit = ???
-      override def visitMultipartIdentifier(ctx: CiglaBaseParser.MultipartIdentifierContext): Unit = ???
-      override def visitIdentifier(ctx: CiglaBaseParser.IdentifierContext): Unit = ???
-      override def visitUnquotedIdentifier(ctx: CiglaBaseParser.UnquotedIdentifierContext): Unit = ???
-      override def visitQuotedIdentifierAlternative(ctx: CiglaBaseParser.QuotedIdentifierAlternativeContext): Unit = ???
-      override def visitQuotedIdentifier(ctx: CiglaBaseParser.QuotedIdentifierContext): Unit = ???
-      override def visitBackQuotedIdentifier(ctx: CiglaBaseParser.BackQuotedIdentifierContext): Unit = ???
-      override def visitIntegerLiteral(ctx: CiglaBaseParser.IntegerLiteralContext): Unit = ???
-      override def visitNullLiteral(ctx: CiglaBaseParser.NullLiteralContext): Unit = ???
-      override def visitNamedParameterLiteral(ctx: CiglaBaseParser.NamedParameterLiteralContext): Unit = ???
-      override def visitNumericLiteral(ctx: CiglaBaseParser.NumericLiteralContext): Unit = ???
-      override def visitStringLiteral(ctx: CiglaBaseParser.StringLiteralContext): Unit = ???
       override def visit(parseTree: ParseTree): Unit = {
         ()
       }
@@ -77,11 +65,29 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
       }
       override def visitTerminal(terminalNode: TerminalNode): Unit = ???
       override def visitErrorNode(errorNode: ErrorNode): Unit = ???
+
+      /**
+       * Visit a parse tree produced by {@link CiglaBaseParser#   statementBody}.
+       *
+       * @param ctx the parse tree
+       * @return the visitor result
+       */
+      override def visitStatementBody(ctx: CiglaBaseParser.StatementBodyContext): Unit = ???
+
+      /**
+       * Visit a parse tree produced by {@link CiglaBaseParser# stringLitOrIdentifierOrConstant}.
+       *
+       * @param ctx the parse tree
+       * @return the visitor result
+       */
+      override def visitStringLitOrIdentifierOrConstant(ctx: CiglaBaseParser.StringLitOrIdentifierOrConstantContext): Unit = ???
     }
 
     visitor.visitMultiStatement(parser.multiStatement())
 
     assert(stmtOutput(0) === "INSERT 1")
     assert(stmtOutput(1) === "SELECT BLA")
+    assert(stmtOutput(2) === "SELECT 1, 2")
+    assert(stmtOutput(3) === "SELECT a, b, c FROM T")
   }
 }

@@ -2,54 +2,23 @@ parser grammar CiglaBaseParser;
 
 options { tokenVocab = CiglaBaseLexer; }
 
-
 singleStatement
-    : SELECT multipartIdentifier
-    | SELECT constant
-    | INSERT constant
+    : SELECT statementBody
+    | UPDATE statementBody
+    | INSERT statementBody
     ;
 
 multiStatement
     : (singleStatement SEMICOLON)*
     ;
 
-stringLitOrIdentifier
-    : stringLit
-    | multipartIdentifier
+
+statementBody
+    : (stringLitOrIdentifierOrConstant (COMMA stringLitOrIdentifierOrConstant)* | SINGLE_STATEMENT_ALLOWED_SEPARATORS)*
     ;
 
-stringLit
+stringLitOrIdentifierOrConstant
     : STRING_LITERAL
-    ;
-
-multipartIdentifier
-    : parts+=identifier (DOT parts+=identifier)*
-    ;
-
-identifier
-    : strictIdentifier
-    ;
-
-strictIdentifier
-    : IDENTIFIER              #unquotedIdentifier
-    | quotedIdentifier        #quotedIdentifierAlternative
-    ;
-
-quotedIdentifier
-    : BACKQUOTED_IDENTIFIER
-    ;
-
-backQuotedIdentifier
-    : BACKQUOTED_IDENTIFIER
-    ;
-
-number
-    : MINUS? INTEGER_VALUE            #integerLiteral
-    ;
-
-constant
-    : NULL                                                                                     #nullLiteral
-    | COLON identifier                                                                         #namedParameterLiteral
-    | number                                                                                   #numericLiteral
-    | stringLit+                                                                               #stringLiteral
+    | IDENTIFIER_OR_CONSTANT
+    | FROM
     ;

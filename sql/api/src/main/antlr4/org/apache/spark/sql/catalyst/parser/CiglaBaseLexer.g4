@@ -70,6 +70,10 @@ SLASH: '/';
 PERCENT: '%';
 COLON: ':';
 
+SINGLE_STATEMENT_ALLOWED_SEPARATORS
+    : COMMA | SEMICOLON | LEFT_PAREN | RIGHT_PAREN | DOT | LEFT_BRACKET | RIGHT_BRACKET | DOT
+    ;
+
 // Keeping string literal because I need to make sure that ';' is not treated as a delimiter if
 // in literal.
 STRING_LITERAL
@@ -80,6 +84,11 @@ STRING_LITERAL
 
 DOUBLEQUOTED_STRING
     :'"' ( ~('"'|'\\') | ('\\' .) )* '"'
+    ;
+
+IDENTIFIER_OR_CONSTANT
+    : (UNICODE_LETTER | DIGIT | '_')+
+    | UNICODE_LETTER+ '://' (UNICODE_LETTER | DIGIT | '_' | '/' | '-' | '.' | '?' | '=' | '&' | '#' | '%')+
     ;
 
 INTEGER_VALUE
