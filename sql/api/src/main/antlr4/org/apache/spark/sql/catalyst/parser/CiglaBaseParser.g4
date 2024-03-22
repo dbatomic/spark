@@ -13,10 +13,6 @@ multiStatement
     : (singleStatement SEMICOLON)*
     ;
 
-commentSpec
-    : COMMENT stringLit
-    ;
-
 stringLitOrIdentifier
     : stringLit
     | multipartIdentifier

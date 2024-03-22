@@ -24,92 +24,44 @@ COMMA: ',';
 DOT: '.';
 LEFT_BRACKET: '[';
 RIGHT_BRACKET: ']';
-BANG: '!';
 
 //============================
 // Start of the keywords list
 //============================
 //--CIGLA-KEYWORD-LIST-START
-ALTER: 'ALTER'; // Keeping alter 
-ANALYZE: 'ANALYZE'; // Keeping analyze
-AND: 'AND'; // Do I need AND? It should be part of expression?
-BOOLEAN: 'BOOLEAN'; // Do I need to keep type system? SET/DECLARE should be enough?
-BYTE: 'BYTE'; // Typesystem?
-CASE: 'CASE';   // Case is probably part of language?
-CATALOG: 'CATALOG';  // Not sure?
-CHAR: 'CHAR'; // Type
-CHARACTER: 'CHARACTER'; // Type
-COMMENT: 'COMMENT'; // Comment as keyword? Why?
-COMMIT: 'COMMIT';
-DATABASE: 'DATABASE';
-DATABASES: 'DATABASES';
-DBPROPERTIES: 'DBPROPERTIES';
-DECIMAL: 'DECIMAL'; // Type
-DECLARE: 'DECLARE'; // Keep declare
-DEFAULT: 'DEFAULT'; // keep default
-DELETE: 'DELETE'; // keep delete
+ALTER: 'ALTER';
+ANALYZE: 'ANALYZE';
+AND: 'AND';
+DECLARE: 'DECLARE';
+DELETE: 'DELETE';
 DELIMITED: 'DELIMITED';
 DESCRIBE: 'DESCRIBE';
-DOUBLE: 'DOUBLE'; // Type
 ELSE: 'ELSE';
 END: 'END';
-ESCAPE: 'ESCAPE';
 EXPLAIN: 'EXPLAIN';
 FALSE: 'FALSE';
-FLOAT: 'FLOAT';
-FOLLOWING: 'FOLLOWING';
 FOR: 'FOR';
 FROM: 'FROM';
-FUNCTION: 'FUNCTION';
-FUNCTIONS: 'FUNCTIONS';
 IF: 'IF';
-IGNORE: 'IGNORE';
-IMPORT: 'IMPORT';
-IN: 'IN';
-INCLUDE: 'INCLUDE';
 INSERT: 'INSERT';
-INT: 'INT';
-INTEGER: 'INTEGER';
 NOT: 'NOT';
 NULL: 'NULL';
 OR: 'OR';
-REAL: 'REAL';
 SELECT: 'SELECT';
-SET: 'SET';
-SETS: 'SETS';
-SHORT: 'SHORT';
 SHOW: 'SHOW';
-STRING: 'STRING';
-TABLE: 'TABLE';
-TABLES: 'TABLES';
 THEN: 'THEN';
 EXECUTE: 'EXECUTE';
-TOUCH: 'TOUCH';
-TRANSFORM: 'TRANSFORM';
 TRUE: 'TRUE';
-TRUNCATE: 'TRUNCATE';
-TRY_CAST: 'TRY_CAST';
-TYPE: 'TYPE';
 UPDATE: 'UPDATE';
 USE: 'USE';
-USER: 'USER';
-VARCHAR: 'VARCHAR';
-VAR: 'VAR';
-VARIABLE: 'VARIABLE';
 WITH: 'WITH';
+
 //============================
 // End of the keywords list
 //============================
 
-// TODO: Do I need this here?
-EQ  : '=' | '==';
-NSEQ: '<=>';
-NEQ : '<>';
-NEQJ: '!=';
-LT  : '<';
-LTE : '<=' | '!>';
-GT  : '>';
-GTE : '>=' | '!<';
+// TODO: I am removing EQ/NSEQ etc.
+// Idea is to use SqlBaseParser and keep them as part of expressions.
 
 PLUS: '+';
 MINUS: '-';
@@ -129,6 +81,8 @@ HENT_START: '/*+';
 HENT_END: '*/';
 QUESTION: '?';
 
+// Keeping string literal because I need to make sure that ';' is not treated as a delimiter if
+// in literal.
 STRING_LITERAL
     : '\'' ( ~('\''|'\\') | ('\\' .) )* '\''
     | 'R\'' (~'\'')* '\''
@@ -138,12 +92,6 @@ STRING_LITERAL
 DOUBLEQUOTED_STRING
     :'"' ( ~('"'|'\\') | ('\\' .) )* '"'
     ;
-
-// NOTE: If you move a numeric literal, you should modify `ParserUtils.toExprAlias()`
-// which assumes all numeric literals are between `BIGINT_LITERAL` and `BIGDECIMAL_LITERAL`.
-
-
-// TODO: Option is to remove all of this...
 
 BIGINT_LITERAL
     : DIGIT+ 'L'

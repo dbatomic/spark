@@ -48,9 +48,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         val command = batch.substring(start, stop + 1)
         println("Command found is: " + command)
 
-        // insert query text of original string!
-        // figure out what kind of statement this is...
-        // maybe I can even treat this as a generic expression?
+        // TODO: Move this to some place from here you can execute the command...
       }
 
       override def visitMultiStatement(ctx: CiglaBaseParser.MultiStatementContext): Unit = {
@@ -60,7 +58,6 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         stmts.forEach(visitSingleStatement)
       }
 
-      override def visitCommentSpec(ctx: CiglaBaseParser.CommentSpecContext): Unit = ???
       override def visitStringLitOrIdentifier(ctx: CiglaBaseParser.StringLitOrIdentifierContext): Unit = ???
       override def visitStringLit(ctx: CiglaBaseParser.StringLitContext): Unit = ???
       override def visitMultipartIdentifier(ctx: CiglaBaseParser.MultipartIdentifierContext): Unit = ???
