@@ -14,7 +14,7 @@ multiStatement
 
 
 statementBody
-    : (stringLitOrIdentifierOrConstant (COMMA stringLitOrIdentifierOrConstant)* | SINGLE_STATEMENT_ALLOWED_SEPARATORS)*
+    : (stringLitOrIdentifierOrConstant ((COMMA | DOT) stringLitOrIdentifierOrConstant)* | SINGLE_STATEMENT_ALLOWED_SEPARATORS)*
     ;
 
 stringLitOrIdentifierOrConstant
