@@ -54,36 +54,15 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
       }
 
       override def visitMultiStatement(ctx: CiglaBaseParser.MultiStatementContext): Unit = {
-        visit(ctx)
         val stmts = ctx.singleStatement()
         stmts.forEach(visitSingleStatement)
       }
 
-      override def visit(parseTree: ParseTree): Unit = {
-        ()
-      }
-      override def visitChildren(ruleNode: RuleNode): Unit = {
-        if (ruleNode.getChildCount == 1) {
-          ruleNode.getChild(0).accept(this)
-        }
-      }
+      override def visit(parseTree: ParseTree): Unit = ???
+      override def visitChildren(ruleNode: RuleNode): Unit = ???
       override def visitTerminal(terminalNode: TerminalNode): Unit = ???
       override def visitErrorNode(errorNode: ErrorNode): Unit = ???
-
-      /**
-       * Visit a parse tree produced by {@link CiglaBaseParser#   statementBody}.
-       *
-       * @param ctx the parse tree
-       * @return the visitor result
-       */
       override def visitStatementBody(ctx: CiglaBaseParser.StatementBodyContext): Unit = ???
-
-      /**
-       * Visit a parse tree produced by {@link CiglaBaseParser# stringLitOrIdentifierOrConstant}.
-       *
-       * @param ctx the parse tree
-       * @return the visitor result
-       */
       override def visitStringLitOrIdentifierOrConstant(ctx: CiglaBaseParser.StringLitOrIdentifierOrConstantContext): Unit = ???
     }
 
