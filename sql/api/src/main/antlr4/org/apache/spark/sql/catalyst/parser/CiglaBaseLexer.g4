@@ -68,18 +68,7 @@ MINUS: '-';
 ASTERISK: '*';
 SLASH: '/';
 PERCENT: '%';
-TILDE: '~';
-AMPERSAND: '&';
-PIPE: '|';
-CONCAT_PIPE: '||';
-HAT: '^';
 COLON: ':';
-DOUBLE_COLON: '::';
-ARROW: '->';
-FAT_ARROW : '=>';
-HENT_START: '/*+';
-HENT_END: '*/';
-QUESTION: '?';
 
 // Keeping string literal because I need to make sure that ';' is not treated as a delimiter if
 // in literal.
@@ -91,18 +80,6 @@ STRING_LITERAL
 
 DOUBLEQUOTED_STRING
     :'"' ( ~('"'|'\\') | ('\\' .) )* '"'
-    ;
-
-BIGINT_LITERAL
-    : DIGIT+ 'L'
-    ;
-
-SMALLINT_LITERAL
-    : DIGIT+ 'S'
-    ;
-
-TINYINT_LITERAL
-    : DIGIT+ 'Y'
     ;
 
 INTEGER_VALUE

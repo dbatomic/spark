@@ -17,6 +17,8 @@
 
 package org.apache.spark.sql.catalyst.parser
 
+import scala.collection.mutable.ArrayBuffer
+
 import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 import org.antlr.v4.runtime.tree.{ErrorNode, ParseTree, RuleNode, TerminalNode}
 import org.apache.spark.SparkFunSuite
@@ -34,30 +36,24 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val tokenStream = new CommonTokenStream(lexer)
     val parser = new CiglaBaseParser(tokenStream)
 
-    // val stmts = parser.multiStatement()
-    // assert(stmts.children.size() == 4)
+    val stmtOutput = ArrayBuffer.empty[String]
 
     val visitor = new CiglaBaseParserVisitor[Unit] {
       override def visitSingleStatement(ctx: CiglaBaseParser.SingleStatementContext): Unit = {
-        println("Single statement is here!!!")
-
-        // use index to get original text.
         val start = ctx.start.getStartIndex
         val stop = ctx.stop.getStopIndex
 
         val command = batch.substring(start, stop + 1)
-        println("Command found is: " + command)
-
-        // TODO: Move this to some place from here you can execute the command...
+        stmtOutput += command
       }
 
       override def visitMultiStatement(ctx: CiglaBaseParser.MultiStatementContext): Unit = {
-        println("Multi statement is here!!!")
         visit(ctx)
         val stmts = ctx.singleStatement()
         stmts.forEach(visitSingleStatement)
       }
 
+      // I don't ever want to visit these... Update parser not to generate them...
       override def visitStringLitOrIdentifier(ctx: CiglaBaseParser.StringLitOrIdentifierContext): Unit = ???
       override def visitStringLit(ctx: CiglaBaseParser.StringLitContext): Unit = ???
       override def visitMultipartIdentifier(ctx: CiglaBaseParser.MultipartIdentifierContext): Unit = ???
@@ -72,7 +68,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
       override def visitNumericLiteral(ctx: CiglaBaseParser.NumericLiteralContext): Unit = ???
       override def visitStringLiteral(ctx: CiglaBaseParser.StringLiteralContext): Unit = ???
       override def visit(parseTree: ParseTree): Unit = {
-        println("generic visit")
+        ()
       }
       override def visitChildren(ruleNode: RuleNode): Unit = {
         if (ruleNode.getChildCount == 1) {
@@ -85,13 +81,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
     visitor.visitMultiStatement(parser.multiStatement())
 
-    // println(stmts.getChild(0).getText)
-    // println(stmts.getChild(1).getText)
-    // println(stmts.getChild(2).getText)
-    // println(stmts.getChild(3).getText)
-
-    // Ok, there are multiple issues:
-    // 1) Can't accept number literal? -> Done.
-    // 2) multi stmt parsing doesn't work. This example returns only one statement.
+    assert(stmtOutput(0) === "INSERT 1")
+    assert(stmtOutput(1) === "SELECT BLA")
   }
 }
