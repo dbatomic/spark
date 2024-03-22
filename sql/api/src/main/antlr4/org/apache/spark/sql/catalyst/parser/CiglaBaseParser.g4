@@ -12,9 +12,8 @@ multiStatement
     : (singleStatement SEMICOLON)*
     ;
 
-
 statementBody
-    : (stringLitOrIdentifierOrConstant ((COMMA | DOT) stringLitOrIdentifierOrConstant)*)*
+    : (stringLitOrIdentifierOrConstant ((DOT | COMMA | EQ | NSEQ | NEQ | LT | LTE | GT | GTE | PLUS | MINUS) stringLitOrIdentifierOrConstant)*)*
     ;
 
 stringLitOrIdentifierOrConstant

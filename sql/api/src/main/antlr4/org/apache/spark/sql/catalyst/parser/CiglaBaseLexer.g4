@@ -60,15 +60,32 @@ WITH: 'WITH';
 // End of the keywords list
 //============================
 
-// TODO: I am removing EQ/NSEQ etc.
-// Idea is to use SqlBaseParser and keep them as part of expressions.
+EQ  : '=' | '==';
+NSEQ: '<=>';
+NEQ : '<>';
+NEQJ: '!=';
+LT  : '<';
+LTE : '<=' | '!>';
+GT  : '>';
+GTE : '>=' | '!<';
 
 PLUS: '+';
 MINUS: '-';
 ASTERISK: '*';
 SLASH: '/';
 PERCENT: '%';
+TILDE: '~';
+AMPERSAND: '&';
+PIPE: '|';
+CONCAT_PIPE: '||';
+HAT: '^';
 COLON: ':';
+DOUBLE_COLON: '::';
+ARROW: '->';
+FAT_ARROW : '=>';
+HENT_START: '/*+';
+HENT_END: '*/';
+QUESTION: '?';
 
 SINGLE_STATEMENT_ALLOWED_SEPARATORS
     : COMMA | SEMICOLON | LEFT_PAREN | RIGHT_PAREN | DOT | LEFT_BRACKET | RIGHT_BRACKET | DOT
@@ -135,6 +152,10 @@ SIMPLE_COMMENT
 
 WS
     : [ \r\n\t]+ -> channel(HIDDEN)
+    ;
+
+NOT_SEMICOLON_SEQUENCE
+    : ~[;]
     ;
 
 // Catch-all for anything we can't recognize.

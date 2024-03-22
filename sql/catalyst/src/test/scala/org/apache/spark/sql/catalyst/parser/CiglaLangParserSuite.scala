@@ -34,7 +34,8 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |SELECT BLA;
         |SELECT 1, 2;
         |SELECT a, b, c FROM T;
-        |SELECT a.b.c, d.e;""".stripMargin
+        |SELECT a.b.c, d.e;
+        |SELECT a, b FROM T WHERE x=y;""".stripMargin
     val lexer = new CiglaBaseLexer(new UpperCaseCharStream(CharStreams.fromString(batch)))
     val tokenStream = new CommonTokenStream(lexer)
     val parser = new CiglaBaseParser(tokenStream)
@@ -86,10 +87,13 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
     visitor.visitMultiStatement(parser.multiStatement())
 
+    assert(stmtOutput.length == 6)
+
     assert(stmtOutput(0) === "INSERT 1")
     assert(stmtOutput(1) === "SELECT BLA")
     assert(stmtOutput(2) === "SELECT 1, 2")
     assert(stmtOutput(3) === "SELECT a, b, c FROM T")
     assert(stmtOutput(4) === "SELECT a.b.c, d.e")
+    assert(stmtOutput(5) === "SELECT a, b FROM T WHERE x=y")
   }
 }
