@@ -6,6 +6,7 @@ singleStatement
     : SELECT statementBody
     | UPDATE statementBody
     | INSERT statementBody
+    | SET statementBody
     ;
 
 multiStatement
