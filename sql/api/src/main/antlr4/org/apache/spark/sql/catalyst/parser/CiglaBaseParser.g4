@@ -13,11 +13,12 @@ multiStatement
     ;
 
 statementBody
-    : (stringLitOrIdentifierOrConstant ((DOT | COMMA | EQ | NSEQ | NEQ | LT | LTE | GT | GTE | PLUS | MINUS) stringLitOrIdentifierOrConstant)*)*
+    : ((ASTERISK | stringLitOrIdentifierOrConstant) ((DOT | COMMA | EQ | NSEQ | NEQ | LT | LTE | GT | GTE | PLUS | MINUS | ASTERISK | PERCENT | TILDE | PIPE | LEFT_PAREN | RIGHT_PAREN | LEFT_BRACKET | RIGHT_BRACKET) stringLitOrIdentifierOrConstant)*)*
     ;
 
 stringLitOrIdentifierOrConstant
     : STRING_LITERAL
     | IDENTIFIER_OR_CONSTANT
     | FROM
+    | SELECT
     ;
