@@ -23,7 +23,7 @@ import org.apache.spark.sql.catalyst.analysis.{Analyzer, EvalSubqueriesForTimeTr
 import org.apache.spark.sql.catalyst.catalog.{FunctionExpressionBuilder, SessionCatalog}
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.optimizer.Optimizer
-import org.apache.spark.sql.catalyst.parser.ParserInterface
+import org.apache.spark.sql.catalyst.parser.{CiglaLangDispatcher, ParserInterface, ProceduralLangInterface}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.connector.catalog.CatalogManager
@@ -145,6 +145,10 @@ abstract class BaseSessionStateBuilder(
   protected lazy val sqlParser: ParserInterface = {
     extensions.buildParser(session, new SparkSqlParser())
   }
+
+  // TODO: Should this be more modular?
+  // What is the extension story with parser?
+  protected lazy val proceduralLangDispatcher: ProceduralLangInterface = CiglaLangDispatcher()
 
   /**
    * ResourceLoader that is used to load function resources and jars.
@@ -395,6 +399,7 @@ abstract class BaseSessionStateBuilder(
       dataSourceRegistration,
       () => catalog,
       sqlParser,
+      proceduralLangDispatcher,
       () => analyzer,
       () => optimizer,
       planner,

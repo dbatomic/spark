@@ -27,6 +27,7 @@ import scala.reflect.runtime.universe.TypeTag
 import scala.util.control.NonFatal
 
 import org.apache.spark.{SPARK_VERSION, SparkConf, SparkContext, SparkException, TaskContext}
+
 import org.apache.spark.annotation.{DeveloperApi, Experimental, Stable, Unstable}
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.internal.Logging
@@ -39,6 +40,7 @@ import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis.{NameParameterizedQuery, PosParameterizedQuery, UnresolvedRelation}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
+import org.apache.spark.sql.catalyst.parser.CiglaCommand
 import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Range}
 import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.catalyst.util.CharVarcharUtils
@@ -708,6 +710,15 @@ class SparkSession private(
       Dataset.ofRows(self, plan, tracker)
     }
 
+
+  private[sql] def sqlBatch(
+      batchText: String,
+      tracker: QueryPlanningTracker): Iterator[CiglaCommand] =
+    withActive {
+      val interpreter = sessionState.proceduralDispatcher.buildInterpreter(batchText)
+      interpreter
+    }
+
   /**
    * Executes a SQL query substituting named parameters by the given arguments,
    * returning the result as a `DataFrame`.
@@ -728,6 +739,10 @@ class SparkSession private(
   @Experimental
   def sql(sqlText: String, args: Map[String, Any]): DataFrame = {
     sql(sqlText, args, new QueryPlanningTracker)
+  }
+
+  def sqlBatch(batchText: String): Iterator[CiglaCommand] = {
+    sqlBatch(batchText, new QueryPlanningTracker)
   }
 
   /**

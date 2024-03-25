@@ -20,11 +20,51 @@ import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 import org.antlr.v4.runtime.tree.{ErrorNode, ParseTree, RuleNode, TerminalNode}
+import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 
 import org.apache.spark.sql.catalyst.parser.CiglaBaseParserBaseVisitor
 
+// TODO: Super hacky implementation. Just experimenting with the interfaces...
+
 case class SingleStatement(command: String)
 case class MultiStatement(statements: ArrayBuffer[SingleStatement])
+
+trait ProceduralLangInterface {
+  def buildInterpreter(batch: String): ProceduralLangInterpreter
+}
+
+case class CiglaLangDispatcher() extends ProceduralLangInterface {
+  def buildInterpreter(batch: String): ProceduralLangInterpreter = CiglaLangInterpreter(batch)
+}
+
+trait CiglaCommand {
+  def execute(): Unit
+}
+
+case class CiglaSparkStatement(command: String) extends CiglaCommand {
+  def execute(): Unit = {
+  }
+}
+
+trait ProceduralLangInterpreter extends Iterator[CiglaCommand] {
+}
+
+case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter {
+  // TODO: Keep at least parser here. We may need for error reporting - e.g. poiting to the
+  // exact location of the error.
+  val lexer = new CiglaBaseLexer(new UpperCaseCharStream(CharStreams.fromString(batch)))
+  val tokenStream = new CommonTokenStream(lexer)
+  val parser = new CiglaBaseParser(tokenStream)
+  val statements = CiglaLangBuilder(batch).visitMultiStatement(parser.multiStatement)
+  val statementIter = statements.statements.iterator
+
+  override def hasNext: Boolean = statementIter.hasNext
+
+  override def next(): CiglaCommand = {
+    val stmt = statementIter.next()
+    CiglaSparkStatement(stmt.command)
+  }
+}
 
 //noinspection ScalaStyle
 case class CiglaLangBuilder(batch: String) extends CiglaBaseParserBaseVisitor[AnyRef] {
