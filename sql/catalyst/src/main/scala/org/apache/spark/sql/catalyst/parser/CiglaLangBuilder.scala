@@ -17,9 +17,6 @@
 package org.apache.spark.sql.catalyst.parser
 
 import scala.collection.mutable.ArrayBuffer
-import scala.jdk.CollectionConverters.CollectionHasAsScala
-
-import org.antlr.v4.runtime.tree.{ErrorNode, ParseTree, RuleNode, TerminalNode}
 
 // TODO: Super hacky implementation. Just experimenting with the interfaces...
 
@@ -42,6 +39,10 @@ case class SparkStatement(command: String) extends CiglaStatement {
 
 trait StatementBooleanEvaluator {
   def eval(statement: CiglaStatement): Boolean
+}
+
+case object AlwaysTrueEval extends StatementBooleanEvaluator {
+  override def eval(statement: CiglaStatement): Boolean = true
 }
 
 case class CiglaIfElseStatement(
@@ -116,7 +117,8 @@ case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter
 }
 
 //noinspection ScalaStyle
-case class CiglaLangBuilder(batch: String) extends CiglaBaseParserBaseVisitor[AnyRef] {
+case class CiglaLangBuilder(batch: String, evaluator: StatementBooleanEvaluator = AlwaysTrueEval)
+    extends CiglaBaseParserBaseVisitor[AnyRef] {
   override def visitSparkStatement(
       ctx: CiglaBaseParser.SparkStatementContext): SparkStatement = {
     val start = ctx.start.getStartIndex
@@ -126,31 +128,20 @@ case class CiglaLangBuilder(batch: String) extends CiglaBaseParserBaseVisitor[An
   }
 
   override def visitBody(ctx: CiglaBaseParser.BodyContext): CiglaBody = {
-    // TODO: Need to check type of statement here?
-    val stmts = ctx.sparkStatement()
-    CiglaBody(stmts.asScala.map(visitSparkStatement).asInstanceOf[ArrayBuffer[CiglaStatement]])
+    val arr = ArrayBuffer.empty[CiglaStatement]
+    for (i <- 0 until ctx.getChildCount) {
+      val child = ctx.getChild(i)
+      val stmt = visit(child).asInstanceOf[CiglaStatement]
+      arr.addOne(stmt)
+    }
+    CiglaBody(arr)
   }
 
-  override def visitIfElseStatement(ctx: CiglaBaseParser.IfElseStatementContext): AnyRef =
-    super.visitIfElseStatement(ctx)
-
-  override def visit(parseTree: ParseTree): AnyRef = {
-    null
-  }
-  override def visitChildren(ruleNode: RuleNode): AnyRef = {
-    null
-  }
-
-  override def visitTerminal(terminalNode: TerminalNode): AnyRef = {
-    null
-  }
-
-  override def visitErrorNode(errorNode: ErrorNode): AnyRef = {
-    null
-  }
-
-  override def visitStringLitOrIdentifierOrConstant(
-    ctx: CiglaBaseParser.StringLitOrIdentifierOrConstantContext): AnyRef = {
-    null
+  override def visitIfElseStatement(
+      ctx: CiglaBaseParser.IfElseStatementContext): CiglaIfElseStatement = {
+    val condition = visitSparkStatement(ctx.sparkStatement())
+    val ifBody = visitBody(ctx.body(0))
+    val elseBody = Option(ctx.body(1)).map(visitBody)
+    CiglaIfElseStatement(condition, ifBody, elseBody, evaluator)
   }
 }

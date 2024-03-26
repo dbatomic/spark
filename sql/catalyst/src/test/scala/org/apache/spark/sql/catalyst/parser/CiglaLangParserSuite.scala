@@ -121,8 +121,11 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val astBuilder = CiglaLangBuilder(batch)
     val tree = astBuilder.visitBody(parser.body())
 
-    batch.split(";").zip(tree.statements).foreach {
-      case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
+    tree.statements.foreach {
+      case ifElse: CiglaIfElseStatement =>
+        assert(ifElse.condition.command == "SELECT 1;")
+        assert(ifElse.ifBody.statements.head.asInstanceOf[SparkStatement].command == "SELECT 2;")
+        assert(ifElse.elseBody.head.statements.head.asInstanceOf[SparkStatement].command == "SELECT 3;")
     }
   }
 }
