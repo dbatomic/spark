@@ -20,26 +20,27 @@ import scala.collection.mutable.ArrayBuffer
 
 // TODO: Super hacky implementation. Just experimenting with the interfaces...
 
-trait CiglaStatement extends Iterator[CiglaStatement] {
-  // Advance accepts a func that can evaluate the statement.
-  // The result of statement should be true or false. This should be enough for control flow (?).
-  // Result can also be an exception. That is fine.
-  // Result can also be function call. With functions things get a bit more tricky.
-}
+trait CiglaStatement extends Iterator[CiglaStatement]
 
 case class SparkStatement(command: String) extends CiglaStatement {
-  // Execution is done outside...
+  // Execution can either be done outside
+  // (e.g. you can just get command text and execute it locally).
+  // Or internally (e.g. in case of SQL in IF branch.)
+  // If Interpreter needs to execute it, it will set this to true.
   var consumed = false
 
   override def hasNext: Boolean = false
-
   override def next(): CiglaStatement = this
 }
 
+// Provide a way to evaluate a statement to a boolean.
+// Interpreter at this point only needs to know true/false
+// result of statement.
 trait StatementBooleanEvaluator {
   def eval(statement: CiglaStatement): Boolean
 }
 
+// Dummy evaluator that always returns true.
 case object AlwaysTrueEval extends StatementBooleanEvaluator {
   override def eval(statement: CiglaStatement): Boolean = true
 }
@@ -56,6 +57,7 @@ case class CiglaIfElseStatement(
   override def hasNext: Boolean = executionList.nonEmpty
 
   override def next(): CiglaStatement = {
+    // TODO: This is terrible...
     val res = executionList match {
       case curr :: ifBody :: tail if curr.isInstanceOf[SparkStatement] =>
         val evalRes = evaluator.eval(curr)
@@ -80,7 +82,11 @@ case class CiglaIfElseStatement(
   }
 }
 
-abstract class CiglaNestedIterator(outerIterator: Iterator[CiglaStatement]) extends CiglaStatement {
+// Nested iterator. This is a bit hacky, but it works for now.
+// Idea is that top level iterator will proceed only after all nested iterators
+// are exhausted.
+// TODO: Figure out some functional way to do this...
+class CiglaNestedIterator(outerIterator: Iterator[CiglaStatement]) extends CiglaStatement {
   private var curr = if (outerIterator.hasNext) Some(outerIterator.next()) else None
   override def hasNext: Boolean = curr.nonEmpty
   override def next(): CiglaStatement = {
@@ -118,28 +124,10 @@ case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter
   private val astBuilder = CiglaLangBuilder(batch)
   private val tree = astBuilder.visitBody(parser.body())
 
-  private val statements = tree.statements
-  private val statementIter = statements.iterator
+  private val iter = new CiglaNestedIterator(tree.statements.iterator)
 
-  // Figure out some functional way to do iteration...
-  private var curr: Option[CiglaStatement] = Some(statementIter.next())
-  override def hasNext: Boolean = curr.nonEmpty
-
-  override def next(): CiglaStatement = {
-    var toRet = curr.get
-    if (curr.get.hasNext) {
-      // Stay in inner flow.
-      toRet = curr.get.next()
-    } else {
-      // Move to next high level statement.
-      if (statementIter.hasNext) {
-        curr = Some(statementIter.next())
-      } else {
-        curr = None
-      }
-    }
-    toRet
-  }
+  override def hasNext: Boolean = iter.hasNext
+  override def next(): CiglaStatement = iter.next()
 }
 
 //noinspection ScalaStyle
