@@ -67,4 +67,42 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
       case (expected, actual) => assert(expected.trim + ";" === actual.command.trim)
     }
   }
+
+  test("Multiline statement") {
+    val cp = new CiglaParser()
+
+    val batch =
+      """
+        |SELECT a, b, c
+        |FROM T
+        |WHERE x=y;
+        |""".stripMargin
+
+    val parser = cp.parseBatch(batch)(t => t)
+    val astBuilder = CiglaLangBuilder(batch)
+    val tree = astBuilder.visitMultiStatement(parser.multiStatement())
+
+    batch.split(";").zip(tree.statements).foreach {
+      case (expected, actual) => assert(expected.trim + ";" === actual.command.trim)
+    }
+  }
+
+  test("select case") {
+    val cp = new CiglaParser()
+
+    val batch = """
+        |SELECT CASE WHEN COUNT(*) > 10 THEN true
+        |ELSE false
+        |END as MoreThanTen
+        |FROM t;
+        |""".stripMargin
+
+    val parser = cp.parseBatch(batch)(t => t)
+    val astBuilder = CiglaLangBuilder(batch)
+    val tree = astBuilder.visitMultiStatement(parser.multiStatement())
+
+    batch.split(";").zip(tree.statements).foreach {
+      case (expected, actual) => assert(expected.trim + ";" === actual.command.trim)
+    }
+  }
 }

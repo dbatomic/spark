@@ -34,7 +34,28 @@ class CiglaLangSuite extends QueryTest
           |SELECT a, b, c FROM t;
           |SELECT a, b FROM T WHERE a=12;
           |SELECT * FROM t;
-          |SET x = 12;""".stripMargin)
+          |SET x = 12;
+          |""".stripMargin)
+
+      commands.foreach {
+        case CiglaSparkStatement(command) =>
+          sql(command).show()
+      }
+    }
+  }
+
+  test("count multistatement") {
+    withTable("t") {
+      sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
+      val commands = sqlBatch(
+        """
+          |INSERT INTO t VALUES (1, 'a', 1.0);
+          |INSERT INTO t VALUES (1, 'a', 1.0);
+          |SELECT CASE WHEN COUNT(*) > 10 THEN true
+          |ELSE false
+          |END as MoreThanTen
+          |FROM t;
+          |""".stripMargin)
 
       commands.foreach {
         case CiglaSparkStatement(command) =>
