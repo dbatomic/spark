@@ -84,18 +84,24 @@ class CiglaLangSuite extends QueryTest
           | END IF;
           |""".stripMargin)
 
-      commands.foreach {
+      val result: Iterator[DataFrame] = commands.flatMap {
         case stmt: SparkStatement =>
           // If expression will be executed on interpreter side.
           // We need to see what kind of behaviour we want to get here...
           if (!stmt.consumed) {
-            sql(stmt.command).show()
+            Some(sql(stmt.command))
+          } else {
+            None
           }
         case stmt: CiglaStatement =>
           // This is just debugging information.
           // We should also print source information here (line number and executed statement)
           println("Executing: " + stmt.getClass)
+          None
       }
+
+      val expected = Seq(Row(42))
+      result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
     }
   }
 }
