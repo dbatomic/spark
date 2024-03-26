@@ -30,11 +30,10 @@ trait CiglaStatement extends Iterator[CiglaStatement] {
 case class SparkStatement(command: String) extends CiglaStatement {
   // Execution is done outside...
   var consumed = false
-  override def hasNext: Boolean = !consumed
-  override def next(): CiglaStatement = {
-    consumed = true
-    this
-  }
+
+  override def hasNext: Boolean = false
+
+  override def next(): CiglaStatement = this
 }
 
 trait StatementBooleanEvaluator {
@@ -126,7 +125,7 @@ case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter
   private val statementIter = statements.iterator
 
   // Figure out some functional way to do iteration...
-  var curr: Option[CiglaStatement] = Some(statementIter.next())
+  private var curr: Option[CiglaStatement] = Some(statementIter.next())
   override def hasNext: Boolean = curr.nonEmpty
 
   override def next(): CiglaStatement = {

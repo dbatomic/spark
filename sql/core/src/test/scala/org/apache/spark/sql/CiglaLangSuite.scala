@@ -26,6 +26,14 @@ class CiglaLangSuite extends QueryTest
   with SharedSparkSession
   with AdaptiveSparkPlanHelper {
 
+  test("select 1") {
+    val commands = sqlBatch("SELECT 1;")
+    commands.foreach {
+      case s: SparkStatement => sql(s.command).show()
+      case _ => ()
+    }
+  }
+
   test("simple multistatement") {
     withTable("t") {
       sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
