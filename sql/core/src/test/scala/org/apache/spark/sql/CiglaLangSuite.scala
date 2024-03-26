@@ -28,10 +28,9 @@ class CiglaLangSuite extends QueryTest
 
   test("select 1") {
     val commands = sqlBatch("SELECT 1;")
-    commands.foreach {
-      case s: SparkStatement => sql(s.command).show()
-      case _ => ()
-    }
+    commands.map {
+      case s: SparkStatement => sql(s.command)
+    }.zip(Seq(Seq(Row(1)))).foreach { case (df, expected) => checkAnswer(df, expected) }
   }
 
   test("simple multistatement") {
@@ -40,16 +39,18 @@ class CiglaLangSuite extends QueryTest
       val commands = sqlBatch(
         """
           |INSERT INTO t VALUES (1, 'a', 1.0);
-          |SELECT a, b, c FROM t;
           |SELECT a, b FROM T WHERE a=12;
-          |SELECT * FROM t;
+          |SELECT a FROM t;
           |SET x = 12;
           |""".stripMargin)
 
-      commands.foreach {
-        case SparkStatement(command) =>
-          sql(command).show()
-      }
+      val expected: Seq[Seq[Row]] = Seq(
+        Seq.empty[Row],
+        Seq.empty[Row],
+        Seq(Row(1)),
+        Seq(Row("x", "12")))
+      commands.map { case SparkStatement(command) => sql(command)
+      }.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
     }
   }
 
@@ -66,9 +67,11 @@ class CiglaLangSuite extends QueryTest
           |FROM t;
           |""".stripMargin)
 
-      commands.foreach {
-        case SparkStatement(command) =>
-          sql(command).show()
+      val result = commands.map { case SparkStatement(command) => sql(command) }.toArray
+      val expected = Seq(Seq.empty[Row], Seq.empty[Row], Seq(Row(false)))
+
+      result.zip(expected).foreach { case (df, expected) =>
+        checkAnswer(df, expected)
       }
     }
   }
