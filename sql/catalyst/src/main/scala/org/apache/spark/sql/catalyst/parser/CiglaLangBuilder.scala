@@ -59,6 +59,7 @@ case class CiglaIfElseStatement(
     val res = executionList match {
       case curr :: ifBody :: tail if curr.isInstanceOf[SparkStatement] =>
         val evalRes = evaluator.eval(curr)
+        curr.asInstanceOf[SparkStatement].consumed = true
         if (evalRes) {
           (ifBody :: tail, curr)
         } else {

@@ -85,11 +85,16 @@ class CiglaLangSuite extends QueryTest
           |""".stripMargin)
 
       commands.foreach {
-        case SparkStatement(command) => sql(command).show()
-        case s: CiglaStatement =>
-              println("Executing CiglaStatement" + s.getClass.getName)
-        // TODO: Would be nice to get debugging information here.
-        // E.g. : Currently executing xyz
+        case stmt: SparkStatement =>
+          // If expression will be executed on interpreter side.
+          // We need to see what kind of behaviour we want to get here...
+          if (!stmt.consumed) {
+            sql(stmt.command).show()
+          }
+        case stmt: CiglaStatement =>
+          // This is just debugging information.
+          // We should also print source information here (line number and executed statement)
+          println("Executing: " + stmt.getClass)
       }
     }
   }
