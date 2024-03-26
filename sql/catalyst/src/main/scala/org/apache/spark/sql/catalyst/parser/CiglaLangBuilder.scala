@@ -57,31 +57,44 @@ case class CiglaIfElseStatement(
   override def hasNext: Boolean = executionList.nonEmpty
 
   override def next(): CiglaStatement = {
-    var curr = executionList.head
-    val rem = executionList.tail
+    var toReturn = executionList.head
 
-    // TODO: This is super ugly...
-    executionList = curr.map {
-        case s: SparkStatement =>
-          val evalRes = evaluator.eval(s)
-          if (evalRes) {
-            List(rem.head)
-          } else {
-            rem.tail
-          }
-        case b: CiglaBody =>
-          curr = b.next()
-          if (b.hasNext) executionList else rem
-        case _ => throw new RuntimeException("Invalid statement")
-    }.toList.flatten
-    curr
+    executionList = executionList match {
+      case curr :: ifBody :: tail if curr.isInstanceOf[SparkStatement] =>
+        val evalRes = evaluator.eval(curr)
+        if (evalRes) {
+          ifBody :: tail
+        } else {
+          tail
+        }
+      case curr :: tail if curr.isInstanceOf[CiglaBody] =>
+        toReturn = curr.next()
+        if (curr.hasNext) curr :: tail else tail
+      case _ => throw new IllegalStateException("Invalid state")
+    }
+    toReturn
   }
 
 }
 case class CiglaBody(statements: ArrayBuffer[CiglaStatement]) extends CiglaStatement {
   private val statementIter = statements.iterator
-  override def hasNext: Boolean = statementIter.hasNext
-  override def next(): CiglaStatement = statementIter.next()
+  private var curr: Option[CiglaStatement] = Some(statementIter.next()) // What if body is empty?
+  override def hasNext: Boolean = curr.nonEmpty
+  override def next(): CiglaStatement = {
+    val res = curr.get
+    if (curr.get.hasNext) {
+      // Stay in inner flow.
+      curr.get.next()
+    } else {
+      // Move to next high level statement.
+      if (statementIter.hasNext) {
+        curr = Some(statementIter.next())
+      } else {
+        curr = None
+      }
+    }
+    res
+  }
 }
 
 trait ProceduralLangInterface {
@@ -108,11 +121,24 @@ case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter
   private val statements = tree.statements
   private val statementIter = statements.iterator
 
-  override def hasNext: Boolean = statementIter.hasNext
+  // Figure out some functional way to do iteration...
+  private var curr: Option[CiglaStatement] = Some(statementIter.next())
+  override def hasNext: Boolean = curr.nonEmpty
 
   override def next(): CiglaStatement = {
-    val stmt = statementIter.next()
-    stmt
+    val res = curr.get
+    if (curr.get.hasNext) {
+      // Stay in inner flow.
+      curr.get.next()
+    } else {
+      // Move to next high level statement.
+      if (statementIter.hasNext) {
+        curr = Some(statementIter.next())
+      } else {
+        curr = None
+      }
+    }
+    res
   }
 }
 

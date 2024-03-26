@@ -17,7 +17,7 @@
 
 package org.apache.spark.sql
 
-import org.apache.spark.sql.catalyst.parser.SparkStatement
+import org.apache.spark.sql.catalyst.parser.{CiglaStatement, SparkStatement}
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanHelper
 import org.apache.spark.sql.test.SharedSparkSession
 
@@ -60,6 +60,26 @@ class CiglaLangSuite extends QueryTest
       commands.foreach {
         case SparkStatement(command) =>
           sql(command).show()
+      }
+    }
+  }
+
+  test("if else") {
+    withTable("t") {
+      sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
+      val commands = sqlBatch(
+        """
+          | IF SELECT TRUE;
+          | THEN
+          |   SELECT 42;
+          | END IF;
+          |""".stripMargin)
+
+      commands.foreach {
+        case SparkStatement(command) => sql(command).show()
+        case stmt: CiglaStatement => ()
+        // TODO: Would be nice to get debugging information here.
+        // E.g. : Currently executing xyz
       }
     }
   }
