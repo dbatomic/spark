@@ -19,7 +19,6 @@ package org.apache.spark.sql.catalyst.parser
 
 import scala.collection.mutable.ArrayBuffer
 
-import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
 import org.apache.spark.SparkFunSuite
 
 import org.apache.spark.sql.catalyst.plans.SQLHelper
@@ -40,18 +39,15 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |SELECT a, b FROM T WHERE x=y;
         |SELECT * FROM T;
         |SET x = 12;""".stripMargin
-    val lexer = new CiglaBaseLexer(new UpperCaseCharStream(CharStreams.fromString(batch)))
-    val tokenStream = new CommonTokenStream(lexer)
-    val parser = new CiglaBaseParser(tokenStream)
 
+    val cp = new CiglaParser()
+    val parser = cp.parseBatch(batch)(t => t)
     val astBuilder = CiglaLangBuilder(batch)
     val tree = astBuilder.visitMultiStatement(parser.multiStatement())
 
     batch.split(";").zip(tree.statements).foreach {
       case (expected, actual) => assert(expected.trim + ";" === actual.command.trim)
     }
-
-    // TODO: how to execute these commands?
   }
 
   test("Insert statement")  {
@@ -59,22 +55,16 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
     val batch =
       """
-        |INSERT a VALUES (1, 2, x);
-        |INSERT a VALUES (a, b, c);
+        |INSERT INTO a VALUES (1, 2, x);
+        |INSERT INTO a VALUES (a, b, c);
         |        |""".stripMargin
 
     val parser = cp.parseBatch(batch)(t => t)
-
-
-    // val lexer = new CiglaBaseLexer(new UpperCaseCharStream(CharStreams.fromString(batch)))
-    // val tokenStream = new CommonTokenStream(lexer)
-    // val parser = new CiglaBaseParser(tokenStream)
-
     val astBuilder = CiglaLangBuilder(batch)
     val tree = astBuilder.visitMultiStatement(parser.multiStatement())
 
-    // batch.split(";").zip(tree.statements).foreach {
-    //   case (expected, actual) => assert(expected.trim === actual.command.trim)
-    // }
+    batch.split(";").zip(tree.statements).foreach {
+      case (expected, actual) => assert(expected.trim + ";" === actual.command.trim)
+    }
   }
 }

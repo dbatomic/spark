@@ -20,9 +20,6 @@ import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 import org.antlr.v4.runtime.tree.{ErrorNode, ParseTree, RuleNode, TerminalNode}
-import org.antlr.v4.runtime.{CharStreams, CommonTokenStream}
-
-import org.apache.spark.sql.catalyst.parser.CiglaBaseParserBaseVisitor
 
 // TODO: Super hacky implementation. Just experimenting with the interfaces...
 
@@ -50,13 +47,18 @@ trait ProceduralLangInterpreter extends Iterator[CiglaCommand] {
 }
 
 case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter {
-  // TODO: Keep at least parser here. We may need for error reporting - e.g. poiting to the
+  // TODO: Keep parser here. We may need for error reporting - e.g. pointing to the
   // exact location of the error.
-  val lexer = new CiglaBaseLexer(new UpperCaseCharStream(CharStreams.fromString(batch)))
-  val tokenStream = new CommonTokenStream(lexer)
-  val parser = new CiglaBaseParser(tokenStream)
-  val statements = CiglaLangBuilder(batch).visitMultiStatement(parser.multiStatement)
-  val statementIter = statements.statements.iterator
+
+  // TODO: No need to init this every time..
+  private val ciglaParser = new CiglaParser()
+  private val parser = ciglaParser.parseBatch(batch)(t => t)
+
+  private val astBuilder = CiglaLangBuilder(batch)
+  private val tree = astBuilder.visitMultiStatement(parser.multiStatement())
+
+  private val statements = tree.statements
+  private val statementIter = statements.iterator
 
   override def hasNext: Boolean = statementIter.hasNext
 
