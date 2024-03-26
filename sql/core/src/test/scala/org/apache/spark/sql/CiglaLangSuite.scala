@@ -21,6 +21,7 @@ import org.apache.spark.sql.catalyst.parser.{CiglaStatement, SparkStatement}
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanHelper
 import org.apache.spark.sql.test.SharedSparkSession
 
+//noinspection ScalaStyle
 class CiglaLangSuite extends QueryTest
   with SharedSparkSession
   with AdaptiveSparkPlanHelper {
@@ -77,7 +78,8 @@ class CiglaLangSuite extends QueryTest
 
       commands.foreach {
         case SparkStatement(command) => sql(command).show()
-        case stmt: CiglaStatement => ()
+        case s: CiglaStatement =>
+              println("Executing CiglaStatement" + s.getClass.getName)
         // TODO: Would be nice to get debugging information here.
         // E.g. : Currently executing xyz
       }

@@ -57,22 +57,26 @@ case class CiglaIfElseStatement(
   override def hasNext: Boolean = executionList.nonEmpty
 
   override def next(): CiglaStatement = {
-    var toReturn = executionList.head
-
-    executionList = executionList match {
+    val res = executionList match {
       case curr :: ifBody :: tail if curr.isInstanceOf[SparkStatement] =>
         val evalRes = evaluator.eval(curr)
         if (evalRes) {
-          ifBody :: tail
+          (ifBody :: tail, curr)
         } else {
-          tail
+          (tail, curr)
         }
       case curr :: tail if curr.isInstanceOf[CiglaBody] =>
-        toReturn = curr.next()
-        if (curr.hasNext) curr :: tail else tail
+        val ret = curr.next()
+        if (curr.hasNext) {
+          (curr :: tail, ret)
+        } else {
+          (tail, ret)
+        }
       case _ => throw new IllegalStateException("Invalid state")
     }
-    toReturn
+
+    executionList = res._1
+    res._2
   }
 
 }
@@ -122,14 +126,14 @@ case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter
   private val statementIter = statements.iterator
 
   // Figure out some functional way to do iteration...
-  private var curr: Option[CiglaStatement] = Some(statementIter.next())
+  var curr: Option[CiglaStatement] = Some(statementIter.next())
   override def hasNext: Boolean = curr.nonEmpty
 
   override def next(): CiglaStatement = {
-    val res = curr.get
+    var toRet = curr.get
     if (curr.get.hasNext) {
       // Stay in inner flow.
-      curr.get.next()
+      toRet = curr.get.next()
     } else {
       // Move to next high level statement.
       if (statementIter.hasNext) {
@@ -138,7 +142,7 @@ case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter
         curr = None
       }
     }
-    res
+    toRet
   }
 }
 
