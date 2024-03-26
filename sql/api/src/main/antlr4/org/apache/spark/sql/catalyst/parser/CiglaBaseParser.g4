@@ -2,15 +2,15 @@ parser grammar CiglaBaseParser;
 
 options { tokenVocab = CiglaBaseLexer; }
 
-singleStatement
+sparkStatement
     : SELECT stringLitOrIdentifierOrConstant+ SEMICOLON
     | UPDATE stringLitOrIdentifierOrConstant+ SEMICOLON
     | INSERT stringLitOrIdentifierOrConstant+ SEMICOLON
     | SET stringLitOrIdentifierOrConstant+ SEMICOLON
     ;
 
-multiStatement
-    : (singleStatement)*
+body
+    : (sparkStatement)*
     ;
 
 stringLitOrIdentifierOrConstant

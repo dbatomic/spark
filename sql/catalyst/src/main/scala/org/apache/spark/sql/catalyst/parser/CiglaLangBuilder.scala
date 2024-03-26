@@ -55,7 +55,7 @@ case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter
   private val parser = ciglaParser.parseBatch(batch)(t => t)
 
   private val astBuilder = CiglaLangBuilder(batch)
-  private val tree = astBuilder.visitMultiStatement(parser.multiStatement())
+  private val tree = astBuilder.visitBody(parser.body())
 
   private val statements = tree.statements
   private val statementIter = statements.iterator
@@ -70,17 +70,17 @@ case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter
 
 //noinspection ScalaStyle
 case class CiglaLangBuilder(batch: String) extends CiglaBaseParserBaseVisitor[AnyRef] {
-  override def visitSingleStatement(
-      ctx: CiglaBaseParser.SingleStatementContext): SingleStatement = {
+  override def visitSparkStatement(
+      ctx: CiglaBaseParser.SparkStatementContext): SingleStatement = {
     val start = ctx.start.getStartIndex
     val stop = ctx.stop.getStopIndex
     val command = batch.substring(start, stop + 1)
     SingleStatement(command)
   }
 
-  override def visitMultiStatement(ctx: CiglaBaseParser.MultiStatementContext): MultiStatement = {
-    val stmts = ctx.singleStatement()
-    MultiStatement(stmts.asScala.map(visitSingleStatement)
+  override def visitBody(ctx: CiglaBaseParser.BodyContext): MultiStatement = {
+    val stmts = ctx.sparkStatement()
+    MultiStatement(stmts.asScala.map(visitSparkStatement)
       .asInstanceOf[ArrayBuffer[SingleStatement]])
   }
 
