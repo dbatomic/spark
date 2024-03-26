@@ -48,9 +48,33 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val tree = astBuilder.visitMultiStatement(parser.multiStatement())
 
     batch.split(";").zip(tree.statements).foreach {
-      case (expected, actual) => assert(expected.trim === actual.command.trim)
+      case (expected, actual) => assert(expected.trim + ";" === actual.command.trim)
     }
 
     // TODO: how to execute these commands?
+  }
+
+  test("Insert statement")  {
+    val cp = new CiglaParser()
+
+    val batch =
+      """
+        |INSERT a VALUES (1, 2, x);
+        |INSERT a VALUES (a, b, c);
+        |        |""".stripMargin
+
+    val parser = cp.parseBatch(batch)(t => t)
+
+
+    // val lexer = new CiglaBaseLexer(new UpperCaseCharStream(CharStreams.fromString(batch)))
+    // val tokenStream = new CommonTokenStream(lexer)
+    // val parser = new CiglaBaseParser(tokenStream)
+
+    val astBuilder = CiglaLangBuilder(batch)
+    val tree = astBuilder.visitMultiStatement(parser.multiStatement())
+
+    // batch.split(";").zip(tree.statements).foreach {
+    //   case (expected, actual) => assert(expected.trim === actual.command.trim)
+    // }
   }
 }

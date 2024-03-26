@@ -56,7 +56,7 @@ class CiglaParser extends Logging {
     // TODO: Figure out exception handling later.
     // For now let exception leak this context...
     parser.setErrorHandler(new SparkParserBailErrorStrategy())
-    parser.getInterpreter.setPredictionMode(PredictionMode.SLL)
+    parser.getInterpreter.setPredictionMode(PredictionMode.LL)
     toResult(parser)
   }
 }

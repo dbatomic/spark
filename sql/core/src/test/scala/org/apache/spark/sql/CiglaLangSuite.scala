@@ -30,6 +30,7 @@ class CiglaLangSuite extends QueryTest
       sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
       val commands = sqlBatch(
         """
+          |INSERT INTO t VALUES (1, 'a', 1.0);
           |SELECT a, b, c FROM t;
           |SELECT a, b FROM T WHERE a=12;
           |SELECT * FROM t;

@@ -82,15 +82,23 @@ case class CiglaLangBuilder(batch: String) extends CiglaBaseParserBaseVisitor[An
       .asInstanceOf[ArrayBuffer[SingleStatement]])
   }
 
-  override def visit(parseTree: ParseTree): AnyRef = ???
+  override def visit(parseTree: ParseTree): AnyRef = {
+    null
+  }
+  override def visitChildren(ruleNode: RuleNode): AnyRef = {
+    null
+  }
 
-  override def visitChildren(ruleNode: RuleNode): AnyRef = ???
+  override def visitTerminal(terminalNode: TerminalNode): AnyRef = {
+    null
+  }
 
-  override def visitTerminal(terminalNode: TerminalNode): AnyRef = ???
-
-  override def visitErrorNode(errorNode: ErrorNode): AnyRef = ???
-
-  override def visitStatementBody(ctx: CiglaBaseParser.StatementBodyContext): AnyRef = ???
+  override def visitErrorNode(errorNode: ErrorNode): AnyRef = {
+    null
+  }
 
   override def visitStringLitOrIdentifierOrConstant(
-    ctx: CiglaBaseParser.StringLitOrIdentifierOrConstantContext): AnyRef = ??? }
+    ctx: CiglaBaseParser.StringLitOrIdentifierOrConstantContext): AnyRef = {
+    null
+  }
+}

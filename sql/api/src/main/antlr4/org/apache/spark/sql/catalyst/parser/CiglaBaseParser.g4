@@ -3,18 +3,14 @@ parser grammar CiglaBaseParser;
 options { tokenVocab = CiglaBaseLexer; }
 
 singleStatement
-    : SELECT statementBody
-    | UPDATE statementBody
-    | INSERT statementBody
-    | SET statementBody
+    : SELECT stringLitOrIdentifierOrConstant+ SEMICOLON
+    | UPDATE stringLitOrIdentifierOrConstant+ SEMICOLON
+    | INSERT stringLitOrIdentifierOrConstant+ SEMICOLON
+    | SET stringLitOrIdentifierOrConstant+ SEMICOLON
     ;
 
 multiStatement
-    : (singleStatement SEMICOLON)*
-    ;
-
-statementBody
-    : ((ASTERISK | stringLitOrIdentifierOrConstant) ((DOT | COMMA | EQ | NSEQ | NEQ | LT | LTE | GT | GTE | PLUS | MINUS | ASTERISK | PERCENT | TILDE | PIPE | LEFT_PAREN | RIGHT_PAREN | LEFT_BRACKET | RIGHT_BRACKET) stringLitOrIdentifierOrConstant)*)*
+    : (singleStatement)*
     ;
 
 stringLitOrIdentifierOrConstant
@@ -22,4 +18,5 @@ stringLitOrIdentifierOrConstant
     | IDENTIFIER_OR_CONSTANT
     | FROM
     | SELECT
+    | LEFT_PAREN | RIGHT_PAREN | COMMA | DOT | EQ | NSEQ | NEQ | LT | LTE | GT | GTE | PLUS | MINUS | ASTERISK | PERCENT | TILDE | PIPE | LEFT_BRACKET | RIGHT_BRACKET | WS
     ;
