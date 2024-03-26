@@ -23,8 +23,65 @@ import org.antlr.v4.runtime.tree.{ErrorNode, ParseTree, RuleNode, TerminalNode}
 
 // TODO: Super hacky implementation. Just experimenting with the interfaces...
 
-case class SingleStatement(command: String)
-case class MultiStatement(statements: ArrayBuffer[SingleStatement])
+trait CiglaStatement extends Iterator[CiglaStatement] {
+  // Advance accepts a func that can evaluate the statement.
+  // The result of statement should be true or false. This should be enough for control flow (?).
+  // Result can also be an exception. That is fine.
+  // Result can also be function call. With functions things get a bit more tricky.
+}
+
+case class SparkStatement(command: String) extends CiglaStatement {
+  // Execution is done outside...
+  var consumed = false
+  override def hasNext: Boolean = !consumed
+  override def next(): CiglaStatement = {
+    consumed = true
+    this
+  }
+}
+
+trait StatementBooleanEvaluator {
+  def eval(statement: CiglaStatement): Boolean
+}
+
+case class CiglaIfElseStatement(
+    condition: SparkStatement,
+    ifBody: CiglaBody,
+    elseBody: Option[CiglaBody],
+    evaluator: StatementBooleanEvaluator) extends CiglaStatement {
+
+  var executionList: List[CiglaStatement] =
+    List(Some(condition), Some(ifBody), elseBody).flatten
+
+  override def hasNext: Boolean = executionList.nonEmpty
+
+  override def next(): CiglaStatement = {
+    var curr = executionList.head
+    val rem = executionList.tail
+
+    // TODO: This is super ugly...
+    executionList = curr.map {
+        case s: SparkStatement =>
+          val evalRes = evaluator.eval(s)
+          if (evalRes) {
+            List(rem.head)
+          } else {
+            rem.tail
+          }
+        case b: CiglaBody =>
+          curr = b.next()
+          if (b.hasNext) executionList else rem
+        case _ => throw new RuntimeException("Invalid statement")
+    }.toList.flatten
+    curr
+  }
+
+}
+case class CiglaBody(statements: ArrayBuffer[CiglaStatement]) extends CiglaStatement {
+  private val statementIter = statements.iterator
+  override def hasNext: Boolean = statementIter.hasNext
+  override def next(): CiglaStatement = statementIter.next()
+}
 
 trait ProceduralLangInterface {
   def buildInterpreter(batch: String): ProceduralLangInterpreter
@@ -34,17 +91,7 @@ case class CiglaLangDispatcher() extends ProceduralLangInterface {
   def buildInterpreter(batch: String): ProceduralLangInterpreter = CiglaLangInterpreter(batch)
 }
 
-trait CiglaCommand {
-  def execute(): Unit
-}
-
-case class CiglaSparkStatement(command: String) extends CiglaCommand {
-  def execute(): Unit = {
-  }
-}
-
-trait ProceduralLangInterpreter extends Iterator[CiglaCommand] {
-}
+trait ProceduralLangInterpreter extends Iterator[CiglaStatement]
 
 case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter {
   // TODO: Keep parser here. We may need for error reporting - e.g. pointing to the
@@ -62,27 +109,30 @@ case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter
 
   override def hasNext: Boolean = statementIter.hasNext
 
-  override def next(): CiglaCommand = {
+  override def next(): CiglaStatement = {
     val stmt = statementIter.next()
-    CiglaSparkStatement(stmt.command)
+    stmt
   }
 }
 
 //noinspection ScalaStyle
 case class CiglaLangBuilder(batch: String) extends CiglaBaseParserBaseVisitor[AnyRef] {
   override def visitSparkStatement(
-      ctx: CiglaBaseParser.SparkStatementContext): SingleStatement = {
+      ctx: CiglaBaseParser.SparkStatementContext): SparkStatement = {
     val start = ctx.start.getStartIndex
     val stop = ctx.stop.getStopIndex
     val command = batch.substring(start, stop + 1)
-    SingleStatement(command)
+    SparkStatement(command)
   }
 
-  override def visitBody(ctx: CiglaBaseParser.BodyContext): MultiStatement = {
+  override def visitBody(ctx: CiglaBaseParser.BodyContext): CiglaBody = {
+    // TODO: Need to check type of statement here?
     val stmts = ctx.sparkStatement()
-    MultiStatement(stmts.asScala.map(visitSparkStatement)
-      .asInstanceOf[ArrayBuffer[SingleStatement]])
+    CiglaBody(stmts.asScala.map(visitSparkStatement).asInstanceOf[ArrayBuffer[CiglaStatement]])
   }
+
+  override def visitIfElseStatement(ctx: CiglaBaseParser.IfElseStatementContext): AnyRef =
+    super.visitIfElseStatement(ctx)
 
   override def visit(parseTree: ParseTree): AnyRef = {
     null

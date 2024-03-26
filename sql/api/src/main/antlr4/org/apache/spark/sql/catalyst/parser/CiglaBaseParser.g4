@@ -9,8 +9,12 @@ sparkStatement
     | SET stringLitOrIdentifierOrConstant+ SEMICOLON
     ;
 
+ifElseStatement
+    : IF sparkStatement THEN body (ELSE body)? END IF SEMICOLON
+    ;
+
 body
-    : (sparkStatement)*
+    : (sparkStatement | ifElseStatement)*
     ;
 
 stringLitOrIdentifierOrConstant

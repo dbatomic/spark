@@ -40,7 +40,7 @@ import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis.{NameParameterizedQuery, PosParameterizedQuery, UnresolvedRelation}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
-import org.apache.spark.sql.catalyst.parser.CiglaCommand
+import org.apache.spark.sql.catalyst.parser.CiglaStatement
 import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Range}
 import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.catalyst.util.CharVarcharUtils
@@ -713,7 +713,7 @@ class SparkSession private(
 
   private[sql] def sqlBatch(
       batchText: String,
-      tracker: QueryPlanningTracker): Iterator[CiglaCommand] =
+      tracker: QueryPlanningTracker): Iterator[CiglaStatement] =
     withActive {
       val interpreter = sessionState.proceduralDispatcher.buildInterpreter(batchText)
       interpreter
@@ -741,7 +741,7 @@ class SparkSession private(
     sql(sqlText, args, new QueryPlanningTracker)
   }
 
-  def sqlBatch(batchText: String): Iterator[CiglaCommand] = {
+  def sqlBatch(batchText: String): Iterator[CiglaStatement] = {
     sqlBatch(batchText, new QueryPlanningTracker)
   }
 

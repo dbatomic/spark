@@ -46,7 +46,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val tree = astBuilder.visitBody(parser.body())
 
     batch.split(";").zip(tree.statements).foreach {
-      case (expected, actual) => assert(expected.trim + ";" === actual.command.trim)
+      case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
     }
   }
 
@@ -64,7 +64,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val tree = astBuilder.visitBody(parser.body())
 
     batch.split(";").zip(tree.statements).foreach {
-      case (expected, actual) => assert(expected.trim + ";" === actual.command.trim)
+      case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
     }
   }
 
@@ -83,7 +83,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val tree = astBuilder.visitBody(parser.body())
 
     batch.split(";").zip(tree.statements).foreach {
-      case (expected, actual) => assert(expected.trim + ";" === actual.command.trim)
+      case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
     }
   }
 
@@ -102,7 +102,27 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val tree = astBuilder.visitBody(parser.body())
 
     batch.split(";").zip(tree.statements).foreach {
-      case (expected, actual) => assert(expected.trim + ";" === actual.command.trim)
+      case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
+    }
+  }
+
+  test("if else") {
+    val cp = new CiglaParser()
+
+    val batch =
+      """
+        |IF SELECT 1;
+        |   THEN SELECT 2;
+        |ELSE SELECT 3;
+        |END IF;
+        |""".stripMargin
+
+    val parser = cp.parseBatch(batch)(t => t)
+    val astBuilder = CiglaLangBuilder(batch)
+    val tree = astBuilder.visitBody(parser.body())
+
+    batch.split(";").zip(tree.statements).foreach {
+      case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
     }
   }
 }

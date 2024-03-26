@@ -17,7 +17,7 @@
 
 package org.apache.spark.sql
 
-import org.apache.spark.sql.catalyst.parser.CiglaSparkStatement
+import org.apache.spark.sql.catalyst.parser.SparkStatement
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanHelper
 import org.apache.spark.sql.test.SharedSparkSession
 
@@ -38,7 +38,7 @@ class CiglaLangSuite extends QueryTest
           |""".stripMargin)
 
       commands.foreach {
-        case CiglaSparkStatement(command) =>
+        case SparkStatement(command) =>
           sql(command).show()
       }
     }
@@ -58,7 +58,7 @@ class CiglaLangSuite extends QueryTest
           |""".stripMargin)
 
       commands.foreach {
-        case CiglaSparkStatement(command) =>
+        case SparkStatement(command) =>
           sql(command).show()
       }
     }
