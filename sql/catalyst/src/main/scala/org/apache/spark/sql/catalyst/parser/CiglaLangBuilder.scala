@@ -78,28 +78,24 @@ case class CiglaIfElseStatement(
     executionList = res._1
     res._2
   }
-
 }
-case class CiglaBody(statements: ArrayBuffer[CiglaStatement]) extends CiglaStatement {
-  private val statementIter = statements.iterator
-  private var curr: Option[CiglaStatement] = Some(statementIter.next()) // What if body is empty?
+
+abstract class CiglaNestedIterator(outerIterator: Iterator[CiglaStatement]) extends CiglaStatement {
+  private var curr = if (outerIterator.hasNext) Some(outerIterator.next()) else None
   override def hasNext: Boolean = curr.nonEmpty
   override def next(): CiglaStatement = {
     val res = curr.get
     if (curr.get.hasNext) {
-      // Stay in inner flow.
-      curr.get.next()
+      curr = Some(curr.get.next())
     } else {
-      // Move to next high level statement.
-      if (statementIter.hasNext) {
-        curr = Some(statementIter.next())
-      } else {
-        curr = None
-      }
+      curr = if (outerIterator.hasNext) Some(outerIterator.next()) else None
     }
     res
   }
 }
+
+case class CiglaBody(statements: ArrayBuffer[CiglaStatement])
+    extends CiglaNestedIterator(statements.iterator)
 
 trait ProceduralLangInterface {
   def buildInterpreter(batch: String): ProceduralLangInterpreter
