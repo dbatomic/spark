@@ -718,7 +718,7 @@ class SparkSession private(
       class DataFrameEvaluator extends StatementBooleanEvaluator {
         override def eval(statement: CiglaStatement): Boolean = statement match {
           case st: SparkStatement =>
-            assert(!st.consumed)
+            // assert(!st.consumed)
             val df = sql(st.command)
 
             // Rules to check whether this dataframe evaluates to true

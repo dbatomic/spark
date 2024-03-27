@@ -141,4 +141,26 @@ class CiglaLangSuite extends QueryTest
       verifyBatchResult(commands, expected)
     }
   }
+
+  test("while") {
+    withTable("t") {
+      val commands =
+        """
+          |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
+          |WHILE SELECT COUNT(*) < 2 FROM t; DO
+          |  INSERT INTO t VALUES (1, 'a', 1.0);
+          |END WHILE;
+          |SELECT COUNT(*) FROM t;
+          |""".stripMargin
+
+      val expected = Seq(
+        Seq.empty[Row], // Create table
+        Seq.empty[Row], // First insert
+        Seq.empty[Row], // Second insert
+        Seq(Row(2))     // Select count
+      )
+
+      verifyBatchResult(commands, expected)
+    }
+  }
 }

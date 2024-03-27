@@ -20,7 +20,11 @@ import scala.collection.mutable.ArrayBuffer
 
 // TODO: Super hacky implementation. Just experimenting with the interfaces...
 
-trait CiglaStatement extends Iterator[CiglaStatement]
+trait CiglaStatement extends Iterator[CiglaStatement] {
+  // TODO: Figure out functional way to do this.
+  // We should be just able to recreate iterators...
+  def rewindToStart(): Unit
+}
 
 case class SparkStatement(command: String) extends CiglaStatement {
   // Execution can either be done outside
@@ -31,6 +35,7 @@ case class SparkStatement(command: String) extends CiglaStatement {
 
   override def hasNext: Boolean = false
   override def next(): CiglaStatement = this
+  override def rewindToStart(): Unit = consumed = false
 }
 
 // Provide a way to evaluate a statement to a boolean.
@@ -53,6 +58,10 @@ case class CiglaIfElseStatement(
 
   var executionList: List[CiglaStatement] =
     List(Some(condition), Some(ifBody), elseBody).flatten
+
+  override def rewindToStart(): Unit = {
+    executionList = List(Some(condition), Some(ifBody), elseBody).flatten
+  }
 
   override def hasNext: Boolean = executionList.nonEmpty
 
@@ -82,23 +91,63 @@ case class CiglaIfElseStatement(
   }
 }
 
-//noinspection ScalaStyle
 case class CiglaWhileStatement(
    condition: SparkStatement,
    whileBody: CiglaBody,
    evaluator: StatementBooleanEvaluator) extends CiglaStatement {
-  override def hasNext: Boolean = ???
-  override def next(): CiglaStatement = ???
+
+  object WhileState extends Enumeration {
+    val Condition, Body = Value
+  }
+
+  var state = WhileState.Condition
+  var curr: Option[CiglaStatement] = Some(condition)
+  override def hasNext: Boolean = curr.nonEmpty
+  override def next(): CiglaStatement = {
+    state match {
+      case WhileState.Condition =>
+        val toRet = curr.get
+        val evalRes = evaluator.eval(curr.get)
+        curr.get.asInstanceOf[SparkStatement].consumed = true
+        if (evalRes) {
+          // Need to rewind iterator in the body.
+          state = WhileState.Body
+          curr = Some(whileBody)
+          whileBody.rewindToStart()
+        } else {
+          curr = None
+        }
+        toRet
+      case WhileState.Body =>
+        val ret = whileBody.next()
+        if (whileBody.hasNext) {
+          // Don't do anything
+          // curr = Some(whileBody)
+        } else {
+          // Go back to condition.
+          state = WhileState.Condition
+          curr = Some(condition)
+        }
+        ret
+    }
+  }
+
+  override def rewindToStart(): Unit = {
+    state = WhileState.Condition
+    curr = Some(condition)
+  }
 }
 
 // Nested iterator. This is a bit hacky, but it works for now.
 // Idea is that top level iterator will proceed only after all nested iterators
 // are exhausted.
 // TODO: Figure out some functional way to do this...
-class CiglaNestedIterator(outerIterator: Iterator[CiglaStatement]) extends CiglaStatement {
+class CiglaNestedIterator(var collection: Seq[CiglaStatement]) extends CiglaStatement {
   // curr is reactive iterator. It points to the element to be returned.
   // TODO: I don't really like this...
-  private var curr = if (outerIterator.hasNext) Some(outerIterator.next()) else None
+
+  private var iter = collection.iterator
+  private var curr = if (iter.hasNext) Some(iter.next()) else None
   override def hasNext: Boolean = curr.nonEmpty
   override def next(): CiglaStatement = {
     var res = curr.get
@@ -108,14 +157,22 @@ class CiglaNestedIterator(outerIterator: Iterator[CiglaStatement]) extends Cigla
       res = curr.get.next()
     } else {
       // If current iterator is exhausted, move to next iterator.
-      curr = if (outerIterator.hasNext) Some(outerIterator.next()) else None
+      curr = if (iter.hasNext) Some(iter.next()) else None
     }
     res
   }
+
+  override def rewindToStart(): Unit = {
+    // is this going to work?
+    // This is same as creating new nested iterator...
+    // I need better design for this. For now just getting to work.
+    iter = collection.iterator
+    curr = if (iter.hasNext) Some(iter.next()) else None
+  }
 }
 
-case class CiglaBody(statements: ArrayBuffer[CiglaStatement])
-    extends CiglaNestedIterator(statements.iterator)
+case class CiglaBody(statements: List[CiglaStatement])
+    extends CiglaNestedIterator(statements)
 
 trait ProceduralLangInterface {
   def buildInterpreter(
@@ -142,7 +199,7 @@ case class CiglaLangInterpreter(
   private val astBuilder = CiglaLangBuilder(batch, evaluator)
   private val tree = astBuilder.visitBody(parser.body())
 
-  private val iter = new CiglaNestedIterator(tree.statements.iterator)
+  private val iter = new CiglaNestedIterator(tree.statements)
 
   override def hasNext: Boolean = iter.hasNext
   override def next(): CiglaStatement = iter.next()
@@ -166,7 +223,7 @@ case class CiglaLangBuilder(batch: String, evaluator: StatementBooleanEvaluator)
       val stmt = visit(child).asInstanceOf[CiglaStatement]
       arr.addOne(stmt)
     }
-    CiglaBody(arr)
+    CiglaBody(arr.toList)
   }
 
   override def visitIfElseStatement(
