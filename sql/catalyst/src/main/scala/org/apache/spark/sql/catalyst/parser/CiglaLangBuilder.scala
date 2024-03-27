@@ -107,6 +107,7 @@ case class CiglaWhileStatement(
     state match {
       case WhileState.Condition =>
         val toRet = curr.get
+        curr.get.rewindToStart()
         val evalRes = evaluator.eval(curr.get)
         curr.get.asInstanceOf[SparkStatement].consumed = true
         if (evalRes) {

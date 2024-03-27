@@ -202,4 +202,6 @@ class CiglaLangSuite extends QueryTest
       verifyBatchResult(commands, expected, printRes = true)
     }
   }
+
+  // TODO: Tests for proper error reporting...
 }
