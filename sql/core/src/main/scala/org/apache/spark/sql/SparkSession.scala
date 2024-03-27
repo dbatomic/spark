@@ -774,6 +774,17 @@ class SparkSession private(
     sqlBatch(batchText, new QueryPlanningTracker)
   }
 
+  def sqlBatchExec(batchText: String): Iterator[DataFrame] = {
+    sqlBatch(batchText).flatMap { statement =>
+      val df = statement match {
+        case st: SparkStatement if !st.consumed =>
+          Some(sql(st.command))
+        case _ => None
+      }
+      df
+    }
+  }
+
   /**
    * Executes a SQL query substituting named parameters by the given arguments,
    * returning the result as a `DataFrame`.

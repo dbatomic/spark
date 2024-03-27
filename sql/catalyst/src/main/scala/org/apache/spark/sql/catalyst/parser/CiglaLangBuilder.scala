@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.catalyst.parser
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
 
 // TODO: Super hacky implementation. Just experimenting with the interfaces...
 
@@ -223,13 +223,13 @@ case class CiglaLangBuilder(batch: String, evaluator: StatementBooleanEvaluator)
   }
 
   override def visitBody(ctx: CiglaBaseParser.BodyContext): CiglaBody = {
-    val arr = ArrayBuffer.empty[CiglaStatement]
+    val buff = ListBuffer[CiglaStatement]()
     for (i <- 0 until ctx.getChildCount) {
       val child = ctx.getChild(i)
       val stmt = visit(child).asInstanceOf[CiglaStatement]
-      arr.addOne(stmt)
+      buff += stmt
     }
-    CiglaBody(arr.toList)
+    CiglaBody(buff.toList)
   }
 
   override def visitIfElseStatement(

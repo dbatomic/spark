@@ -203,5 +203,26 @@ class CiglaLangSuite extends QueryTest
     }
   }
 
+  test("nested while direct exec") {
+    withTable("t1", "t2") {
+      val commands =
+        """
+          |CREATE TABLE t1 (a INT) USING parquet;
+          |CREATE TABLE t2 (a INT) USING parquet;
+          |WHILE SELECT COUNT(*) < 2 FROM t1; DO
+          |  INSERT INTO t1 VALUES (1);
+          |  WHILE SELECT COUNT(*) < 2 FROM t2; DO
+          |   INSERT INTO t2 VALUES (1);
+          |   SELECT COUNT(*) as T2Count FROM t2;
+          |  END WHILE;
+          |  TRUNCATE TABLE t2;
+          |END WHILE;
+          |SELECT COUNT(*) as t1FinalCount FROM t1;
+          |SELECT COUNT(*) as t2FinalCount FROM t2;
+          |""".stripMargin
+      spark.sqlBatchExec(commands).foreach(_.show())
+    }
+  }
+
   // TODO: Tests for proper error reporting...
 }
