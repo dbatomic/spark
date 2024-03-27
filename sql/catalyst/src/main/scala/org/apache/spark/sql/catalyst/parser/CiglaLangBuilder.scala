@@ -40,7 +40,8 @@ case class SparkStatement(command: String) extends CiglaStatement {
 
 // Provide a way to evaluate a statement to a boolean.
 // Interpreter at this point only needs to know true/false
-// result of statement.
+// result of statement. E.g. if it is part of branching condition.
+// For var assignment, we will need more complex evaluator.
 trait StatementBooleanEvaluator {
   def eval(statement: CiglaStatement): Boolean
 }
@@ -51,12 +52,12 @@ case class CiglaIfElseStatement(
     elseBody: Option[CiglaBody],
     evaluator: StatementBooleanEvaluator) extends CiglaStatement {
 
-  object IfElseState extends Enumeration {
+  private object IfElseState extends Enumeration {
     val Condition, IfBody, ElseBody = Value
   }
 
-  var state = IfElseState.Condition
-  var curr: Option[CiglaStatement] = Some(condition)
+  private var state = IfElseState.Condition
+  private var curr: Option[CiglaStatement] = Some(condition)
 
   override def rewindToStart(): Unit = {
     state = IfElseState.Condition
@@ -67,6 +68,7 @@ case class CiglaIfElseStatement(
 
   override def next(): CiglaStatement = {
     // TODO: This is terrible...
+    // Think about better abstraction.
     state match {
       case IfElseState.Condition =>
         assert(curr.get.isInstanceOf[SparkStatement])
@@ -103,12 +105,13 @@ case class CiglaWhileStatement(
    whileBody: CiglaBody,
    evaluator: StatementBooleanEvaluator) extends CiglaStatement {
 
-  object WhileState extends Enumeration {
+  private object WhileState extends Enumeration {
     val Condition, Body = Value
   }
 
-  var state = WhileState.Condition
-  var curr: Option[CiglaStatement] = Some(condition)
+  private var state = WhileState.Condition
+  private var curr: Option[CiglaStatement] = Some(condition)
+
   override def hasNext: Boolean = curr.nonEmpty
   override def next(): CiglaStatement = {
     state match {
@@ -128,10 +131,7 @@ case class CiglaWhileStatement(
         toRet
       case WhileState.Body =>
         val ret = whileBody.next()
-        if (whileBody.hasNext) {
-          // Don't do anything
-          // curr = Some(whileBody)
-        } else {
+        if (!whileBody.hasNext) {
           // Go back to condition.
           state = WhileState.Condition
           curr = Some(condition)
