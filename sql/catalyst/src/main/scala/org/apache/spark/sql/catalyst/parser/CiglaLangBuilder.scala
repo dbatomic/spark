@@ -45,11 +45,6 @@ trait StatementBooleanEvaluator {
   def eval(statement: CiglaStatement): Boolean
 }
 
-// Dummy evaluator that always returns true.
-case object AlwaysTrueEval extends StatementBooleanEvaluator {
-  override def eval(statement: CiglaStatement): Boolean = true
-}
-
 case class CiglaIfElseStatement(
     condition: SparkStatement,
     ifBody: CiglaBody,
@@ -219,6 +214,9 @@ case class CiglaLangBuilder(batch: String, evaluator: StatementBooleanEvaluator)
     val start = ctx.start.getStartIndex
     val stop = ctx.stop.getStopIndex
     val command = batch.substring(start, stop + 1)
+    // We can choose to parse the command here and get AST.
+    // AST should be cacheable.
+    // For now we are keeping raw string.
     SparkStatement(command)
   }
 
@@ -235,6 +233,7 @@ case class CiglaLangBuilder(batch: String, evaluator: StatementBooleanEvaluator)
   override def visitIfElseStatement(
       ctx: CiglaBaseParser.IfElseStatementContext): CiglaIfElseStatement = {
     val condition = visitSparkStatement(ctx.sparkStatement())
+    // TODO: Some more work is needed for else if.
     val ifBody = visitBody(ctx.body(0))
     val elseBody = Option(ctx.body(1)).map(visitBody)
     CiglaIfElseStatement(condition, ifBody, elseBody, evaluator)

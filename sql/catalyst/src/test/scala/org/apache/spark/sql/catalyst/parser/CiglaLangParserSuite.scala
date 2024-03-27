@@ -28,6 +28,12 @@ case class MultiStatement(statements: ArrayBuffer[SingleStatement])
 
 //noinspection ScalaStyle
 class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
+
+  // Dummy evaluator that always returns true.
+  case object AlwaysTrueEval extends StatementBooleanEvaluator {
+    override def eval(statement: CiglaStatement): Boolean = true
+  }
+
   test("Initial parsing test") {
     val batch =
       """
