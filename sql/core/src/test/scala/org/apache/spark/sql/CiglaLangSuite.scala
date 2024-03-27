@@ -157,4 +157,30 @@ class CiglaLangSuite extends QueryTest
       result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
     }
   }
+
+  test("if with count") {
+    withTable("t") {
+      sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
+      val commands = sqlBatch(
+        """
+          |INSERT INTO t VALUES (1, 'a', 1.0);
+          |INSERT INTO t VALUES (1, 'a', 1.0);
+          |IF SELECT COUNT(*) > 2 FROM t;
+          | THEN
+          |   SELECT 42;
+          | ELSE
+          |   SELECT 43;
+          | END IF;
+          |""".stripMargin)
+
+      val result: Array[DataFrame] = commands.flatMap {
+        case stmt: SparkStatement => Some(sql(stmt.command)).filter(_ => !stmt.consumed)
+        case _: CiglaStatement => None
+      }.toArray
+
+      val expected = Seq(Seq.empty[Row], Seq.empty[Row], Seq(Row(43)))
+      assert(result.length == expected.size)
+      result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
+    }
+  }
 }
