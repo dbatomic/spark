@@ -78,84 +78,75 @@ class CiglaLangSuite extends QueryTest
   }
 
   test("if") {
-    withTable("t") {
-      sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
-      val commands = sqlBatch(
-        """
-          | IF SELECT TRUE;
-          | THEN
-          |   SELECT 42;
-          | END IF;
-          |""".stripMargin)
+    val commands = sqlBatch(
+      """
+        | IF SELECT TRUE;
+        | THEN
+        |   SELECT 42;
+        | END IF;
+        |""".stripMargin)
 
-      val result: Iterator[DataFrame] = commands.flatMap {
-        case stmt: SparkStatement =>
-          // If expression will be executed on interpreter side.
-          // We need to see what kind of behaviour we want to get here...
-          if (!stmt.consumed) {
-            Some(sql(stmt.command))
-          } else {
-            None
-          }
-        case stmt: CiglaStatement =>
-          // This is just debugging information.
-          // We should also print source information here (line number and executed statement)
-          println("Executing: " + stmt.getClass)
+    val result: Iterator[DataFrame] = commands.flatMap {
+      case stmt: SparkStatement =>
+        // If expression will be executed on interpreter side.
+        // We need to see what kind of behaviour we want to get here...
+        if (!stmt.consumed) {
+          Some(sql(stmt.command))
+        } else {
           None
-      }
-
-      val expected = Seq(Row(42))
-      assert(result.size == expected.size)
-      result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
+        }
+      case stmt: CiglaStatement =>
+        // This is just debugging information.
+        // We should also print source information here (line number and executed statement)
+        println("Executing: " + stmt.getClass)
+        None
     }
+
+    val expected = Seq(Row(42))
+    assert(result.size == expected.size)
+    result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
   }
 
   test("if else going in if") {
-    withTable("t") {
-      sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
-      val commands = sqlBatch(
-        """
-          | IF SELECT TRUE;
-          | THEN
-          |   SELECT 42;
-          | ELSE
-          |   SELECT 43;
-          | END IF;
-          |""".stripMargin)
+    val commands = sqlBatch(
+      """
+        | IF SELECT TRUE;
+        | THEN
+        |   SELECT 42;
+        | ELSE
+        |   SELECT 43;
+        | END IF;
+        |""".stripMargin)
 
-      val result: Array[DataFrame] = commands.flatMap {
-        case stmt: SparkStatement => Some(sql(stmt.command)).filter(_ => !stmt.consumed)
-        case _: CiglaStatement => None
-      }.toArray
+    val result: Array[DataFrame] = commands.flatMap {
+      case stmt: SparkStatement => Some(sql(stmt.command)).filter(_ => !stmt.consumed)
+      case _: CiglaStatement => None
+    }.toArray
 
-      val expected = Seq(Row(42))
-      assert(result.length == expected.size)
-      result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
-    }
+    val expected = Seq(Row(42))
+    assert(result.length == expected.size)
+    result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
   }
 
   test("if else going in else") {
-    withTable("t") {
-      sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
-      val commands = sqlBatch(
-        """
-          | IF SELECT FALSE;
-          | THEN
-          |   SELECT 42;
-          | ELSE
-          |   SELECT 43;
-          | END IF;
-          |""".stripMargin)
+    val commands = sqlBatch(
+      """
+        | IF SELECT FALSE;
+        | THEN
+        |   SELECT 42;
+        | ELSE
+        |   SELECT 43;
+        | END IF;
+        |""".stripMargin)
 
-      val result: Array[DataFrame] = commands.flatMap {
-        case stmt: SparkStatement => Some(sql(stmt.command)).filter(_ => !stmt.consumed)
-        case _: CiglaStatement => None
-      }.toArray
+    val result: Array[DataFrame] = commands.flatMap {
+      case stmt: SparkStatement => Some(sql(stmt.command)).filter(_ => !stmt.consumed)
+      case _: CiglaStatement => None
+    }.toArray
 
-      val expected = Seq(Row(43))
-      assert(result.length == expected.size)
-      result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
-    }
+    val expected = Seq(Row(43))
+    assert(result.length == expected.size)
+    result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
   }
 
   test("if with count") {
