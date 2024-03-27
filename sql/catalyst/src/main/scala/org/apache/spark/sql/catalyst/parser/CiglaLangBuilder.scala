@@ -135,6 +135,8 @@ case class CiglaWhileStatement(
   override def rewindToStart(): Unit = {
     state = WhileState.Condition
     curr = Some(condition)
+    condition.rewindToStart()
+    whileBody.rewindToStart()
   }
 }
 
@@ -166,6 +168,9 @@ class CiglaNestedIterator(var collection: Seq[CiglaStatement]) extends CiglaStat
     // is this going to work?
     // This is same as creating new nested iterator...
     // I need better design for this. For now just getting to work.
+
+    // rewind every inner statement
+    collection.foreach(_.rewindToStart())
     iter = collection.iterator
     curr = if (iter.hasNext) Some(iter.next()) else None
   }

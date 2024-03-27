@@ -26,15 +26,18 @@ class CiglaLangSuite extends QueryTest
   with SharedSparkSession
   with AdaptiveSparkPlanHelper {
 
-  def verifyBatchResult(batch: String, expected: Seq[Seq[Row]]): Unit = {
+  def verifyBatchResult(
+      batch: String, expected: Seq[Seq[Row]], printRes: Boolean = false): Unit = {
     val commands = sqlBatch(batch)
     val result = commands.flatMap {
-
       case stmt: SparkStatement =>
         // If expression will be executed on interpreter side.
         // We need to see what kind of behaviour we want to get here...
         // Example here is expression in while loop/if/else.
-      Some(sql(stmt.command)).filter(_ => !stmt.consumed)
+        if (printRes) {
+          println("Executing: " + stmt.command)
+        }
+        Some(sql(stmt.command)).filter(_ => !stmt.consumed)
       case _: CiglaStatement => None
     }.toArray
 
@@ -157,10 +160,46 @@ class CiglaLangSuite extends QueryTest
         Seq.empty[Row], // Create table
         Seq.empty[Row], // First insert
         Seq.empty[Row], // Second insert
-        Seq(Row(2))     // Select count
+        Seq(Row(2)) // Select count
       )
 
       verifyBatchResult(commands, expected)
+    }
+  }
+
+  test("nested while") {
+    withTable("t1", "t2") {
+      val commands =
+        """
+          |CREATE TABLE t1 (a INT) USING parquet;
+          |CREATE TABLE t2 (a INT) USING parquet;
+          |WHILE SELECT COUNT(*) < 2 FROM t1; DO
+          |  INSERT INTO t1 VALUES (1);
+          |  WHILE SELECT COUNT(*) < 2 FROM t2; DO
+          |   INSERT INTO t2 VALUES (1);
+          |  END WHILE;
+          |  TRUNCATE TABLE t2;
+          |END WHILE;
+          |SELECT COUNT(*) FROM t1;
+          |SELECT COUNT(*) FROM t2;
+          |""".stripMargin
+
+      val expected = Seq(
+        Seq.empty[Row], // Create table t1
+        Seq.empty[Row], // Create table t2
+        Seq.empty[Row], // First insert t1
+        Seq.empty[Row], // First insert t2
+        Seq.empty[Row], // Second insert t2
+        Seq.empty[Row], // Truncate t2
+        Seq.empty[Row], // Second insert t1
+        Seq.empty[Row], // Third insert t2
+        Seq.empty[Row], // Forth insert t2
+        Seq.empty[Row], // Truncate t2
+        Seq(Row(2)), // Select count t1
+        Seq(Row(0)), // Select count t2
+      )
+
+      verifyBatchResult(commands, expected, printRes = true)
     }
   }
 }

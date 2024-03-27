@@ -9,6 +9,7 @@ sparkStatement
     | UPDATE stringLitOrIdentifierOrConstant+ SEMICOLON
     | INSERT stringLitOrIdentifierOrConstant+ SEMICOLON
     | CREATE stringLitOrIdentifierOrConstant+ SEMICOLON
+    | TRUNCATE stringLitOrIdentifierOrConstant+ SEMICOLON
     | SET stringLitOrIdentifierOrConstant+ SEMICOLON
     ;
 
