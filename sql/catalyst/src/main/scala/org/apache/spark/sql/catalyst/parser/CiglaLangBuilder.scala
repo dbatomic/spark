@@ -51,38 +51,50 @@ case class CiglaIfElseStatement(
     elseBody: Option[CiglaBody],
     evaluator: StatementBooleanEvaluator) extends CiglaStatement {
 
-  var executionList: List[CiglaStatement] =
-    List(Some(condition), Some(ifBody), elseBody).flatten
-
-  override def rewindToStart(): Unit = {
-    executionList = List(Some(condition), Some(ifBody), elseBody).flatten
+  object IfElseState extends Enumeration {
+    val Condition, IfBody, ElseBody = Value
   }
 
-  override def hasNext: Boolean = executionList.nonEmpty
+  var state = IfElseState.Condition
+  var curr: Option[CiglaStatement] = Some(condition)
+
+  override def rewindToStart(): Unit = {
+    state = IfElseState.Condition
+    curr = Some(condition)
+  }
+
+  override def hasNext: Boolean = curr.nonEmpty
 
   override def next(): CiglaStatement = {
     // TODO: This is terrible...
-    val res = executionList match {
-      case curr :: ifBody :: tail if curr.isInstanceOf[SparkStatement] =>
-        val evalRes = evaluator.eval(curr)
-        curr.asInstanceOf[SparkStatement].consumed = true
+    state match {
+      case IfElseState.Condition =>
+        assert(curr.get.isInstanceOf[SparkStatement])
+        val evalRes = evaluator.eval(curr.get)
+        curr.get.asInstanceOf[SparkStatement].consumed = true
+        val ret = curr.get
         if (evalRes) {
-          (ifBody :: Nil, curr)
+          state = IfElseState.IfBody
+          curr = Some(ifBody)
         } else {
-          (tail, curr)
+          state = IfElseState.ElseBody
+          curr = elseBody // Else can be None here
         }
-      case curr :: tail if curr.isInstanceOf[CiglaBody] =>
-        val ret = curr.next()
-        if (curr.hasNext) {
-          (curr :: tail, ret)
-        } else {
-          (tail, ret)
+        ret
+      case IfElseState.IfBody =>
+        val ret = ifBody.next()
+        if (!ifBody.hasNext) {
+          curr = None
         }
+        ret
+      case IfElseState.ElseBody =>
+        val ret = elseBody.get.next()
+        if (!elseBody.get.hasNext) {
+          curr = None
+        }
+        ret
       case _ => throw new IllegalStateException("Invalid state")
     }
-
-    executionList = res._1
-    res._2
   }
 }
 
