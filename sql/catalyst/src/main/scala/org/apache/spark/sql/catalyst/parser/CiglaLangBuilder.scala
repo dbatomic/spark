@@ -82,6 +82,15 @@ case class CiglaIfElseStatement(
   }
 }
 
+//noinspection ScalaStyle
+case class CiglaWhileStatement(
+   condition: SparkStatement,
+   whileBody: CiglaBody,
+   evaluator: StatementBooleanEvaluator) extends CiglaStatement {
+  override def hasNext: Boolean = ???
+  override def next(): CiglaStatement = ???
+}
+
 // Nested iterator. This is a bit hacky, but it works for now.
 // Idea is that top level iterator will proceed only after all nested iterators
 // are exhausted.
@@ -166,5 +175,12 @@ case class CiglaLangBuilder(batch: String, evaluator: StatementBooleanEvaluator)
     val ifBody = visitBody(ctx.body(0))
     val elseBody = Option(ctx.body(1)).map(visitBody)
     CiglaIfElseStatement(condition, ifBody, elseBody, evaluator)
+  }
+
+  override def visitWhileStatement(
+      ctx: CiglaBaseParser.WhileStatementContext): CiglaWhileStatement = {
+    val condition = visitSparkStatement(ctx.sparkStatement())
+    val whileBody = visitBody(ctx.body)
+    CiglaWhileStatement(condition, whileBody, evaluator)
   }
 }

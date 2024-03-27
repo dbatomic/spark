@@ -16,16 +16,20 @@ ifElseStatement
     : IF sparkStatement THEN body (ELSE body)? END IF SEMICOLON
     ;
 
+whileStatement
+    : WHILE sparkStatement DO body END WHILE SEMICOLON
+    ;
+
 body
-    : (sparkStatement | ifElseStatement)*
+    : (sparkStatement | ifElseStatement | whileStatement)*
     ;
 
 stringLitOrIdentifierOrConstant
     : STRING_LITERAL
     | IDENTIFIER_OR_CONSTANT
     | FROM
-    | SELECT
-    | THEN | ELSE | END | TRUE | FALSE
+    | SELECT | CREATE
+    | THEN | ELSE | END | TRUE | FALSE | WHILE | DO | IF
     | LEFT_PAREN | RIGHT_PAREN | COMMA | DOT | EQ | NSEQ | NEQ | LT | LTE | GT | GTE | PLUS | MINUS | ASTERISK | PERCENT | TILDE | PIPE | LEFT_BRACKET | RIGHT_BRACKET | WS
     ;
 
