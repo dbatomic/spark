@@ -26,152 +26,119 @@ class CiglaLangSuite extends QueryTest
   with SharedSparkSession
   with AdaptiveSparkPlanHelper {
 
+  def verifyBatchResult(batch: String, expected: Seq[Seq[Row]]): Unit = {
+    val commands = sqlBatch(batch)
+    val result = commands.flatMap {
+
+      case stmt: SparkStatement =>
+        // If expression will be executed on interpreter side.
+        // We need to see what kind of behaviour we want to get here...
+        // Example here is expression in while loop/if/else.
+      Some(sql(stmt.command)).filter(_ => !stmt.consumed)
+      case _: CiglaStatement => None
+    }.toArray
+
+    assert(result.length == expected.size)
+    result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
+  }
+
   test("select 1") {
-    val commands = sqlBatch("SELECT 1;")
-    commands.map {
-      case s: SparkStatement => sql(s.command)
-    }.zip(Seq(Seq(Row(1)))).foreach { case (df, expected) => checkAnswer(df, expected) }
+    verifyBatchResult("SELECT 1;", Seq(Seq(Row(1))))
   }
 
   test("simple multistatement") {
     withTable("t") {
+      // TODO: Push also crete table in the batch.
       sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
-      val commands = sqlBatch(
-        """
-          |INSERT INTO t VALUES (1, 'a', 1.0);
-          |SELECT a, b FROM T WHERE a=12;
-          |SELECT a FROM t;
-          |SET x = 12;
-          |""".stripMargin)
+      val commands = """
+        |INSERT INTO t VALUES (1, 'a', 1.0);
+        |SELECT a, b FROM T WHERE a=12;
+        |SELECT a FROM t;
+        |SET x = 12;
+        |""".stripMargin
 
       val expected: Seq[Seq[Row]] = Seq(
         Seq.empty[Row],
         Seq.empty[Row],
         Seq(Row(1)),
         Seq(Row("x", "12")))
-      commands.map { case SparkStatement(command) => sql(command)
-      }.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
+
+      verifyBatchResult(commands, expected)
     }
   }
 
   test("count multistatement") {
     withTable("t") {
       sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
-      val commands = sqlBatch(
-        """
-          |INSERT INTO t VALUES (1, 'a', 1.0);
-          |INSERT INTO t VALUES (1, 'a', 1.0);
-          |SELECT CASE WHEN COUNT(*) > 10 THEN true
-          |ELSE false
-          |END as MoreThanTen
-          |FROM t;
-          |""".stripMargin)
+      val commands = """
+        |INSERT INTO t VALUES (1, 'a', 1.0);
+        |INSERT INTO t VALUES (1, 'a', 1.0);
+        |SELECT CASE WHEN COUNT(*) > 10 THEN true
+        |ELSE false
+        |END as MoreThanTen
+        |FROM t;
+        |""".stripMargin
 
-      val result = commands.map { case SparkStatement(command) => sql(command) }.toArray
       val expected = Seq(Seq.empty[Row], Seq.empty[Row], Seq(Row(false)))
-
-      assert(result.length == expected.size)
-      result.zip(expected).foreach { case (df, expected) =>
-        checkAnswer(df, expected)
-      }
+      verifyBatchResult(commands, expected)
     }
   }
 
   test("if") {
-    val commands = sqlBatch(
-      """
-        | IF SELECT TRUE;
-        | THEN
-        |   SELECT 42;
-        | END IF;
-        |""".stripMargin)
-
-    val result: Iterator[DataFrame] = commands.flatMap {
-      case stmt: SparkStatement =>
-        // If expression will be executed on interpreter side.
-        // We need to see what kind of behaviour we want to get here...
-        if (!stmt.consumed) {
-          Some(sql(stmt.command))
-        } else {
-          None
-        }
-      case stmt: CiglaStatement =>
-        // This is just debugging information.
-        // We should also print source information here (line number and executed statement)
-        println("Executing: " + stmt.getClass)
-        None
-    }
-
-    val expected = Seq(Row(42))
-    assert(result.size == expected.size)
-    result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
+    val commands = """
+      | IF SELECT TRUE;
+      | THEN
+      |   SELECT 42;
+      | END IF;
+      |""".stripMargin
+    val expected = Seq(Seq(Row(42)))
+    verifyBatchResult(commands, expected)
   }
 
   test("if else going in if") {
-    val commands = sqlBatch(
-      """
-        | IF SELECT TRUE;
-        | THEN
-        |   SELECT 42;
-        | ELSE
-        |   SELECT 43;
-        | END IF;
-        |""".stripMargin)
+    val commands = """
+      | IF SELECT TRUE;
+      | THEN
+      |   SELECT 42;
+      | ELSE
+      |   SELECT 43;
+      | END IF;
+      |""".stripMargin
 
-    val result: Array[DataFrame] = commands.flatMap {
-      case stmt: SparkStatement => Some(sql(stmt.command)).filter(_ => !stmt.consumed)
-      case _: CiglaStatement => None
-    }.toArray
-
-    val expected = Seq(Row(42))
-    assert(result.length == expected.size)
-    result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
+    val expected = Seq(Seq(Row(42)))
+    verifyBatchResult(commands, expected)
   }
 
   test("if else going in else") {
-    val commands = sqlBatch(
-      """
-        | IF SELECT FALSE;
-        | THEN
-        |   SELECT 42;
-        | ELSE
-        |   SELECT 43;
-        | END IF;
-        |""".stripMargin)
+    val commands = """
+      | IF SELECT FALSE;
+      | THEN
+      |   SELECT 42;
+      | ELSE
+      |   SELECT 43;
+      | END IF;
+      |""".stripMargin
 
-    val result: Array[DataFrame] = commands.flatMap {
-      case stmt: SparkStatement => Some(sql(stmt.command)).filter(_ => !stmt.consumed)
-      case _: CiglaStatement => None
-    }.toArray
-
-    val expected = Seq(Row(43))
-    assert(result.length == expected.size)
-    result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
+    val expected = Seq(Seq(Row(43)))
+    verifyBatchResult(commands, expected)
   }
 
   test("if with count") {
     withTable("t") {
       sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
-      val commands = sqlBatch(
-        """
-          |INSERT INTO t VALUES (1, 'a', 1.0);
-          |INSERT INTO t VALUES (1, 'a', 1.0);
-          |IF SELECT COUNT(*) > 2 FROM t;
-          | THEN
-          |   SELECT 42;
-          | ELSE
-          |   SELECT 43;
-          | END IF;
-          |""".stripMargin)
-
-      val result: Array[DataFrame] = commands.flatMap {
-        case stmt: SparkStatement => Some(sql(stmt.command)).filter(_ => !stmt.consumed)
-        case _: CiglaStatement => None
-      }.toArray
+      val commands = """
+        |INSERT INTO t VALUES (1, 'a', 1.0);
+        |INSERT INTO t VALUES (1, 'a', 1.0);
+        |IF SELECT COUNT(*) > 2 FROM t;
+        | THEN
+        |   SELECT 42;
+        | ELSE
+        |   SELECT 43;
+        | END IF;
+        |""".stripMargin
 
       val expected = Seq(Seq.empty[Row], Seq.empty[Row], Seq(Row(43)))
-      assert(result.length == expected.size)
-      result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
+      verifyBatchResult(commands, expected)
     }
   }
 }
