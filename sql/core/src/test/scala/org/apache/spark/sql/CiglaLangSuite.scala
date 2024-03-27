@@ -48,9 +48,8 @@ class CiglaLangSuite extends QueryTest
 
   test("simple multistatement") {
     withTable("t") {
-      // TODO: Push also crete table in the batch.
-      sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
       val commands = """
+        |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
         |INSERT INTO t VALUES (1, 'a', 1.0);
         |SELECT a, b FROM T WHERE a=12;
         |SELECT a FROM t;
@@ -58,10 +57,11 @@ class CiglaLangSuite extends QueryTest
         |""".stripMargin
 
       val expected: Seq[Seq[Row]] = Seq(
-        Seq.empty[Row],
-        Seq.empty[Row],
-        Seq(Row(1)),
-        Seq(Row("x", "12")))
+        Seq.empty[Row], // For create table
+        Seq.empty[Row], // For insert
+        Seq.empty[Row], // For select with filter
+        Seq(Row(1)), // For select
+        Seq(Row("x", "12"))) // For set
 
       verifyBatchResult(commands, expected)
     }
@@ -69,8 +69,8 @@ class CiglaLangSuite extends QueryTest
 
   test("count multistatement") {
     withTable("t") {
-      sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
       val commands = """
+        |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
         |INSERT INTO t VALUES (1, 'a', 1.0);
         |INSERT INTO t VALUES (1, 'a', 1.0);
         |SELECT CASE WHEN COUNT(*) > 10 THEN true
@@ -79,7 +79,7 @@ class CiglaLangSuite extends QueryTest
         |FROM t;
         |""".stripMargin
 
-      val expected = Seq(Seq.empty[Row], Seq.empty[Row], Seq(Row(false)))
+      val expected = Seq(Seq.empty[Row], Seq.empty[Row], Seq.empty[Row], Seq(Row(false)))
       verifyBatchResult(commands, expected)
     }
   }
@@ -125,8 +125,8 @@ class CiglaLangSuite extends QueryTest
 
   test("if with count") {
     withTable("t") {
-      sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
       val commands = """
+        |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
         |INSERT INTO t VALUES (1, 'a', 1.0);
         |INSERT INTO t VALUES (1, 'a', 1.0);
         |IF SELECT COUNT(*) > 2 FROM t;
@@ -137,7 +137,7 @@ class CiglaLangSuite extends QueryTest
         | END IF;
         |""".stripMargin
 
-      val expected = Seq(Seq.empty[Row], Seq.empty[Row], Seq(Row(43)))
+      val expected = Seq(Seq.empty[Row], Seq.empty[Row], Seq.empty[Row], Seq(Row(43)))
       verifyBatchResult(commands, expected)
     }
   }

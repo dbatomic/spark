@@ -2,10 +2,13 @@ parser grammar CiglaBaseParser;
 
 options { tokenVocab = CiglaBaseLexer; }
 
+// TODO: Maybe we can differ between DML and DDL statements.
+// DDLs don't need to stream results back?
 sparkStatement
     : SELECT stringLitOrIdentifierOrConstant+ SEMICOLON
     | UPDATE stringLitOrIdentifierOrConstant+ SEMICOLON
     | INSERT stringLitOrIdentifierOrConstant+ SEMICOLON
+    | CREATE stringLitOrIdentifierOrConstant+ SEMICOLON
     | SET stringLitOrIdentifierOrConstant+ SEMICOLON
     ;
 

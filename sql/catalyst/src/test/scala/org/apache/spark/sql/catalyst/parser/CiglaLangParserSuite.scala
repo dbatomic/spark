@@ -57,7 +57,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
       """
         |INSERT INTO a VALUES (1, 2, x);
         |INSERT INTO a VALUES (a, b, c);
-        |        |""".stripMargin
+        |""".stripMargin
 
     val parser = cp.parseBatch(batch)(t => t)
     val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval)
@@ -126,6 +126,24 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         assert(ifElse.condition.command == "SELECT 1;")
         assert(ifElse.ifBody.statements.head.asInstanceOf[SparkStatement].command == "SELECT 2;")
         assert(ifElse.elseBody.head.statements.head.asInstanceOf[SparkStatement].command == "SELECT 3;")
+    }
+  }
+
+  test("create table") {
+    val cp = new CiglaParser()
+
+    val batch =
+      """
+        |CREATE TABLE a (a INT, b STRING, c DOUBLE) USING parquet;
+        |CREATE TABLE a (a INT, b STRING, c DOUBLE) USING parquet;
+        |""".stripMargin
+
+    val parser = cp.parseBatch(batch)(t => t)
+    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval)
+    val tree = astBuilder.visitBody(parser.body())
+
+    batch.split(";").zip(tree.statements).foreach {
+      case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
     }
   }
 }
