@@ -40,7 +40,7 @@ import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis.{NameParameterizedQuery, PosParameterizedQuery, UnresolvedRelation}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
-import org.apache.spark.sql.catalyst.parser.CiglaStatement
+import org.apache.spark.sql.catalyst.parser.{CiglaStatement, SparkStatement, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Range}
 import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.catalyst.util.CharVarcharUtils
@@ -715,7 +715,36 @@ class SparkSession private(
       batchText: String,
       tracker: QueryPlanningTracker): Iterator[CiglaStatement] =
     withActive {
-      val interpreter = sessionState.proceduralDispatcher.buildInterpreter(batchText)
+      class DataFrameEvaluator extends StatementBooleanEvaluator {
+        override def eval(statement: CiglaStatement): Boolean = statement match {
+          case st: SparkStatement =>
+            assert(!st.consumed)
+            val df = sql(st.command)
+
+            // Rules to check whether this dataframe evaluates to true
+            // rewrite this later
+            if (df.count() == 1) {
+              if (df.schema.fields.length == 1) {
+                if (df.schema.fields(0).dataType == org.apache.spark.sql.types.BooleanType) {
+                  val value = df.collect()(0).getBoolean(0)
+                  value
+                } else {
+                  // result is not of a boolean type.
+                  // TODO: We can even try to enforce this in the analyzer phase.
+                  false
+                }
+              } else {
+                // More than one column in the result.
+                false
+              }
+            } else {
+              // No rows in the result.
+              false
+            }
+        }
+      }
+      val interpreter = sessionState.proceduralDispatcher.buildInterpreter(
+        batchText, new DataFrameEvaluator)
       interpreter
     }
 

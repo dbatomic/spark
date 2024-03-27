@@ -63,7 +63,7 @@ case class CiglaIfElseStatement(
         val evalRes = evaluator.eval(curr)
         curr.asInstanceOf[SparkStatement].consumed = true
         if (evalRes) {
-          (ifBody :: tail, curr)
+          (ifBody :: Nil, curr)
         } else {
           (tail, curr)
         }
@@ -87,13 +87,18 @@ case class CiglaIfElseStatement(
 // are exhausted.
 // TODO: Figure out some functional way to do this...
 class CiglaNestedIterator(outerIterator: Iterator[CiglaStatement]) extends CiglaStatement {
+  // curr is reactive iterator. It points to the element to be returned.
+  // TODO: I don't really like this...
   private var curr = if (outerIterator.hasNext) Some(outerIterator.next()) else None
   override def hasNext: Boolean = curr.nonEmpty
   override def next(): CiglaStatement = {
-    val res = curr.get
+    var res = curr.get
     if (curr.get.hasNext) {
-      curr = Some(curr.get.next())
+      // If current iterator has more elements, return next element.
+      // But don't progress my iterator.
+      res = curr.get.next()
     } else {
+      // If current iterator is exhausted, move to next iterator.
       curr = if (outerIterator.hasNext) Some(outerIterator.next()) else None
     }
     res
@@ -104,16 +109,20 @@ case class CiglaBody(statements: ArrayBuffer[CiglaStatement])
     extends CiglaNestedIterator(statements.iterator)
 
 trait ProceduralLangInterface {
-  def buildInterpreter(batch: String): ProceduralLangInterpreter
+  def buildInterpreter(
+    batch: String, evaluator: StatementBooleanEvaluator): ProceduralLangInterpreter
 }
 
 case class CiglaLangDispatcher() extends ProceduralLangInterface {
-  def buildInterpreter(batch: String): ProceduralLangInterpreter = CiglaLangInterpreter(batch)
+  def buildInterpreter(
+    batch: String, evaluator: StatementBooleanEvaluator): ProceduralLangInterpreter
+    = CiglaLangInterpreter(batch, evaluator)
 }
 
 trait ProceduralLangInterpreter extends Iterator[CiglaStatement]
 
-case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter {
+case class CiglaLangInterpreter(
+    batch: String, evaluator: StatementBooleanEvaluator) extends ProceduralLangInterpreter {
   // TODO: Keep parser here. We may need for error reporting - e.g. pointing to the
   // exact location of the error.
 
@@ -121,7 +130,7 @@ case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter
   private val ciglaParser = new CiglaParser()
   private val parser = ciglaParser.parseBatch(batch)(t => t)
 
-  private val astBuilder = CiglaLangBuilder(batch)
+  private val astBuilder = CiglaLangBuilder(batch, evaluator)
   private val tree = astBuilder.visitBody(parser.body())
 
   private val iter = new CiglaNestedIterator(tree.statements.iterator)
@@ -131,7 +140,7 @@ case class CiglaLangInterpreter(batch: String) extends ProceduralLangInterpreter
 }
 
 //noinspection ScalaStyle
-case class CiglaLangBuilder(batch: String, evaluator: StatementBooleanEvaluator = AlwaysTrueEval)
+case class CiglaLangBuilder(batch: String, evaluator: StatementBooleanEvaluator)
     extends CiglaBaseParserBaseVisitor[AnyRef] {
   override def visitSparkStatement(
       ctx: CiglaBaseParser.SparkStatementContext): SparkStatement = {

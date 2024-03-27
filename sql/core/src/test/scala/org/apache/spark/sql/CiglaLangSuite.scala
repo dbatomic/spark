@@ -70,13 +70,14 @@ class CiglaLangSuite extends QueryTest
       val result = commands.map { case SparkStatement(command) => sql(command) }.toArray
       val expected = Seq(Seq.empty[Row], Seq.empty[Row], Seq(Row(false)))
 
+      assert(result.length == expected.size)
       result.zip(expected).foreach { case (df, expected) =>
         checkAnswer(df, expected)
       }
     }
   }
 
-  test("if else") {
+  test("if") {
     withTable("t") {
       sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
       val commands = sqlBatch(
@@ -104,6 +105,55 @@ class CiglaLangSuite extends QueryTest
       }
 
       val expected = Seq(Row(42))
+      assert(result.size == expected.size)
+      result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
+    }
+  }
+
+  test("if else going in if") {
+    withTable("t") {
+      sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
+      val commands = sqlBatch(
+        """
+          | IF SELECT TRUE;
+          | THEN
+          |   SELECT 42;
+          | ELSE
+          |   SELECT 43;
+          | END IF;
+          |""".stripMargin)
+
+      val result: Array[DataFrame] = commands.flatMap {
+        case stmt: SparkStatement => Some(sql(stmt.command)).filter(_ => !stmt.consumed)
+        case _: CiglaStatement => None
+      }.toArray
+
+      val expected = Seq(Row(42))
+      assert(result.length == expected.size)
+      result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
+    }
+  }
+
+  test("if else going in else") {
+    withTable("t") {
+      sql("CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet")
+      val commands = sqlBatch(
+        """
+          | IF SELECT FALSE;
+          | THEN
+          |   SELECT 42;
+          | ELSE
+          |   SELECT 43;
+          | END IF;
+          |""".stripMargin)
+
+      val result: Array[DataFrame] = commands.flatMap {
+        case stmt: SparkStatement => Some(sql(stmt.command)).filter(_ => !stmt.consumed)
+        case _: CiglaStatement => None
+      }.toArray
+
+      val expected = Seq(Row(43))
+      assert(result.length == expected.size)
       result.zip(expected).foreach { case (df, expected) => checkAnswer(df, expected) }
     }
   }
