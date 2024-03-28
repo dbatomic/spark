@@ -164,7 +164,7 @@ class CiglaLangNestedIteratorStatement(val collection: Seq[RewindableStatement])
 
   override def hasNext: Boolean = {
     val childHasNext = curr match {
-      case Some(body: NonLeafStatement) => body.hasNext || localIterator.hasNext
+      case Some(body: NonLeafStatement) => body.hasNext
       case Some(_: LeafStatement) => true
       case None => false
       case _ => throw new IllegalStateException("Unknown statement type")
