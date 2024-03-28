@@ -167,8 +167,8 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     tree.statements.foreach {
       case whileStmt: CiglaWhileStatement =>
         assert(whileStmt.condition.asInstanceOf[SparkStatement].command == "SELECT 1;")
-        assert(whileStmt.whileBody.statements.head.asInstanceOf[SparkStatement].command == "SELECT 2;")
-        assert(whileStmt.whileBody.statements(1).asInstanceOf[SparkStatement].command == "SELECT 3;")
+        assert(whileStmt.whileBody.asInstanceOf[CiglaBody].statements.head.asInstanceOf[SparkStatement].command == "SELECT 2;")
+        assert(whileStmt.whileBody.asInstanceOf[CiglaBody].statements(1).asInstanceOf[SparkStatement].command == "SELECT 3;")
     }
   }
 }

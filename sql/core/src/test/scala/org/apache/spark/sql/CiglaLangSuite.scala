@@ -19,17 +19,30 @@ package org.apache.spark.sql
 
 import org.apache.spark.SparkFunSuite
 
-import org.apache.spark.sql.catalyst.parser.{CiglaLangBuilder, CiglaLangNestedIteratorStatement, LeafStatement, SparkStatement}
+import org.apache.spark.sql.catalyst.parser.{BoolEvaluableStatement, CiglaLangBuilder, CiglaLangNestedIteratorStatement, CiglaWhileStatement, LeafStatement, SparkStatement, StatementBooleanEvaluator}
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanHelper
 import org.apache.spark.sql.test.SharedSparkSession
 
 class CiglaLangSuite extends SparkFunSuite {
-  case class TestStatement(myval: String) extends LeafStatement {
+  // mocks...
+  case class TestStatement(myval: String) extends LeafStatement with BoolEvaluableStatement {
     override def rewind(): Unit = ()
   }
 
   class TestBody(stmts: List[CiglaLangBuilder.CiglaLanguageStatement])
     extends CiglaLangNestedIteratorStatement(stmts)
+
+  // Return false every reps-th time.
+  case class RepEval(reps: Int) extends StatementBooleanEvaluator {
+    var callCount = 0
+    override def eval(statement: BoolEvaluableStatement): Boolean = {
+      callCount += 1
+      !(callCount % (reps + 1) == 0)
+    }
+  }
+
+  class TestWhile(condition: BoolEvaluableStatement, body: TestBody, reps: Int)
+    extends CiglaWhileStatement(condition, body, RepEval(reps))
 
   test("test body single statement") {
     val nestedIterator = new TestBody(
@@ -67,8 +80,40 @@ class CiglaLangSuite extends SparkFunSuite {
   }
 
   test("test while loop") {
-    val iterator = new TestBody(List(
+    val iter = new TestBody(List(
+      new TestWhile(
+        TestStatement("condition"),
+        new TestBody(List(TestStatement("42"))), 3)
+    ))
+    val statements = iter.map {
+      case stmt: TestStatement => stmt.myval
+      case _ => fail("Unexpected statement type")
+    }.toList
+    assert(statements === List(
+      "condition", "42", "condition", "42", "condition", "42", "condition"))
+  }
 
+  test("nested while loop") {
+    // inner 2x, outer 3x
+    val iter = new TestBody(List(
+      new TestWhile(
+        TestStatement("con1"),
+        new TestBody(List(
+          TestStatement("42"),
+          new TestWhile(
+            TestStatement("con2"),
+              new TestBody(List(TestStatement("43"))), 2)
+        )), 3)
+    ))
+    val statements = iter.map {
+      case stmt: TestStatement => stmt.myval
+      case _ => fail("Unexpected statement type")
+    }.toList
+    assert(statements === List(
+      "con1", "42", "con2", "43", "con2", "43", "con2",
+      "con1", "42", "con2", "43", "con2", "43", "con2",
+      "con1", "42", "con2", "43", "con2", "43", "con2",
+      "con1"
     ))
   }
 }

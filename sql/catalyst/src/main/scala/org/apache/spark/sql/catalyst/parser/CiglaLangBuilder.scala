@@ -117,7 +117,7 @@ case class CiglaIfElseStatement(
 
 case class CiglaWhileStatement(
    condition: BoolEvaluableStatement,
-   whileBody: CiglaBody,
+   whileBody: CiglaLangNestedIteratorStatement,
    evaluator: StatementBooleanEvaluator) extends NonLeafStatement {
   private object WhileState extends Enumeration {
     val Condition, Body = Value
