@@ -18,6 +18,8 @@ package org.apache.spark.sql.catalyst.parser
 
 import scala.collection.mutable.ListBuffer
 
+import org.apache.spark.internal.Logging
+
 trait NodeStatement
 
 // Interface suggesting that operation can be rewound.
@@ -26,7 +28,7 @@ trait Rewindable {
   def rewind(): Unit
 }
 
-trait RewindableStatement extends NodeStatement with Rewindable
+trait RewindableStatement extends NodeStatement with Rewindable with Logging
 
 // Interpreter debugger can point to leaf statement.
 // This can either be a Spark statement or Cigla statement (e.g. var assignment or trace).
@@ -81,6 +83,7 @@ case class CiglaIfElseStatement(
   override def next(): Option[RewindableStatement] = {
     state match {
       case IfElseState.Condition =>
+        logInfo("Entering condition")
         assert(curr.get.isInstanceOf[SparkStatement])
         val evalRes = evaluator.eval(condition)
         condition.consumed = true
@@ -93,6 +96,7 @@ case class CiglaIfElseStatement(
         }
         Some(condition)
       case IfElseState.IfBody =>
+        logInfo("Entering body")
         val ret = ifBody.next()
         if (!ifBody.hasNext) {
           curr = None
