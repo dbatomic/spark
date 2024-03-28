@@ -19,7 +19,7 @@ package org.apache.spark.sql
 
 import org.apache.spark.SparkFunSuite
 
-import org.apache.spark.sql.catalyst.parser.{CiglaLangNestedIteratorStatement, LeafStatement, SparkStatement}
+import org.apache.spark.sql.catalyst.parser.{CiglaLangBuilder, CiglaLangNestedIteratorStatement, LeafStatement, SparkStatement}
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanHelper
 import org.apache.spark.sql.test.SharedSparkSession
 
@@ -28,8 +28,11 @@ class CiglaLangSuite extends SparkFunSuite {
     override def rewind(): Unit = ()
   }
 
+  class TestBody(stmts: List[CiglaLangBuilder.CiglaLanguageStatement])
+    extends CiglaLangNestedIteratorStatement(stmts)
+
   test("test body no nesting") {
-    val nestedIterator = new CiglaLangNestedIteratorStatement(
+    val nestedIterator = new TestBody(
       List(TestStatement("one"), TestStatement("two"), TestStatement("three")))
     val statements = nestedIterator.map {
       case Some(stmt: TestStatement) => stmt.myval
@@ -37,6 +40,21 @@ class CiglaLangSuite extends SparkFunSuite {
     }.toList
 
     assert(statements === List("one", "two", "three"))
+  }
+
+  test("test body in body") {
+    val nestedIterator = new TestBody(List(
+      new TestBody(List(TestStatement("one"), TestStatement("two"))),
+      TestStatement("three"),
+      new TestBody(List(TestStatement("four"), TestStatement("five")))))
+
+    val statements = nestedIterator.map {
+      case Some(stmt: TestStatement) => stmt.myval
+      case None => "END" // TODO: Need to fix this none at the end!
+      case _ => fail("Unexpected statement type")
+    }.toList
+
+    assert(statements === List("one", "two", "three", "four", "five", "END"))
   }
 }
 
