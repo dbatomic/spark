@@ -20,11 +20,11 @@ import scala.collection.mutable.ListBuffer
 
 // TODO: Super hacky implementation. Just experimenting with the interfaces...
 
-trait CiglaStatement extends Iterator[CiglaStatement] {
-  // TODO: Figure out functional way to do this.
-  // We should be just able to recreate iterators...
+trait RecIter[T] extends Iterator[RecIter[T]] {
   def rewindToStart(): Unit
 }
+
+trait CiglaStatement extends RecIter[CiglaStatement]
 
 case class SparkStatement(command: String) extends CiglaStatement {
   // Execution can either be done outside
@@ -33,6 +33,8 @@ case class SparkStatement(command: String) extends CiglaStatement {
   // If Interpreter needs to execute it, it will set this to true.
   var consumed = false
 
+  // This is also hacky.
+  // Spark statement is not really an iterator.
   override def hasNext: Boolean = false
   override def next(): CiglaStatement = this
   override def rewindToStart(): Unit = consumed = false
@@ -69,6 +71,7 @@ case class CiglaIfElseStatement(
   override def next(): CiglaStatement = {
     // TODO: This is terrible...
     // Think about better abstraction.
+    // Do I need per statement state?
     state match {
       case IfElseState.Condition =>
         assert(curr.get.isInstanceOf[SparkStatement])
@@ -148,41 +151,29 @@ case class CiglaWhileStatement(
   }
 }
 
-// Nested iterator. This is a bit hacky, but it works for now.
-// Idea is that top level iterator will proceed only after all nested iterators
-// are exhausted.
-// TODO: Figure out some functional way to do this...
-class CiglaNestedIterator(var collection: Seq[CiglaStatement]) extends CiglaStatement {
-  // curr is reactive iterator. It points to the element to be returned.
-  // TODO: I don't really like this...
-
-  private var iter = collection.iterator
-  private var curr = if (iter.hasNext) Some(iter.next()) else None
+class NestedIterator[T](val collection: Seq[CiglaStatement]) extends CiglaStatement {
+  protected var iter = collection.iterator
+  protected var curr = if (iter.hasNext) Some(iter.next()) else None
   override def hasNext: Boolean = curr.nonEmpty
   override def next(): CiglaStatement = {
     var res = curr.get
     if (curr.get.hasNext) {
-      // If current iterator has more elements, return next element.
-      // But don't progress my iterator.
-      res = curr.get.next()
+      res = curr.get.next().asInstanceOf[CiglaStatement]
     } else {
-      // If current iterator is exhausted, move to next iterator.
       curr = if (iter.hasNext) Some(iter.next()) else None
     }
     res
   }
 
   override def rewindToStart(): Unit = {
-    // is this going to work?
-    // This is same as creating new nested iterator...
-    // I need better design for this. For now just getting to work.
-
-    // rewind every inner statement
     collection.foreach(_.rewindToStart())
     iter = collection.iterator
     curr = if (iter.hasNext) Some(iter.next()) else None
   }
 }
+
+class CiglaNestedIterator(collection: Seq[CiglaStatement])
+    extends NestedIterator[CiglaStatement] (collection) with CiglaStatement
 
 case class CiglaBody(statements: List[CiglaStatement])
     extends CiglaNestedIterator(statements)
