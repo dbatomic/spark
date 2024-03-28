@@ -17,12 +17,31 @@
 
 package org.apache.spark.sql
 
-import org.apache.spark.sql.catalyst.parser.SparkStatement
+import org.apache.spark.SparkFunSuite
+
+import org.apache.spark.sql.catalyst.parser.{CiglaLangNestedIteratorStatement, LeafStatement, SparkStatement}
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanHelper
 import org.apache.spark.sql.test.SharedSparkSession
 
+class CiglaLangSuite extends SparkFunSuite {
+  case class TestStatement(myval: String) extends LeafStatement {
+    override def rewind(): Unit = ()
+  }
+
+  test("test body no nesting") {
+    val nestedIterator = new CiglaLangNestedIteratorStatement(
+      List(TestStatement("one"), TestStatement("two"), TestStatement("three")))
+    val statements = nestedIterator.map {
+      case Some(stmt: TestStatement) => stmt.myval
+      case _ => fail("Unexpected statement type")
+    }.toList
+
+    assert(statements === List("one", "two", "three"))
+  }
+}
+
 //noinspection ScalaStyle
-class CiglaLangSuite extends QueryTest
+class CiglaLangSuiteE2E extends QueryTest
   with SharedSparkSession
   with AdaptiveSparkPlanHelper {
 

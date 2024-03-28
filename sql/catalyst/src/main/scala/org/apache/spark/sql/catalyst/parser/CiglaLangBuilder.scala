@@ -165,7 +165,7 @@ class CiglaLangNestedIteratorStatement(val collection: Seq[RewindableStatement])
   override def next(): Option[RewindableStatement] = {
     curr match {
       case None => None
-      case Some(stmt: SparkStatement) =>
+      case Some(stmt: LeafStatement) =>
         if (!localIterator.hasNext) curr = None
         else curr = Some(localIterator.next())
         Some(stmt)

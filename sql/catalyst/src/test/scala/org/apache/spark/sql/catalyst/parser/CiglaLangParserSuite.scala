@@ -17,14 +17,10 @@
 
 package org.apache.spark.sql.catalyst.parser
 
-import scala.collection.mutable.ArrayBuffer
-
 import org.apache.spark.SparkFunSuite
 
 import org.apache.spark.sql.catalyst.plans.SQLHelper
 
-case class SingleStatement(command: String)
-case class MultiStatement(statements: ArrayBuffer[SingleStatement])
 
 //noinspection ScalaStyle
 class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
