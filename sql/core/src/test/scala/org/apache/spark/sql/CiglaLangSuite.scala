@@ -65,6 +65,12 @@ class CiglaLangSuite extends SparkFunSuite {
 
     assert(statements === List("one", "two", "three", "four", "five"))
   }
+
+  test("test while loop") {
+    val iterator = new TestBody(List(
+
+    ))
+  }
 }
 
 //noinspection ScalaStyle

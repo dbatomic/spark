@@ -40,8 +40,12 @@ abstract class LeafStatement extends RewindableStatement
 abstract class NonLeafStatement
   extends RewindableStatement with Iterator[RewindableStatement]
 
+// Statement that can be evaluated to a boolean.
+// It can go in if/else condition or while loop.
+trait BoolEvaluableStatement extends RewindableStatement
+
 // Statement thtat is supposed to be executed against Spark.
-case class SparkStatement(command: String) extends LeafStatement {
+case class SparkStatement(command: String) extends LeafStatement with BoolEvaluableStatement {
   // Execution can either be done outside
   // (e.g. you can just get command text and execute it locally).
   // Or internally (e.g. in case of SQL in IF branch.)
@@ -55,11 +59,11 @@ case class SparkStatement(command: String) extends LeafStatement {
 // result of a statement. E.g. if it is part of branching condition.
 // For var assignment, we will need more complex evaluator.
 trait StatementBooleanEvaluator {
-  def eval(statement: SparkStatement): Boolean
+  def eval(statement: BoolEvaluableStatement): Boolean
 }
 
 case class CiglaIfElseStatement(
-    condition: SparkStatement,
+    condition: BoolEvaluableStatement,
     ifBody: CiglaBody,
     elseBody: Option[CiglaBody],
     evaluator: StatementBooleanEvaluator) extends NonLeafStatement {
@@ -86,7 +90,6 @@ case class CiglaIfElseStatement(
         logInfo("Entering condition")
         assert(curr.get.isInstanceOf[SparkStatement])
         val evalRes = evaluator.eval(condition)
-        condition.consumed = true
         if (evalRes) {
           state = IfElseState.IfBody
           curr = Some(ifBody)
@@ -113,7 +116,7 @@ case class CiglaIfElseStatement(
 }
 
 case class CiglaWhileStatement(
-   condition: SparkStatement,
+   condition: BoolEvaluableStatement,
    whileBody: CiglaBody,
    evaluator: StatementBooleanEvaluator) extends NonLeafStatement {
   private object WhileState extends Enumeration {
@@ -127,7 +130,6 @@ case class CiglaWhileStatement(
   override def next(): RewindableStatement = {
     state match {
       case WhileState.Condition =>
-        condition.consumed = true
         if (evaluator.eval(condition)) {
           whileBody.rewind()
           state = WhileState.Body
@@ -141,6 +143,7 @@ case class CiglaWhileStatement(
         if (!whileBody.hasNext) {
           state = WhileState.Condition
           curr = Some(condition)
+          condition.rewind()
         }
         ret
     }

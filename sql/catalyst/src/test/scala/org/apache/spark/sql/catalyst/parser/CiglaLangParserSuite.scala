@@ -27,7 +27,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
   // Dummy evaluator that always returns true.
   case object AlwaysTrueEval extends StatementBooleanEvaluator {
-    override def eval(statement: SparkStatement): Boolean = true
+    override def eval(statement: BoolEvaluableStatement): Boolean = true
   }
 
   test("Initial parsing test") {
@@ -125,7 +125,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
     tree.statements.foreach {
       case ifElse: CiglaIfElseStatement =>
-        assert(ifElse.condition.command == "SELECT 1;")
+        assert(ifElse.condition.asInstanceOf[SparkStatement].command == "SELECT 1;")
         assert(ifElse.ifBody.statements.head.asInstanceOf[SparkStatement].command == "SELECT 2;")
         assert(ifElse.elseBody.head.statements.head.asInstanceOf[SparkStatement].command == "SELECT 3;")
     }
@@ -166,7 +166,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
     tree.statements.foreach {
       case whileStmt: CiglaWhileStatement =>
-        assert(whileStmt.condition.command == "SELECT 1;")
+        assert(whileStmt.condition.asInstanceOf[SparkStatement].command == "SELECT 1;")
         assert(whileStmt.whileBody.statements.head.asInstanceOf[SparkStatement].command == "SELECT 2;")
         assert(whileStmt.whileBody.statements(1).asInstanceOf[SparkStatement].command == "SELECT 3;")
     }
