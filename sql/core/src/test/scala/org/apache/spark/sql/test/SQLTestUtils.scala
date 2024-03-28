@@ -37,7 +37,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.FunctionIdentifier
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.catalog.SessionCatalog.DEFAULT_DATABASE
-import org.apache.spark.sql.catalyst.parser.RewindableStatement
+import org.apache.spark.sql.catalyst.parser.CiglaLangBuilder
 import org.apache.spark.sql.catalyst.plans.PlanTest
 import org.apache.spark.sql.catalyst.plans.PlanTestBase
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
@@ -233,7 +233,8 @@ private[sql] trait SQLTestUtilsBase
   // Shorthand for running a query using our SQLContext
   protected lazy val sql: String => DataFrame = spark.sql _
 
-  protected lazy val sqlBatch: String => Iterator[Option[RewindableStatement]] = spark.sqlBatch _
+  protected lazy val sqlBatch: String =>
+    Iterator[Option[CiglaLangBuilder.CiglaLanguageStatement]] = spark.sqlBatch _
 
   /**
    * A helper object for importing SQL implicits.

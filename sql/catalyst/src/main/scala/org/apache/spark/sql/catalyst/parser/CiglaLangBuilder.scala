@@ -21,7 +21,7 @@ import scala.collection.mutable.ListBuffer
 trait NodeStatement
 
 // Interface suggesting that operation can be rewound.
-// E.g. iterator can be set back to beginning.
+// E.g. iterator can be set back to beginning if in while loop.
 trait Rewindable {
   def rewind(): Unit
 }
@@ -30,7 +30,8 @@ trait RewindableStatement extends NodeStatement with Rewindable
 
 // Interpreter debugger can point to leaf statement.
 // This can either be a Spark statement or Cigla statement (e.g. var assignment or trace).
-abstract class LeafStatement[T](value: T) extends RewindableStatement
+// TODO: Add all debugging info here.
+abstract class LeafStatement extends RewindableStatement
 
 // Non leaf statement hosts other statements. It can return iterator to it's children.
 // It can also be executed multiple times (e.g. while loop).
@@ -49,7 +50,7 @@ case class SparkStatement(command: String) extends LeafStatement {
 
 // Provide a way to evaluate a statement to a boolean.
 // Interpreter at this point only needs to know true/false
-// result of statement. E.g. if it is part of branching condition.
+// result of a statement. E.g. if it is part of branching condition.
 // For var assignment, we will need more complex evaluator.
 trait StatementBooleanEvaluator {
   def eval(statement: SparkStatement): Boolean
@@ -88,7 +89,7 @@ case class CiglaIfElseStatement(
           curr = Some(ifBody)
         } else {
           state = IfElseState.ElseBody
-          curr = elseBody // Else can be None here
+          curr = elseBody
         }
         Some(condition)
       case IfElseState.IfBody =>
@@ -103,7 +104,6 @@ case class CiglaIfElseStatement(
           curr = None
         }
         ret
-      case _ => throw new IllegalStateException("Invalid state")
     }
   }
 }
@@ -179,7 +179,7 @@ class CiglaLangNestedIteratorStatement(val collection: Seq[RewindableStatement])
             None
           }
         }
-      case _ => throw new IllegalStateException("Invalid state")
+      case _ => throw new IllegalStateException("Statement not supported")
     }
   }
 
@@ -210,7 +210,6 @@ case class CiglaLangInterpreter(batch: String, evaluator: StatementBooleanEvalua
     extends ProceduralLangInterpreter {
   // TODO: Keep parser here. We may need for error reporting - e.g. pointing to the
   // exact location of the error.
-
   // TODO: No need to init this every time..
   private val ciglaParser = new CiglaParser()
   private val parser = ciglaParser.parseBatch(batch)(t => t)
@@ -265,3 +264,10 @@ case class CiglaLangBuilder(batch: String, evaluator: StatementBooleanEvaluator)
     CiglaWhileStatement(condition, whileBody, evaluator)
   }
 }
+
+object CiglaLangBuilder {
+  // Export friendly name.
+  // Internally it is rewinding statement but from outside it is just a language statement.
+  type CiglaLanguageStatement = RewindableStatement
+}
+
