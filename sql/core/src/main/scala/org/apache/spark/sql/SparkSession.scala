@@ -40,7 +40,7 @@ import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis.{NameParameterizedQuery, PosParameterizedQuery, UnresolvedRelation}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
-import org.apache.spark.sql.catalyst.parser.{SparkStatement, StatementBooleanEvaluator}
+import org.apache.spark.sql.catalyst.parser.{RewindableStatement, SparkStatement, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Range}
 import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.catalyst.util.CharVarcharUtils
@@ -713,7 +713,7 @@ class SparkSession private(
 
   private[sql] def sqlBatch(
       batchText: String,
-      tracker: QueryPlanningTracker): Iterator[Option[SparkStatement]] =
+      tracker: QueryPlanningTracker): Iterator[Option[RewindableStatement]] =
     withActive {
       class DataFrameEvaluator extends StatementBooleanEvaluator {
         override def eval(statement: SparkStatement): Boolean = {
@@ -768,14 +768,14 @@ class SparkSession private(
     sql(sqlText, args, new QueryPlanningTracker)
   }
 
-  def sqlBatch(batchText: String): Iterator[Option[SparkStatement]] = {
+  def sqlBatch(batchText: String): Iterator[Option[RewindableStatement]] = {
     sqlBatch(batchText, new QueryPlanningTracker)
   }
 
   def sqlBatchExec(batchText: String): Iterator[DataFrame] = {
     sqlBatch(batchText).flatMap { statement =>
       val df = statement match {
-        case Some(st) if !st.consumed => Some(sql(st.command))
+        case Some(st: SparkStatement) if !st.consumed => Some(sql(st.command))
         case _ => None
       }
       df
