@@ -713,7 +713,7 @@ class SparkSession private(
 
   private[sql] def sqlBatch(
       batchText: String,
-      tracker: QueryPlanningTracker): Iterator[Option[CiglaLangBuilder.CiglaLanguageStatement]] =
+      tracker: QueryPlanningTracker): Iterator[CiglaLangBuilder.CiglaLanguageStatement] =
     withActive {
       class DataFrameEvaluator extends StatementBooleanEvaluator {
         override def eval(statement: SparkStatement): Boolean = {
@@ -768,14 +768,15 @@ class SparkSession private(
     sql(sqlText, args, new QueryPlanningTracker)
   }
 
-  def sqlBatch(batchText: String): Iterator[Option[CiglaLangBuilder.CiglaLanguageStatement]] = {
+  def sqlBatch(batchText: String): Iterator[CiglaLangBuilder.CiglaLanguageStatement] = {
     sqlBatch(batchText, new QueryPlanningTracker)
   }
 
   def sqlBatchExec(batchText: String): Iterator[DataFrame] = {
     sqlBatch(batchText).flatMap { statement =>
       val df = statement match {
-        case Some(st: SparkStatement) if !st.consumed => Some(sql(st.command))
+        case st: SparkStatement if !st.consumed => Some(sql(st.command))
+        // Remove everything that is not spark statement.
         case _ => None
       }
       df

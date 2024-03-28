@@ -234,7 +234,7 @@ private[sql] trait SQLTestUtilsBase
   protected lazy val sql: String => DataFrame = spark.sql _
 
   protected lazy val sqlBatch: String =>
-    Iterator[Option[CiglaLangBuilder.CiglaLanguageStatement]] = spark.sqlBatch _
+    Iterator[CiglaLangBuilder.CiglaLanguageStatement] = spark.sqlBatch _
 
   /**
    * A helper object for importing SQL implicits.

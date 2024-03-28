@@ -38,7 +38,7 @@ abstract class LeafStatement extends RewindableStatement
 // Non leaf statement hosts other statements. It can return iterator to it's children.
 // It can also be executed multiple times (e.g. while loop).
 abstract class NonLeafStatement
-  extends RewindableStatement with Iterator[Option[RewindableStatement]]
+  extends RewindableStatement with Iterator[RewindableStatement]
 
 // Statement thtat is supposed to be executed against Spark.
 case class SparkStatement(command: String) extends LeafStatement {
@@ -80,7 +80,7 @@ case class CiglaIfElseStatement(
 
   override def hasNext: Boolean = curr.nonEmpty
 
-  override def next(): Option[RewindableStatement] = {
+  override def next(): RewindableStatement = {
     state match {
       case IfElseState.Condition =>
         logInfo("Entering condition")
@@ -94,7 +94,7 @@ case class CiglaIfElseStatement(
           state = IfElseState.ElseBody
           curr = elseBody
         }
-        Some(condition)
+        condition
       case IfElseState.IfBody =>
         logInfo("Entering body")
         val ret = ifBody.next()
@@ -124,7 +124,7 @@ case class CiglaWhileStatement(
   private var curr: Option[RewindableStatement] = Some(condition)
 
   override def hasNext: Boolean = curr.nonEmpty
-  override def next(): Option[RewindableStatement] = {
+  override def next(): RewindableStatement = {
     state match {
       case WhileState.Condition =>
         condition.consumed = true
@@ -135,7 +135,7 @@ case class CiglaWhileStatement(
         } else {
           curr = None
         }
-        Some(condition)
+        condition
       case WhileState.Body =>
         val ret = whileBody.next()
         if (!whileBody.hasNext) {
@@ -171,13 +171,13 @@ class CiglaLangNestedIteratorStatement(val collection: Seq[RewindableStatement])
     }
     localIterator.hasNext || childHasNext
   }
-  override def next(): Option[RewindableStatement] = {
+  override def next(): RewindableStatement = {
     curr match {
       case None => throw new IllegalStateException("No more elements")
       case Some(stmt: LeafStatement) =>
         if (localIterator.hasNext) curr = Some(localIterator.next())
         else curr = None
-        Some(stmt)
+        stmt
       case Some(body: NonLeafStatement) =>
         if (body.hasNext) {
           // progress body.
@@ -212,7 +212,7 @@ case class CiglaLangDispatcher() extends ProceduralLangInterface {
     = CiglaLangInterpreter(batch, evaluator)
 }
 
-trait ProceduralLangInterpreter extends Iterator[Option[RewindableStatement]]
+trait ProceduralLangInterpreter extends Iterator[RewindableStatement]
 
 case class CiglaLangInterpreter(batch: String, evaluator: StatementBooleanEvaluator)
     extends ProceduralLangInterpreter {
@@ -229,7 +229,7 @@ case class CiglaLangInterpreter(batch: String, evaluator: StatementBooleanEvalua
 
   override def hasNext: Boolean = iter.hasNext
 
-  override def next(): Option[RewindableStatement] = iter.next()
+  override def next(): RewindableStatement = iter.next()
 }
 
 //noinspection ScalaStyle

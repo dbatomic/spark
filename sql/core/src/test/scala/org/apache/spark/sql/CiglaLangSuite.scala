@@ -35,7 +35,7 @@ class CiglaLangSuite extends SparkFunSuite {
     val nestedIterator = new TestBody(
       List(TestStatement("one")))
     val statements = nestedIterator.map {
-      case Some(stmt: TestStatement) => stmt.myval
+      case stmt: TestStatement => stmt.myval
       case _ => fail("Unexpected statement type")
     }.toList
 
@@ -46,8 +46,7 @@ class CiglaLangSuite extends SparkFunSuite {
     val nestedIterator = new TestBody(
       List(TestStatement("one"), TestStatement("two"), TestStatement("three")))
     val statements = nestedIterator.map {
-      case Some(stmt: TestStatement) => stmt.myval
-      case _ => fail("Unexpected statement type")
+      case TestStatement(v) => v
     }.toList
 
     assert(statements === List("one", "two", "three"))
@@ -60,7 +59,7 @@ class CiglaLangSuite extends SparkFunSuite {
       new TestBody(List(TestStatement("four"), TestStatement("five")))))
 
     val statements = nestedIterator.map {
-      case Some(stmt: TestStatement) => stmt.myval
+      case stmt: TestStatement => stmt.myval
       case _ => fail("Unexpected statement type")
     }.toList
 
@@ -77,7 +76,7 @@ class CiglaLangSuiteE2E extends QueryTest
       batch: String, expected: Seq[Seq[Row]], printRes: Boolean = false): Unit = {
     val commands = sqlBatch(batch)
     val result = commands.flatMap {
-      case Some(stmt: SparkStatement) =>
+      case stmt: SparkStatement =>
         // If expression will be executed on interpreter side.
         // We need to see what kind of behaviour we want to get here...
         // Example here is expression in while loop/if/else.
