@@ -31,6 +31,17 @@ class CiglaLangSuite extends SparkFunSuite {
   class TestBody(stmts: List[CiglaLangBuilder.CiglaLanguageStatement])
     extends CiglaLangNestedIteratorStatement(stmts)
 
+  test("test body single statement") {
+    val nestedIterator = new TestBody(
+      List(TestStatement("one")))
+    val statements = nestedIterator.map {
+      case Some(stmt: TestStatement) => stmt.myval
+      case _ => fail("Unexpected statement type")
+    }.toList
+
+    assert(statements === List("one"))
+  }
+
   test("test body no nesting") {
     val nestedIterator = new TestBody(
       List(TestStatement("one"), TestStatement("two"), TestStatement("three")))
@@ -50,11 +61,10 @@ class CiglaLangSuite extends SparkFunSuite {
 
     val statements = nestedIterator.map {
       case Some(stmt: TestStatement) => stmt.myval
-      case None => "END" // TODO: Need to fix this none at the end!
       case _ => fail("Unexpected statement type")
     }.toList
 
-    assert(statements === List("one", "two", "three", "four", "five", "END"))
+    assert(statements === List("one", "two", "three", "four", "five"))
   }
 }
 

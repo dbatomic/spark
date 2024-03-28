@@ -161,29 +161,33 @@ class CiglaLangNestedIteratorStatement(val collection: Seq[RewindableStatement])
 
   var localIterator = collection.iterator
   var curr = if (localIterator.hasNext) Some(localIterator.next()) else None
-  override def hasNext: Boolean = curr.nonEmpty
+
+  override def hasNext: Boolean = {
+    val childHasNext = curr match {
+      case Some(body: NonLeafStatement) => body.hasNext || localIterator.hasNext
+      case Some(_: LeafStatement) => true
+      case None => false
+      case _ => throw new IllegalStateException("Unknown statement type")
+    }
+    localIterator.hasNext || childHasNext
+  }
   override def next(): Option[RewindableStatement] = {
     curr match {
-      case None => None
+      case None => throw new IllegalStateException("No more elements")
       case Some(stmt: LeafStatement) =>
-        if (!localIterator.hasNext) curr = None
-        else curr = Some(localIterator.next())
+        if (localIterator.hasNext) curr = Some(localIterator.next())
+        else curr = None
         Some(stmt)
       case Some(body: NonLeafStatement) =>
         if (body.hasNext) {
-          // keep body.
+          // progress body.
           body.next()
         } else {
-          if (localIterator.hasNext) {
-            curr = Some(localIterator.next())
-            next()
-          } else {
-            // We are done.
-            curr = None
-            None
-          }
+          // progress my self
+          curr = if (localIterator.hasNext) Some(localIterator.next()) else None
+          next()
         }
-      case _ => throw new IllegalStateException("Statement not supported")
+      case _ => throw new IllegalStateException("Unknown statement type")
     }
   }
 
