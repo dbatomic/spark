@@ -20,40 +20,48 @@ import scala.collection.mutable.ListBuffer
 
 // TODO: Super hacky implementation. Just experimenting with the interfaces...
 
-trait RecIter[T] extends Iterator[RecIter[T]] {
-  def rewindToStart(): Unit
+trait NodeStatement
+trait Rewindable {
+  def rewind(): Unit
 }
 
-trait CiglaStatement extends RecIter[CiglaStatement]
+// This can either be spark statement
+// or core Cigla language statement.
+trait CiglaStatement extends NodeStatement with Rewindable
 
-case class SparkStatement(command: String) extends CiglaStatement {
+abstract class LeafStatement[T](value: T) extends NodeStatement
+abstract class NonLeafStatement[T] extends NodeStatement with Iterator[Option[T]]
+
+case class SparkStatement(command: String) extends LeafStatement with CiglaStatement {
   // Execution can either be done outside
   // (e.g. you can just get command text and execute it locally).
   // Or internally (e.g. in case of SQL in IF branch.)
   // If Interpreter needs to execute it, it will set this to true.
   var consumed = false
-
-  // This is also hacky.
-  // Spark statement is not really an iterator.
-  override def hasNext: Boolean = false
-  override def next(): CiglaStatement = this
-  override def rewindToStart(): Unit = consumed = false
+  override def rewind(): Unit = consumed = false
 }
+
+// All Cigla non leafs statements are iterators against Spark statements.
+// Also, all of them are rewindable.
+// When we add support for executing non-leaf statements (e.g. variables and other
+// code that doesn't touch Spark new interface should be added).
+// At this point CiglaLang is always NonLeaf.
+abstract class CiglaLangNonLeafStatement
+  extends NonLeafStatement[SparkStatement] with CiglaStatement
 
 // Provide a way to evaluate a statement to a boolean.
 // Interpreter at this point only needs to know true/false
 // result of statement. E.g. if it is part of branching condition.
 // For var assignment, we will need more complex evaluator.
 trait StatementBooleanEvaluator {
-  def eval(statement: CiglaStatement): Boolean
+  def eval(statement: SparkStatement): Boolean
 }
 
 case class CiglaIfElseStatement(
     condition: SparkStatement,
     ifBody: CiglaBody,
     elseBody: Option[CiglaBody],
-    evaluator: StatementBooleanEvaluator) extends CiglaStatement {
-
+    evaluator: StatementBooleanEvaluator) extends CiglaLangNonLeafStatement {
   private object IfElseState extends Enumeration {
     val Condition, IfBody, ElseBody = Value
   }
@@ -61,23 +69,22 @@ case class CiglaIfElseStatement(
   private var state = IfElseState.Condition
   private var curr: Option[CiglaStatement] = Some(condition)
 
-  override def rewindToStart(): Unit = {
+  override def rewind(): Unit = {
     state = IfElseState.Condition
     curr = Some(condition)
+    condition.rewind()
+    ifBody.rewind()
+    elseBody.foreach(_.rewind())
   }
 
   override def hasNext: Boolean = curr.nonEmpty
 
-  override def next(): CiglaStatement = {
-    // TODO: This is terrible...
-    // Think about better abstraction.
-    // Do I need per statement state?
+  override def next(): Option[SparkStatement] = {
     state match {
       case IfElseState.Condition =>
         assert(curr.get.isInstanceOf[SparkStatement])
-        val evalRes = evaluator.eval(curr.get)
-        curr.get.asInstanceOf[SparkStatement].consumed = true
-        val ret = curr.get
+        val evalRes = evaluator.eval(condition)
+        condition.consumed = true
         if (evalRes) {
           state = IfElseState.IfBody
           curr = Some(ifBody)
@@ -85,7 +92,7 @@ case class CiglaIfElseStatement(
           state = IfElseState.ElseBody
           curr = elseBody // Else can be None here
         }
-        ret
+        Some(condition)
       case IfElseState.IfBody =>
         val ret = ifBody.next()
         if (!ifBody.hasNext) {
@@ -106,8 +113,7 @@ case class CiglaIfElseStatement(
 case class CiglaWhileStatement(
    condition: SparkStatement,
    whileBody: CiglaBody,
-   evaluator: StatementBooleanEvaluator) extends CiglaStatement {
-
+   evaluator: StatementBooleanEvaluator) extends CiglaLangNonLeafStatement {
   private object WhileState extends Enumeration {
     val Condition, Body = Value
   }
@@ -116,26 +122,21 @@ case class CiglaWhileStatement(
   private var curr: Option[CiglaStatement] = Some(condition)
 
   override def hasNext: Boolean = curr.nonEmpty
-  override def next(): CiglaStatement = {
+  override def next(): Option[SparkStatement] = {
     state match {
       case WhileState.Condition =>
-        val toRet = curr.get
-        curr.get.rewindToStart()
-        val evalRes = evaluator.eval(curr.get)
-        curr.get.asInstanceOf[SparkStatement].consumed = true
-        if (evalRes) {
-          // Need to rewind iterator in the body.
+        condition.consumed = true
+        if (evaluator.eval(condition)) {
+          whileBody.rewind()
           state = WhileState.Body
           curr = Some(whileBody)
-          whileBody.rewindToStart()
         } else {
           curr = None
         }
-        toRet
+        Some(condition)
       case WhileState.Body =>
         val ret = whileBody.next()
         if (!whileBody.hasNext) {
-          // Go back to condition.
           state = WhileState.Condition
           curr = Some(condition)
         }
@@ -143,40 +144,56 @@ case class CiglaWhileStatement(
     }
   }
 
-  override def rewindToStart(): Unit = {
+  override def rewind(): Unit = {
     state = WhileState.Condition
     curr = Some(condition)
-    condition.rewindToStart()
-    whileBody.rewindToStart()
+    condition.rewind()
+    whileBody.rewind()
   }
 }
 
-class NestedIterator[T](val collection: Seq[CiglaStatement]) extends CiglaStatement {
-  protected var iter = collection.iterator
-  protected var curr = if (iter.hasNext) Some(iter.next()) else None
+// This is base class for all nested cigla lang statements.
+// e.g. if/else/while or even regular body.
+class CiglaLangNestedIteratorStatement(val collection: Seq[CiglaStatement])
+    extends CiglaLangNonLeafStatement {
+
+  var localIterator = collection.iterator
+  var curr = if (localIterator.hasNext) Some(localIterator.next()) else None
   override def hasNext: Boolean = curr.nonEmpty
-  override def next(): CiglaStatement = {
-    var res = curr.get
-    if (curr.get.hasNext) {
-      res = curr.get.next().asInstanceOf[CiglaStatement]
-    } else {
-      curr = if (iter.hasNext) Some(iter.next()) else None
+  override def next(): Option[SparkStatement] = {
+    curr match {
+      case None => None
+      case Some(stmt: SparkStatement) =>
+        if (!localIterator.hasNext) curr = None
+        else curr = Some(localIterator.next())
+        Some(stmt)
+      case Some(body: CiglaLangNonLeafStatement) =>
+        if (body.hasNext) {
+          // keep body.
+          body.next()
+        } else {
+          if (localIterator.hasNext) {
+            curr = Some(localIterator.next())
+            next()
+          } else {
+            // We are done.
+            curr = None
+            None
+          }
+        }
+      case _ => throw new IllegalStateException("Invalid state")
     }
-    res
   }
 
-  override def rewindToStart(): Unit = {
-    collection.foreach(_.rewindToStart())
-    iter = collection.iterator
-    curr = if (iter.hasNext) Some(iter.next()) else None
+  override def rewind(): Unit = {
+    collection.foreach(_.rewind())
+    localIterator = collection.iterator
+    curr = if (localIterator.hasNext) Some(localIterator.next()) else None
   }
 }
-
-class CiglaNestedIterator(collection: Seq[CiglaStatement])
-    extends NestedIterator[CiglaStatement] (collection) with CiglaStatement
 
 case class CiglaBody(statements: List[CiglaStatement])
-    extends CiglaNestedIterator(statements)
+    extends CiglaLangNestedIteratorStatement(statements)
 
 trait ProceduralLangInterface {
   def buildInterpreter(
@@ -189,10 +206,10 @@ case class CiglaLangDispatcher() extends ProceduralLangInterface {
     = CiglaLangInterpreter(batch, evaluator)
 }
 
-trait ProceduralLangInterpreter extends Iterator[CiglaStatement]
+trait ProceduralLangInterpreter extends Iterator[Option[SparkStatement]]
 
-case class CiglaLangInterpreter(
-    batch: String, evaluator: StatementBooleanEvaluator) extends ProceduralLangInterpreter {
+case class CiglaLangInterpreter(batch: String, evaluator: StatementBooleanEvaluator)
+    extends ProceduralLangInterpreter {
   // TODO: Keep parser here. We may need for error reporting - e.g. pointing to the
   // exact location of the error.
 
@@ -203,15 +220,16 @@ case class CiglaLangInterpreter(
   private val astBuilder = CiglaLangBuilder(batch, evaluator)
   private val tree = astBuilder.visitBody(parser.body())
 
-  private val iter = new CiglaNestedIterator(tree.statements)
+  private val iter = new CiglaLangNestedIteratorStatement(tree.statements)
 
   override def hasNext: Boolean = iter.hasNext
-  override def next(): CiglaStatement = iter.next()
+
+  override def next(): Option[SparkStatement] = iter.next()
 }
 
 //noinspection ScalaStyle
 case class CiglaLangBuilder(batch: String, evaluator: StatementBooleanEvaluator)
-    extends CiglaBaseParserBaseVisitor[AnyRef] {
+  extends CiglaBaseParserBaseVisitor[AnyRef] {
   override def visitSparkStatement(
       ctx: CiglaBaseParser.SparkStatementContext): SparkStatement = {
     val start = ctx.start.getStartIndex

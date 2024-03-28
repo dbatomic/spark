@@ -17,7 +17,7 @@
 
 package org.apache.spark.sql
 
-import org.apache.spark.sql.catalyst.parser.{CiglaStatement, SparkStatement}
+import org.apache.spark.sql.catalyst.parser.SparkStatement
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanHelper
 import org.apache.spark.sql.test.SharedSparkSession
 
@@ -30,7 +30,7 @@ class CiglaLangSuite extends QueryTest
       batch: String, expected: Seq[Seq[Row]], printRes: Boolean = false): Unit = {
     val commands = sqlBatch(batch)
     val result = commands.flatMap {
-      case stmt: SparkStatement =>
+      case Some(stmt: SparkStatement) =>
         // If expression will be executed on interpreter side.
         // We need to see what kind of behaviour we want to get here...
         // Example here is expression in while loop/if/else.
@@ -38,7 +38,7 @@ class CiglaLangSuite extends QueryTest
           println("Executing: " + stmt.command)
         }
         Some(sql(stmt.command)).filter(_ => !stmt.consumed)
-      case _: CiglaStatement => None
+      case _ => None
     }.toArray
 
     assert(result.length == expected.size)
@@ -163,7 +163,7 @@ class CiglaLangSuite extends QueryTest
         Seq(Row(2)) // Select count
       )
 
-      verifyBatchResult(commands, expected)
+      verifyBatchResult(commands, expected, printRes = true)
     }
   }
 

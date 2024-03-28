@@ -233,7 +233,7 @@ private[sql] trait SQLTestUtilsBase
   // Shorthand for running a query using our SQLContext
   protected lazy val sql: String => DataFrame = spark.sql _
 
-  protected lazy val sqlBatch: String => Iterator[CiglaStatement] = spark.sqlBatch _
+  protected lazy val sqlBatch: String => Iterator[Option[CiglaStatement]] = spark.sqlBatch _
 
   /**
    * A helper object for importing SQL implicits.

@@ -31,7 +31,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
   // Dummy evaluator that always returns true.
   case object AlwaysTrueEval extends StatementBooleanEvaluator {
-    override def eval(statement: CiglaStatement): Boolean = true
+    override def eval(statement: SparkStatement): Boolean = true
   }
 
   test("Initial parsing test") {

@@ -40,7 +40,7 @@ import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis.{NameParameterizedQuery, PosParameterizedQuery, UnresolvedRelation}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
-import org.apache.spark.sql.catalyst.parser.{CiglaStatement, SparkStatement, StatementBooleanEvaluator}
+import org.apache.spark.sql.catalyst.parser.{SparkStatement, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Range}
 import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.catalyst.util.CharVarcharUtils
@@ -713,34 +713,32 @@ class SparkSession private(
 
   private[sql] def sqlBatch(
       batchText: String,
-      tracker: QueryPlanningTracker): Iterator[CiglaStatement] =
+      tracker: QueryPlanningTracker): Iterator[Option[SparkStatement]] =
     withActive {
       class DataFrameEvaluator extends StatementBooleanEvaluator {
-        override def eval(statement: CiglaStatement): Boolean = statement match {
-          case st: SparkStatement =>
-            assert(!st.consumed)
-            val df = sql(st.command)
+        override def eval(statement: SparkStatement): Boolean = {
+          val df = sql(statement.command)
 
-            // Rules to check whether this dataframe evaluates to true
-            // rewrite this later
-            if (df.count() == 1) {
-              if (df.schema.fields.length == 1) {
-                if (df.schema.fields(0).dataType == org.apache.spark.sql.types.BooleanType) {
-                  val value = df.collect()(0).getBoolean(0)
-                  value
-                } else {
-                  // result is not of a boolean type.
-                  // TODO: We can even try to enforce this in the analyzer phase.
-                  false
-                }
+          // Rules to check whether this dataframe evaluates to true
+          // rewrite this later
+          if (df.count() == 1) {
+            if (df.schema.fields.length == 1) {
+              if (df.schema.fields(0).dataType == org.apache.spark.sql.types.BooleanType) {
+                val value = df.collect()(0).getBoolean(0)
+                value
               } else {
-                // More than one column in the result.
+                // result is not of a boolean type.
+                // TODO: We can even try to enforce this in the analyzer phase.
                 false
               }
             } else {
-              // No rows in the result.
+              // More than one column in the result.
               false
             }
+          } else {
+            // No rows in the result.
+            false
+          }
         }
       }
       val interpreter = sessionState.proceduralDispatcher.buildInterpreter(
@@ -770,15 +768,14 @@ class SparkSession private(
     sql(sqlText, args, new QueryPlanningTracker)
   }
 
-  def sqlBatch(batchText: String): Iterator[CiglaStatement] = {
+  def sqlBatch(batchText: String): Iterator[Option[SparkStatement]] = {
     sqlBatch(batchText, new QueryPlanningTracker)
   }
 
   def sqlBatchExec(batchText: String): Iterator[DataFrame] = {
     sqlBatch(batchText).flatMap { statement =>
       val df = statement match {
-        case st: SparkStatement if !st.consumed =>
-          Some(sql(st.command))
+        case Some(st) if !st.consumed => Some(sql(st.command))
         case _ => None
       }
       df
