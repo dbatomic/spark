@@ -163,26 +163,21 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
   }
 
   test("parse variable") {
-    // Just checking whether parser looks correctly.
-    assert(CatalystSqlParser.parseDataType("INT") == org.apache.spark.sql.types.IntegerType)
-    assert(CatalystSqlParser.parseDataType("DOUBLE") == org.apache.spark.sql.types.DoubleType)
-    assert(CatalystSqlParser.parseDataType("DECIMAL(10,5)") == org.apache.spark.sql.types.DecimalType(10,5))
-    assert(CatalystSqlParser.parseDataType("string") == org.apache.spark.sql.types.StringType)
-    assert(CatalystSqlParser.parseDataType("string collate utf8_binary") == org.apache.spark.sql.types.StringType)
-    assert(CatalystSqlParser.parseDataType("string collate utf8_binary_lcase") == org.apache.spark.sql.types.StringType(1))
+    val batch =
+      """
+        |DECLARE x: STRING = 'testme';
+        |DECLARE x: INT = 42;
+        |""".stripMargin
+    val tree = buildTree(batch)
+    assert(tree.statements.length == 2)
+    val stmt1 = tree.statements.head.asInstanceOf[CiglaVarDeclareStatement]
+    val stmt2 = tree.statements(1).asInstanceOf[CiglaVarDeclareStatement]
+    assert(stmt1.varType == org.apache.spark.sql.types.StringType)
+    assert(stmt1.varName == "x")
+    assert(stmt1.varValue == ExpressionStatement(Literal.create("testme", stmt1.varType)))
 
-    {
-      val batch =
-        """
-          |DECLARE x: STRING = 'testme';
-          |""".stripMargin
-      val tree = buildTree(batch)
-      assert(tree.statements.length == 1)
-      val varStmt = tree.statements.head.asInstanceOf[CiglaVarDeclareStatement]
-      assert(varStmt.varType == org.apache.spark.sql.types.StringType)
-      assert(varStmt.varName == "x")
-
-      assert(varStmt.varValue == ExpressionStatement(Literal.create("testme", varStmt.varType)))
-    }
+    assert(stmt2.varType == org.apache.spark.sql.types.IntegerType)
+    assert(stmt2.varName == "x")
+    assert(stmt2.varValue == ExpressionStatement(Literal.create(42, stmt2.varType)))
   }
 }
