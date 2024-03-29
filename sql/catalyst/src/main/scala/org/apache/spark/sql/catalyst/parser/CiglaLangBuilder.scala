@@ -19,7 +19,7 @@ package org.apache.spark.sql.catalyst.parser
 import scala.collection.mutable.ListBuffer
 
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.catalyst.expressions.{Expression, Literal}
+import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.types.DataType
 
@@ -312,9 +312,11 @@ case class CiglaLangBuilder(
             visitSparkStatement(sparkStatement)
         case literal: CiglaBaseParser.StringLitOrIdentifierOrConstantContext =>
           val rawText = literal.getText
-          // TODO: Maybe explicit cast is needed here
-          val sparkLiteral = Literal.create(rawText, varType)
-          ExpressionStatement(sparkLiteral)
+          // This is spark expression. Parse it as such.
+          // Two parser thing is a bit tricky when it comes to propagating errors.
+          // TODO: Work on that later.
+          val expression = sparkStatementParser.parseExpression(rawText)
+          ExpressionStatement(expression)
         case _ => throw new IllegalStateException("Unknown statement type")
     }
     CiglaVarDeclareStatement(varName, varType, statement)

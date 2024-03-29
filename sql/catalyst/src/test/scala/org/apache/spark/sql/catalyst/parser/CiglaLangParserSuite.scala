@@ -188,7 +188,6 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     assert(tree.statements.head.asInstanceOf[SparkStatement].command == "SELECT 'SELECT 1; SELECT 2;';")
   }
 
-  // Veriables and Datatypes
   test("parse variable") {
     // Just checking whether parser looks correctly.
     assert(CatalystSqlParser.parseDataType("INT") == org.apache.spark.sql.types.IntegerType)
@@ -211,7 +210,6 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     assert(varStmt.varType == org.apache.spark.sql.types.StringType)
     assert(varStmt.varName == "x")
 
-    // TODO: This should be "testme" instead of "'testme'"
-    assert(varStmt.varValue == ExpressionStatement(Literal.create("'testme'", varStmt.varType)))
+    assert(varStmt.varValue == ExpressionStatement(Literal.create("testme", varStmt.varType)))
   }
 }
