@@ -113,18 +113,20 @@ IDENTIFIER_OR_CONSTANT
     | UNICODE_LETTER+ '://' (UNICODE_LETTER | DIGIT | '_' | '/' | '-' | '.' | '?' | '=' | '&' | '#' | '%')+
     ;
 
-INTEGER_VALUE
-    : DIGIT+
-    ;
-
 // Generalize the identifier to give a sensible INVALID_IDENTIFIER error message:
 // * Unicode letters rather than a-z and A-Z only
 // * URI paths for table references using paths
 // We then narrow down to ANSI rules in exitUnquotedIdentifier() in the parser.
-// IDENTIFIER
-//     : (UNICODE_LETTER | DIGIT | '_')+
-//     | UNICODE_LETTER+ '://' (UNICODE_LETTER | DIGIT | '_' | '/' | '-' | '.' | '?' | '=' | '&' | '#' | '%')+
-//     ;
+IDENTIFIER
+    : (UNICODE_LETTER | DIGIT | '_')+
+    | UNICODE_LETTER+ '://' (UNICODE_LETTER | DIGIT | '_' | '/' | '-' | '.' | '?' | '=' | '&' | '#' | '%')+
+    ;
+
+
+
+INTEGER_VALUE
+    : DIGIT+
+    ;
 
 BACKQUOTED_IDENTIFIER
     : '`' ( ~'`' | '``' )* '`'

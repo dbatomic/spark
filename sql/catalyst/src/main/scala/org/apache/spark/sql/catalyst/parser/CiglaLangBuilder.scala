@@ -19,7 +19,9 @@ package org.apache.spark.sql.catalyst.parser
 import scala.collection.mutable.ListBuffer
 
 import org.apache.spark.internal.Logging
+import org.apache.spark.sql.catalyst.expressions.{Expression, Literal}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.types.DataType
 
 trait NodeStatement
 
@@ -45,6 +47,12 @@ abstract class NonLeafStatement
 // It can go in if/else condition or while loop.
 trait BoolEvaluableStatement extends RewindableStatement
 
+case class ExpressionStatement(value: Expression) extends LeafStatement {
+  // TODO: Maybe unify Cigla expression and Spark expression?
+  // E.g. expression will already have a datatype. This is for additional cast.
+  override def rewind(): Unit = {}
+}
+
 // Statement thtat is supposed to be executed against Spark.
 case class SparkStatement(command: String, parsedPlan: LogicalPlan)
     extends LeafStatement with BoolEvaluableStatement {
@@ -54,6 +62,12 @@ case class SparkStatement(command: String, parsedPlan: LogicalPlan)
   // If Interpreter needs to execute it, it will set this to true.
   var consumed = false
   override def rewind(): Unit = consumed = false
+}
+
+case class CiglaVarDeclareStatement(
+    varName: String, varType: DataType, varValue: RewindableStatement) extends LeafStatement {
+    // TODO: should value be spark stament? Let's keep it like this for now...
+    override def rewind(): Unit = varValue.rewind()
 }
 
 // Provide a way to evaluate a statement to a boolean.
@@ -283,6 +297,27 @@ case class CiglaLangBuilder(
     val condition = visitSparkStatement(ctx.sparkStatement())
     val whileBody = visitBody(ctx.body)
     CiglaWhileStatement(condition, whileBody, evaluator)
+  }
+
+  override def visitDeclareVar(ctx: CiglaBaseParser.DeclareVarContext): CiglaVarDeclareStatement = {
+    val varName = ctx.varName.getText
+    val varType = sparkStatementParser.parseDataType(ctx.dataType().getText)
+    val expression = ctx.expression
+
+    // TODO: I am doing more in this layer than I am supposed to.
+    // Probably the proper thing would be took keep expression unresolved and deal with that later.
+    // But let's keep it like this and see how far we can go.
+    val statement: RewindableStatement = expression.children.get(0) match {
+        case sparkStatement: CiglaBaseParser.SparkStatementContext =>
+            visitSparkStatement(sparkStatement)
+        case literal: CiglaBaseParser.StringLitOrIdentifierOrConstantContext =>
+          val rawText = literal.getText
+          // TODO: Maybe explicit cast is needed here
+          val sparkLiteral = Literal.create(rawText, varType)
+          ExpressionStatement(sparkLiteral)
+        case _ => throw new IllegalStateException("Unknown statement type")
+    }
+    CiglaVarDeclareStatement(varName, varType, statement)
   }
 }
 

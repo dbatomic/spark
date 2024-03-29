@@ -21,8 +21,32 @@ whileStatement
     : WHILE sparkStatement DO body END WHILE SEMICOLON
     ;
 
+expression
+    : stringLitOrIdentifierOrConstant
+    | sparkStatement
+    // Add this stuff later to keep it simple for now.
+    // | LEFT_PAREN expression RIGHT_PAREN
+    // | expression (ASTERISK | PERCENT | PLUS | MINUS) expression
+    ;
+
+// TODO: This can also be:
+// 1) expression
+// 2) Select statement
+// TODO: Can we say that variables are dataframe aliases and build against that?
+declareVar
+    : DECLARE varName COLON dataType EQ expression SEMICOLON
+    ;
+
+varName
+    : stringLitOrIdentifierOrConstant
+    ;
+
+dataType
+    : stringLitOrIdentifierOrConstant
+    ;
+
 body
-    : (sparkStatement | ifElseStatement | whileStatement)*
+    : (sparkStatement | ifElseStatement | whileStatement | declareVar)*
     ;
 
 stringLitOrIdentifierOrConstant

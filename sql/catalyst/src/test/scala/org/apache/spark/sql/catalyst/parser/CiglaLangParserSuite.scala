@@ -19,6 +19,7 @@ package org.apache.spark.sql.catalyst.parser
 
 import org.apache.spark.SparkFunSuite
 
+import org.apache.spark.sql.catalyst.expressions.Literal
 import org.apache.spark.sql.catalyst.plans.SQLHelper
 
 
@@ -185,5 +186,32 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val tree = astBuilder.visitBody(parser.body())
     assert(tree.statements.length == 1)
     assert(tree.statements.head.asInstanceOf[SparkStatement].command == "SELECT 'SELECT 1; SELECT 2;';")
+  }
+
+  // Veriables and Datatypes
+  test("parse variable") {
+    // Just checking whether parser looks correctly.
+    assert(CatalystSqlParser.parseDataType("INT") == org.apache.spark.sql.types.IntegerType)
+    assert(CatalystSqlParser.parseDataType("DOUBLE") == org.apache.spark.sql.types.DoubleType)
+    assert(CatalystSqlParser.parseDataType("DECIMAL(10,5)") == org.apache.spark.sql.types.DecimalType(10,5))
+    assert(CatalystSqlParser.parseDataType("string") == org.apache.spark.sql.types.StringType)
+    assert(CatalystSqlParser.parseDataType("string collate utf8_binary") == org.apache.spark.sql.types.StringType)
+    assert(CatalystSqlParser.parseDataType("string collate utf8_binary_lcase") == org.apache.spark.sql.types.StringType(1))
+
+    val cp = new CiglaParser()
+    val batch =
+      """
+        |DECLARE x: STRING = 'testme';
+        |""".stripMargin
+    val parser = cp.parseBatch(batch)(t => t)
+    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
+    val tree = astBuilder.visitBody(parser.body())
+    assert(tree.statements.length == 1)
+    val varStmt = tree.statements.head.asInstanceOf[CiglaVarDeclareStatement]
+    assert(varStmt.varType == org.apache.spark.sql.types.StringType)
+    assert(varStmt.varName == "x")
+
+    // TODO: This should be "testme" instead of "'testme'"
+    assert(varStmt.varValue == ExpressionStatement(Literal.create("'testme'", varStmt.varType)))
   }
 }

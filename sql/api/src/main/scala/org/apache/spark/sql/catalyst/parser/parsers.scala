@@ -65,6 +65,8 @@ class CiglaParser extends Logging {
  * Base SQL parsing infrastructure.
  */
 abstract class AbstractParser extends DataTypeParserInterface with Logging {
+  // TODO: CiglaLang should also be exposed through this interface.
+
   /** Creates/Resolves DataType for a given SQL string. */
   override def parseDataType(sqlText: String): DataType = parse(sqlText) { parser =>
     astBuilder.visitSingleDataType(parser.singleDataType())
