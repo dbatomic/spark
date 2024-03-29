@@ -31,6 +31,13 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     override def eval(statement: BoolEvaluableStatement): Boolean = true
   }
 
+  def buildTree(batch: String): CiglaBody = {
+    val cp = new CiglaParser()
+    val parser = cp.parseBatch(batch)(t => t)
+    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
+    astBuilder.visitBody(parser.body())
+  }
+
   test("Initial parsing test") {
     val batch =
       """
@@ -43,10 +50,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |SELECT * FROM T;
         |""".stripMargin
 
-    val cp = new CiglaParser()
-    val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
-    val tree = astBuilder.visitBody(parser.body())
+    val tree = buildTree(batch)
 
     batch.split(";").zip(tree.statements).foreach {
       case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
@@ -54,26 +58,19 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
   }
 
   test("Insert statement")  {
-    val cp = new CiglaParser()
-
     val batch =
       """
         |INSERT INTO a VALUES (1, 2, x);
         |INSERT INTO a VALUES (a, b, c);
         |""".stripMargin
 
-    val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
-    val tree = astBuilder.visitBody(parser.body())
-
+    val tree = buildTree(batch)
     batch.split(";").zip(tree.statements).foreach {
       case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
     }
   }
 
   test("Multiline statement") {
-    val cp = new CiglaParser()
-
     val batch =
       """
         |SELECT a, b, c
@@ -81,9 +78,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |WHERE x=y;
         |""".stripMargin
 
-    val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
-    val tree = astBuilder.visitBody(parser.body())
+    val tree = buildTree(batch)
 
     batch.split(";").zip(tree.statements).foreach {
       case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
@@ -91,8 +86,6 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
   }
 
   test("select case") {
-    val cp = new CiglaParser()
-
     val batch = """
         |SELECT CASE WHEN COUNT(*) > 10 THEN true
         |ELSE false
@@ -100,9 +93,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |FROM t;
         |""".stripMargin
 
-    val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
-    val tree = astBuilder.visitBody(parser.body())
+    val tree = buildTree(batch)
 
     batch.split(";").zip(tree.statements).foreach {
       case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
@@ -110,8 +101,6 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
   }
 
   test("if else") {
-    val cp = new CiglaParser()
-
     val batch =
       """
         |IF SELECT 1;
@@ -120,9 +109,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |END IF;
         |""".stripMargin
 
-    val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
-    val tree = astBuilder.visitBody(parser.body())
+    val tree = buildTree(batch)
 
     tree.statements.foreach {
       case ifElse: CiglaIfElseStatement =>
@@ -133,26 +120,19 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
   }
 
   test("create table") {
-    val cp = new CiglaParser()
-
     val batch =
       """
         |CREATE TABLE a (a INT, b STRING, c DOUBLE) USING parquet;
         |CREATE TABLE a (a INT, b STRING, c DOUBLE) USING parquet;
         |""".stripMargin
 
-    val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
-    val tree = astBuilder.visitBody(parser.body())
-
+    val tree = buildTree(batch)
     batch.split(";").zip(tree.statements).foreach {
       case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
     }
   }
 
   test("while loop") {
-    val cp = new CiglaParser()
-
     val batch =
       """
         |WHILE SELECT 1; DO
@@ -161,9 +141,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |END WHILE;
         |""".stripMargin
 
-    val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
-    val tree = astBuilder.visitBody(parser.body())
+    val tree = buildTree(batch)
 
     tree.statements.foreach {
       case whileStmt: CiglaWhileStatement =>
@@ -174,16 +152,12 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
   }
 
   test("; in string") {
-    val cp = new CiglaParser()
-
     val batch =
       """
         |SELECT 'SELECT 1; SELECT 2;';
         |""".stripMargin
 
-    val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
-    val tree = astBuilder.visitBody(parser.body())
+    val tree = buildTree(batch)
     assert(tree.statements.length == 1)
     assert(tree.statements.head.asInstanceOf[SparkStatement].command == "SELECT 'SELECT 1; SELECT 2;';")
   }
@@ -197,19 +171,18 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     assert(CatalystSqlParser.parseDataType("string collate utf8_binary") == org.apache.spark.sql.types.StringType)
     assert(CatalystSqlParser.parseDataType("string collate utf8_binary_lcase") == org.apache.spark.sql.types.StringType(1))
 
-    val cp = new CiglaParser()
-    val batch =
-      """
-        |DECLARE x: STRING = 'testme';
-        |""".stripMargin
-    val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
-    val tree = astBuilder.visitBody(parser.body())
-    assert(tree.statements.length == 1)
-    val varStmt = tree.statements.head.asInstanceOf[CiglaVarDeclareStatement]
-    assert(varStmt.varType == org.apache.spark.sql.types.StringType)
-    assert(varStmt.varName == "x")
+    {
+      val batch =
+        """
+          |DECLARE x: STRING = 'testme';
+          |""".stripMargin
+      val tree = buildTree(batch)
+      assert(tree.statements.length == 1)
+      val varStmt = tree.statements.head.asInstanceOf[CiglaVarDeclareStatement]
+      assert(varStmt.varType == org.apache.spark.sql.types.StringType)
+      assert(varStmt.varName == "x")
 
-    assert(varStmt.varValue == ExpressionStatement(Literal.create("testme", varStmt.varType)))
+      assert(varStmt.varValue == ExpressionStatement(Literal.create("testme", varStmt.varType)))
+    }
   }
 }
