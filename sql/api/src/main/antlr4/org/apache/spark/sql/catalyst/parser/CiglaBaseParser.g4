@@ -38,20 +38,27 @@ declareVar
     ;
 
 varName
-    : stringLitOrIdentifierOrConstant
+    : identifier
     ;
 
 dataType
-    : stringLitOrIdentifierOrConstant
+    : identifier
     ;
 
 body
     : (sparkStatement | ifElseStatement | whileStatement | declareVar)*
     ;
 
+identifier
+    : IDENTIFIER
+    ;
+
+
+// catch all rule. this will pretty much match anything up to ;.
+// idea is to pass this entire block to spark and let it handle it.
 stringLitOrIdentifierOrConstant
     : STRING_LITERAL
-    | IDENTIFIER_OR_CONSTANT
+    | IDENTIFIER
     | FROM
     | SELECT | CREATE
     | THEN | ELSE | END | TRUE | FALSE | WHILE | DO | IF

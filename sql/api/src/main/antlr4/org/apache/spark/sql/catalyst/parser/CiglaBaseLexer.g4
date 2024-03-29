@@ -108,11 +108,6 @@ DOUBLEQUOTED_STRING
     :'"' ( ~('"'|'\\') | ('\\' .) )* '"'
     ;
 
-IDENTIFIER_OR_CONSTANT
-    : (UNICODE_LETTER | DIGIT | '_')+
-    | UNICODE_LETTER+ '://' (UNICODE_LETTER | DIGIT | '_' | '/' | '-' | '.' | '?' | '=' | '&' | '#' | '%')+
-    ;
-
 // Generalize the identifier to give a sensible INVALID_IDENTIFIER error message:
 // * Unicode letters rather than a-z and A-Z only
 // * URI paths for table references using paths
@@ -121,8 +116,6 @@ IDENTIFIER
     : (UNICODE_LETTER | DIGIT | '_')+
     | UNICODE_LETTER+ '://' (UNICODE_LETTER | DIGIT | '_' | '/' | '-' | '.' | '?' | '=' | '&' | '#' | '%')+
     ;
-
-
 
 INTEGER_VALUE
     : DIGIT+
