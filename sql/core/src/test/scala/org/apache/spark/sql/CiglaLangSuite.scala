@@ -313,16 +313,20 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
         """
           |CREATE TABLE t1 (a INT) USING parquet;
           |CREATE TABLE t2 (a INT) USING parquet;
+          |DECLARE totalInsertCount = 0;
           |WHILE SELECT COUNT(*) < 2 FROM t1; DO
           |  INSERT INTO t1 VALUES (1);
+          |  SET VAR totalInsertCount = totalInsertCount + 1;
           |  WHILE SELECT COUNT(*) < 2 FROM t2; DO
           |   INSERT INTO t2 VALUES (1);
+          |   SET VAR totalInsertCount = totalInsertCount + 1;
           |   SELECT COUNT(*) as T2Count FROM t2;
           |  END WHILE;
           |  TRUNCATE TABLE t2;
           |END WHILE;
           |SELECT COUNT(*) as t1FinalCount FROM t1;
           |SELECT COUNT(*) as t2FinalCount FROM t2;
+          |SELECT totalInsertCount;
           |""".stripMargin
       spark.sqlBatchExec(commands).foreach(_.show())
     }

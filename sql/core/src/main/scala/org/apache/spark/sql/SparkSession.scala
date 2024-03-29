@@ -40,7 +40,7 @@ import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis.{NameParameterizedQuery, PosParameterizedQuery, UnresolvedRelation}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
-import org.apache.spark.sql.catalyst.parser.{BoolEvaluableStatement, CiglaLangBuilder, SparkStatement, StatementBooleanEvaluator}
+import org.apache.spark.sql.catalyst.parser.{BoolEvaluableStatement, CiglaLangBuilder, CiglaVarDeclareStatement, SparkStatement, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Range}
 import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.catalyst.util.CharVarcharUtils
@@ -770,6 +770,7 @@ class SparkSession private(
     sqlBatch(batchText).flatMap { statement =>
       val df = statement match {
         case st: SparkStatement if !st.consumed => Some(sql(st.command))
+        case st: CiglaVarDeclareStatement => Some(sql(st.command))
         // Remove everything that is not spark statement.
         case _ => None
       }
