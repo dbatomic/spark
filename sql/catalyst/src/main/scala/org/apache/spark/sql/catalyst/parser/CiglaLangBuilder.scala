@@ -304,9 +304,6 @@ case class CiglaLangBuilder(
     val varType = sparkStatementParser.parseDataType(ctx.dataType().getText)
     val expression = ctx.expression
 
-    // TODO: I am doing more in this layer than I am supposed to.
-    // Probably the proper thing would be took keep expression unresolved and deal with that later.
-    // But let's keep it like this and see how far we can go.
     val statement: RewindableStatement = expression.children.get(0) match {
         case sparkStatement: CiglaBaseParser.SparkStatementContext =>
             visitSparkStatement(sparkStatement)

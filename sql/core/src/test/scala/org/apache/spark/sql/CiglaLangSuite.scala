@@ -21,7 +21,6 @@ import org.apache.spark.SparkFunSuite
 
 import org.apache.spark.sql.catalyst.parser.{BoolEvaluableStatement, CiglaLangBuilder, CiglaLangNestedIteratorStatement, CiglaWhileStatement, LeafStatement, SparkStatement, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalyst.QueryPlanningTracker
-import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanHelper
 import org.apache.spark.sql.test.SharedSparkSession
 
 class CiglaLangSuite extends SparkFunSuite {
@@ -120,22 +119,19 @@ class CiglaLangSuite extends SparkFunSuite {
 }
 
 //noinspection ScalaStyle
-class CiglaLangSuiteE2E extends QueryTest
-  with SharedSparkSession
-  with AdaptiveSparkPlanHelper {
-
-  def verifyBatchResult(
+class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
+  private def verifyBatchResult(
       batch: String, expected: Seq[Seq[Row]], printRes: Boolean = false): Unit = {
     val commands = sqlBatch(batch)
     val result = commands.flatMap {
       case stmt: SparkStatement =>
-        // If expression will be executed on interpreter side.
-        // We need to see what kind of behaviour we want to get here...
-        // Example here is expression in while loop/if/else.
         if (printRes) {
           println("Executing: " + stmt.command)
         }
 
+        // If expression will be executed on interpreter side.
+        // We need to see what kind of behaviour we want to get here...
+        // Example here is expression in while loop/if/else.
         if (stmt.consumed) {
           None
         } else {
