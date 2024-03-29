@@ -54,7 +54,7 @@ import org.apache.spark.sql.internal._
 import org.apache.spark.sql.internal.StaticSQLConf.CATALOG_IMPLEMENTATION
 import org.apache.spark.sql.sources.BaseRelation
 import org.apache.spark.sql.streaming._
-import org.apache.spark.sql.types.{DataType, StructType}
+import org.apache.spark.sql.types.{BooleanType, DataType, StructType}
 import org.apache.spark.sql.util.ExecutionListenerManager
 import org.apache.spark.util.{CallSite, Utils}
 import org.apache.spark.util.ArrayImplicits._
@@ -715,38 +715,23 @@ class SparkSession private(
       batchText: String,
       tracker: QueryPlanningTracker): Iterator[CiglaLangBuilder.CiglaLanguageStatement] =
     withActive {
+      val session = this
       class DataFrameEvaluator extends StatementBooleanEvaluator {
         override def eval(statement: BoolEvaluableStatement): Boolean = {
           statement match {
             case st: SparkStatement =>
               assert(!st.consumed)
               st.consumed = true
-              val df = sql(st.command)
+              val df = Dataset.ofRows(session, st.parsedPlan, tracker)
 
-              // Rules to check whether this dataframe evaluates to true
-              // rewrite this later
-              // In short, true only if single row with single column of a boolean type
+              // Rules to check whether this dataframe evaluates to true:
+              // True only if single row with single column of a boolean type
               // with value TRUE.
-              if (df.count() == 1) {
-                if (df.schema.fields.length == 1) {
-                  if (df.schema.fields(0).dataType == org.apache.spark.sql.types.BooleanType) {
-                    val value = df.collect()(0).getBoolean(0)
-                    value
-                  } else {
-                    // result is not of a boolean type.
-                    // TODO: We can even try to enforce this in the analyzer phase.
-                    false
-                  }
-                } else {
-                  // More than one column in the result.
-                  false
-                }
-              } else {
-                // No rows in the result.
-                false
+              (df.count(), df.schema.fields) match {
+                case (1, Array(field)) if field.dataType == BooleanType =>
+                  df.collect()(0).getBoolean(0)
+                case _ => false
               }
-            case _ => throw new IllegalArgumentException(
-              "Only Spark statements are allowed in the batch.")
           }
         }
       }

@@ -20,6 +20,7 @@ package org.apache.spark.sql
 import org.apache.spark.SparkFunSuite
 
 import org.apache.spark.sql.catalyst.parser.{BoolEvaluableStatement, CiglaLangBuilder, CiglaLangNestedIteratorStatement, CiglaWhileStatement, LeafStatement, SparkStatement, StatementBooleanEvaluator}
+import org.apache.spark.sql.catalyst.QueryPlanningTracker
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanHelper
 import org.apache.spark.sql.test.SharedSparkSession
 
@@ -134,7 +135,12 @@ class CiglaLangSuiteE2E extends QueryTest
         if (printRes) {
           println("Executing: " + stmt.command)
         }
-        Some(sql(stmt.command)).filter(_ => !stmt.consumed)
+
+        if (stmt.consumed) {
+          None
+        } else {
+          Some(Dataset.ofRows(spark, stmt.parsedPlan, new QueryPlanningTracker))
+        }
       case _ => None
     }.toArray
 
