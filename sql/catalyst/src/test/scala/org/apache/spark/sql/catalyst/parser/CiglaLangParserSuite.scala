@@ -166,7 +166,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val batch =
       """
         |DECLARE x: STRING = 'testme';
-        |DECLARE x: INT = 42;
+        |DECLARE y: INT = 42;
         |""".stripMargin
     val tree = buildTree(batch)
     assert(tree.statements.length == 2)
@@ -177,7 +177,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     assert(stmt1.varValue == ExpressionStatement(Literal.create("testme", stmt1.varType)))
 
     assert(stmt2.varType == org.apache.spark.sql.types.IntegerType)
-    assert(stmt2.varName == "x")
+    assert(stmt2.varName == "y")
     assert(stmt2.varValue == ExpressionStatement(Literal.create(42, stmt2.varType)))
   }
 }
