@@ -19,9 +19,7 @@ package org.apache.spark.sql.catalyst.parser
 import scala.collection.mutable.ListBuffer
 
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.types.DataType
 
 trait NodeStatement
 
@@ -47,13 +45,7 @@ abstract class NonLeafStatement
 // It can go in if/else condition or while loop.
 trait BoolEvaluableStatement extends RewindableStatement
 
-case class ExpressionStatement(value: Expression) extends LeafStatement {
-  // TODO: Maybe unify Cigla expression and Spark expression?
-  // E.g. expression will already have a datatype. This is for additional cast.
-  override def rewind(): Unit = {}
-}
-
-// Statement thtat is supposed to be executed against Spark.
+// Statement that is supposed to be executed against Spark.
 case class SparkStatement(command: String, parsedPlan: LogicalPlan)
     extends LeafStatement with BoolEvaluableStatement {
   // Execution can either be done outside
@@ -64,10 +56,23 @@ case class SparkStatement(command: String, parsedPlan: LogicalPlan)
   override def rewind(): Unit = consumed = false
 }
 
+// Same as spark statement. Idea is to capture the place of definition and use it to track scope.
+// The main point is to remove all the variables at the end of the given scope.
+// E.g.:
+// while (x < 10) {
+//    declare y = 10;
+//    set var y = y + 1;
+//    // <- interpreter removes var declaration here ->
+// }
+// declare y = 22; // <-- this is now fine.
+// Trickier situation will happen during procedure calls.
+// Interpreter will have to remove all the variables in current scope
+// and then restore them after the call.
 case class CiglaVarDeclareStatement(
-    varName: String, varType: DataType, varValue: RewindableStatement) extends LeafStatement {
-    // TODO: should value be spark stament? Let's keep it like this for now...
-    override def rewind(): Unit = varValue.rewind()
+    varName: String, command: String, parsedPlan: LogicalPlan) extends LeafStatement {
+  override def rewind(): Unit = {
+    // TODO: Probably just remove the variable from the session of rewind?
+  }
 }
 
 // Provide a way to evaluate a statement to a boolean.
@@ -300,23 +305,15 @@ case class CiglaLangBuilder(
   }
 
   override def visitDeclareVar(ctx: CiglaBaseParser.DeclareVarContext): CiglaVarDeclareStatement = {
+    // this is just a proxy to track variable lifetime.
+    // all the real work is done in the spark expression.
     val varName = ctx.varName.getText
-    val varType = sparkStatementParser.parseDataType(ctx.dataType().getText)
-    val expression = ctx.expression
+    val start = ctx.start.getStartIndex
+    val stop = ctx.stop.getStopIndex
+    val originalStatement = batch.substring(start, stop + 1)
+    val sparkPlan = sparkStatementParser.parsePlan(originalStatement)
 
-    val statement: RewindableStatement = expression.children.get(0) match {
-        case sparkStatement: CiglaBaseParser.SparkStatementContext =>
-            visitSparkStatement(sparkStatement)
-        case literal: CiglaBaseParser.StringLitOrIdentifierOrConstantContext =>
-          val rawText = literal.getText
-          // This is spark expression. Parse it as such.
-          // Two parser thing is a bit tricky when it comes to propagating errors.
-          // TODO: Work on that later.
-          val expression = sparkStatementParser.parseExpression(rawText)
-          ExpressionStatement(expression)
-        case _ => throw new IllegalStateException("Unknown statement type")
-    }
-    CiglaVarDeclareStatement(varName, varType, statement)
+    CiglaVarDeclareStatement(varName, originalStatement, sparkPlan)
   }
 }
 

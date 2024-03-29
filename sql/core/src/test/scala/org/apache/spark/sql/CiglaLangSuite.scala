@@ -19,7 +19,7 @@ package org.apache.spark.sql
 
 import org.apache.spark.SparkFunSuite
 
-import org.apache.spark.sql.catalyst.parser.{BoolEvaluableStatement, CiglaLangBuilder, CiglaLangNestedIteratorStatement, CiglaWhileStatement, LeafStatement, SparkStatement, StatementBooleanEvaluator}
+import org.apache.spark.sql.catalyst.parser.{BoolEvaluableStatement, CiglaLangBuilder, CiglaLangNestedIteratorStatement, CiglaVarDeclareStatement, CiglaWhileStatement, LeafStatement, SparkStatement, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalyst.QueryPlanningTracker
 import org.apache.spark.sql.test.SharedSparkSession
 
@@ -137,6 +137,11 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
         } else {
           Some(Dataset.ofRows(spark, stmt.parsedPlan, new QueryPlanningTracker))
         }
+      case stmt: CiglaVarDeclareStatement =>
+        if (printRes) {
+          println("Executing: " + stmt.command)
+        }
+        Some(Dataset.ofRows(spark, stmt.parsedPlan, new QueryPlanningTracker))
       case _ => None
     }.toArray
 
@@ -321,6 +326,21 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
           |""".stripMargin
       spark.sqlBatchExec(commands).foreach(_.show())
     }
+  }
+
+  test("session variable set and read") {
+    val commands =
+      """
+        |DECLARE var = 1;
+        |SET VAR var = var + 1;
+        |SELECT var;
+        |""".stripMargin
+    val expected = Seq(
+      Seq.empty[Row], // Declare
+      Seq.empty[Row], // SET
+      Seq(Row(2)), // Select
+    )
+    verifyBatchResult(commands, expected, printRes = true)
   }
 
   // TODO: Tests for proper error reporting...

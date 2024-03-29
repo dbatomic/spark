@@ -29,19 +29,13 @@ expression
     // | expression (ASTERISK | PERCENT | PLUS | MINUS) expression
     ;
 
-// TODO: This can also be:
-// 1) expression
-// 2) Select statement
-// TODO: Can we say that variables are dataframe aliases and build against that?
+// Just capture the variable name. The rest will be handled by the spark.
+// variable name is important in order to keep track of the variables in the scope.
 declareVar
-    : DECLARE varName COLON dataType EQ expression SEMICOLON
+    : DECLARE varName stringLitOrIdentifierOrConstant+ SEMICOLON
     ;
 
 varName
-    : identifier
-    ;
-
-dataType
     : identifier
     ;
 

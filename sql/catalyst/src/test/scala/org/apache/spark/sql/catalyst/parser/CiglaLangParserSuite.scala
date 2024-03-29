@@ -19,7 +19,6 @@ package org.apache.spark.sql.catalyst.parser
 
 import org.apache.spark.SparkFunSuite
 
-import org.apache.spark.sql.catalyst.expressions.Literal
 import org.apache.spark.sql.catalyst.plans.SQLHelper
 
 
@@ -165,19 +164,17 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
   test("parse variable") {
     val batch =
       """
-        |DECLARE x: STRING = 'testme';
-        |DECLARE y: INT = 42;
+        |DECLARE x = 'testme';
+        |DECLARE y = 42;
         |""".stripMargin
     val tree = buildTree(batch)
     assert(tree.statements.length == 2)
     val stmt1 = tree.statements.head.asInstanceOf[CiglaVarDeclareStatement]
     val stmt2 = tree.statements(1).asInstanceOf[CiglaVarDeclareStatement]
-    assert(stmt1.varType == org.apache.spark.sql.types.StringType)
     assert(stmt1.varName == "x")
-    assert(stmt1.varValue == ExpressionStatement(Literal.create("testme", stmt1.varType)))
+    assert(stmt1.command == "DECLARE x = 'testme';")
 
-    assert(stmt2.varType == org.apache.spark.sql.types.IntegerType)
     assert(stmt2.varName == "y")
-    assert(stmt2.varValue == ExpressionStatement(Literal.create(42, stmt2.varType)))
+    assert(stmt2.command == "DECLARE y = 42;")
   }
 }
