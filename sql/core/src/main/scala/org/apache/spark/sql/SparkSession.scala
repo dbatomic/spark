@@ -751,7 +751,7 @@ class SparkSession private(
         }
       }
       val interpreter = sessionState.proceduralDispatcher.buildInterpreter(
-        batchText, new DataFrameEvaluator)
+        batchText, new DataFrameEvaluator, sessionState.sqlParser)
       interpreter
     }
 

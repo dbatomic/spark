@@ -33,18 +33,18 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
   test("Initial parsing test") {
     val batch =
       """
-        |INSERT 1;
+        |INSERT INTO a VALUES (1, 2, x);
         |SELECT BLA;
         |SELECT 1, 2;
         |SELECT a, b, c FROM T;
         |SELECT a.b.c, d.e;
         |SELECT a, b FROM T WHERE x=y;
         |SELECT * FROM T;
-        |SET x = 12;""".stripMargin
+        |""".stripMargin
 
     val cp = new CiglaParser()
     val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval)
+    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
     val tree = astBuilder.visitBody(parser.body())
 
     batch.split(";").zip(tree.statements).foreach {
@@ -62,7 +62,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |""".stripMargin
 
     val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval)
+    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
     val tree = astBuilder.visitBody(parser.body())
 
     batch.split(";").zip(tree.statements).foreach {
@@ -81,7 +81,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |""".stripMargin
 
     val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval)
+    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
     val tree = astBuilder.visitBody(parser.body())
 
     batch.split(";").zip(tree.statements).foreach {
@@ -100,7 +100,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |""".stripMargin
 
     val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval)
+    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
     val tree = astBuilder.visitBody(parser.body())
 
     batch.split(";").zip(tree.statements).foreach {
@@ -120,7 +120,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |""".stripMargin
 
     val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval)
+    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
     val tree = astBuilder.visitBody(parser.body())
 
     tree.statements.foreach {
@@ -141,7 +141,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |""".stripMargin
 
     val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval)
+    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
     val tree = astBuilder.visitBody(parser.body())
 
     batch.split(";").zip(tree.statements).foreach {
@@ -161,7 +161,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |""".stripMargin
 
     val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval)
+    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
     val tree = astBuilder.visitBody(parser.body())
 
     tree.statements.foreach {
@@ -181,7 +181,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |""".stripMargin
 
     val parser = cp.parseBatch(batch)(t => t)
-    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval)
+    val astBuilder = CiglaLangBuilder(batch, AlwaysTrueEval, CatalystSqlParser)
     val tree = astBuilder.visitBody(parser.body())
     assert(tree.statements.length == 1)
     assert(tree.statements.head.asInstanceOf[SparkStatement].command == "SELECT 'SELECT 1; SELECT 2;';")

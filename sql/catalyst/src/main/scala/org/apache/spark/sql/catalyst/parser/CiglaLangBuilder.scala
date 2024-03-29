@@ -19,6 +19,7 @@ package org.apache.spark.sql.catalyst.parser
 import scala.collection.mutable.ListBuffer
 
 import org.apache.spark.internal.Logging
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 
 trait NodeStatement
 
@@ -45,7 +46,8 @@ abstract class NonLeafStatement
 trait BoolEvaluableStatement extends RewindableStatement
 
 // Statement thtat is supposed to be executed against Spark.
-case class SparkStatement(command: String) extends LeafStatement with BoolEvaluableStatement {
+case class SparkStatement(command: String, parsedPlan: LogicalPlan)
+    extends LeafStatement with BoolEvaluableStatement {
   // Execution can either be done outside
   // (e.g. you can just get command text and execute it locally).
   // Or internally (e.g. in case of SQL in IF branch.)
@@ -206,18 +208,23 @@ case class CiglaBody(statements: List[RewindableStatement])
 
 trait ProceduralLangInterface {
   def buildInterpreter(
-    batch: String, evaluator: StatementBooleanEvaluator): ProceduralLangInterpreter
+    batch: String,
+    evaluator: StatementBooleanEvaluator,
+    sparkStatementParser: ParserInterface): ProceduralLangInterpreter
 }
 
 case class CiglaLangDispatcher() extends ProceduralLangInterface {
   def buildInterpreter(
-    batch: String, evaluator: StatementBooleanEvaluator): ProceduralLangInterpreter
-    = CiglaLangInterpreter(batch, evaluator)
+    batch: String,
+    evaluator: StatementBooleanEvaluator,
+    sparkStatementParser: ParserInterface): ProceduralLangInterpreter
+    = CiglaLangInterpreter(batch, evaluator, sparkStatementParser)
 }
 
 trait ProceduralLangInterpreter extends Iterator[RewindableStatement]
 
-case class CiglaLangInterpreter(batch: String, evaluator: StatementBooleanEvaluator)
+case class CiglaLangInterpreter(
+    batch: String, evaluator: StatementBooleanEvaluator, sparkStatementParser: ParserInterface)
     extends ProceduralLangInterpreter {
   // TODO: Keep parser here. We may need for error reporting - e.g. pointing to the
   // exact location of the error.
@@ -225,7 +232,7 @@ case class CiglaLangInterpreter(batch: String, evaluator: StatementBooleanEvalua
   private val ciglaParser = new CiglaParser()
   private val parser = ciglaParser.parseBatch(batch)(t => t)
 
-  private val astBuilder = CiglaLangBuilder(batch, evaluator)
+  private val astBuilder = CiglaLangBuilder(batch, evaluator, sparkStatementParser)
   private val tree = astBuilder.visitBody(parser.body())
 
   private val iter = new CiglaLangNestedIteratorStatement(tree.statements)
@@ -236,8 +243,9 @@ case class CiglaLangInterpreter(batch: String, evaluator: StatementBooleanEvalua
 }
 
 //noinspection ScalaStyle
-case class CiglaLangBuilder(batch: String, evaluator: StatementBooleanEvaluator)
-  extends CiglaBaseParserBaseVisitor[AnyRef] {
+case class CiglaLangBuilder(
+    batch: String, evaluator: StatementBooleanEvaluator, sparkStatementParser: ParserInterface)
+    extends CiglaBaseParserBaseVisitor[AnyRef] {
   override def visitSparkStatement(
       ctx: CiglaBaseParser.SparkStatementContext): SparkStatement = {
     val start = ctx.start.getStartIndex
@@ -246,7 +254,9 @@ case class CiglaLangBuilder(batch: String, evaluator: StatementBooleanEvaluator)
     // We can choose to parse the command here and get AST.
     // AST should be cacheable.
     // For now we are keeping raw string.
-    SparkStatement(command)
+    val parsedPlan = sparkStatementParser.parsePlan(command)
+    // TODO: Add debug info here as well.
+    SparkStatement(command, parsedPlan)
   }
 
   override def visitBody(ctx: CiglaBaseParser.BodyContext): CiglaBody = {
