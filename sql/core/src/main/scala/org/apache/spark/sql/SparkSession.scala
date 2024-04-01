@@ -716,7 +716,7 @@ class SparkSession private(
       tracker: QueryPlanningTracker): Iterator[CiglaLangBuilder.CiglaLanguageStatement] =
     withActive {
       val session = this
-      class DataFrameEvaluator extends StatementBooleanEvaluator {
+      object DataFrameEvaluator extends StatementBooleanEvaluator {
         override def eval(statement: BoolEvaluableStatement): Boolean = {
           statement match {
             case st: SparkStatement =>
@@ -735,8 +735,9 @@ class SparkSession private(
           }
         }
       }
+
       val interpreter = sessionState.proceduralDispatcher.buildInterpreter(
-        batchText, new DataFrameEvaluator, sessionState.sqlParser)
+        batchText, DataFrameEvaluator, sessionState.sqlParser)
       interpreter
     }
 

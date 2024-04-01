@@ -180,11 +180,14 @@ case class CiglaWhileStatement(
 
 // This is base class for all nested cigla lang statements.
 // e.g. if/else/while or even regular body.
-class CiglaLangNestedIteratorStatement(val collection: Seq[RewindableStatement])
+class CiglaLangNestedIteratorStatement(collection: Seq[RewindableStatement])
     extends NonLeafStatement {
 
   var localIterator = collection.iterator
   var curr = if (localIterator.hasNext) Some(localIterator.next()) else None
+
+  // Called when a leaf statement is encountered.
+  protected def processStatement(stmt: LeafStatement) = ()
 
   override def hasNext: Boolean = {
     val childHasNext = curr match {
@@ -193,12 +196,14 @@ class CiglaLangNestedIteratorStatement(val collection: Seq[RewindableStatement])
       case None => false
       case _ => throw new IllegalStateException("Unknown statement type")
     }
-    localIterator.hasNext || childHasNext
+    val hasNext = localIterator.hasNext || childHasNext
+    hasNext
   }
   override def next(): RewindableStatement = {
     curr match {
       case None => throw new IllegalStateException("No more elements")
       case Some(stmt: LeafStatement) =>
+        processStatement(stmt)
         if (localIterator.hasNext) curr = Some(localIterator.next())
         else curr = None
         stmt
@@ -223,7 +228,21 @@ class CiglaLangNestedIteratorStatement(val collection: Seq[RewindableStatement])
 }
 
 case class CiglaBody(statements: List[RewindableStatement])
-    extends CiglaLangNestedIteratorStatement(statements)
+    extends CiglaLangNestedIteratorStatement(statements) {
+
+  val variables = ListBuffer[String]()
+  override def processStatement(stmt: LeafStatement): Unit = {
+    stmt match {
+      case CiglaVarDeclareStatement(varName, _, _) => variables += varName
+      case _ =>
+    }
+  }
+
+  override def rewind(): Unit = {
+    super.rewind()
+    variables.clear()
+  }
+}
 
 trait ProceduralLangInterface {
   def buildInterpreter(
@@ -243,7 +262,9 @@ case class CiglaLangDispatcher() extends ProceduralLangInterface {
 trait ProceduralLangInterpreter extends Iterator[RewindableStatement]
 
 case class CiglaLangInterpreter(
-    batch: String, evaluator: StatementBooleanEvaluator, sparkStatementParser: ParserInterface)
+    batch: String,
+    evaluator: StatementBooleanEvaluator,
+    sparkStatementParser: ParserInterface)
     extends ProceduralLangInterpreter {
   // TODO: Keep parser here. We may need for error reporting - e.g. pointing to the
   // exact location of the error.
@@ -251,10 +272,11 @@ case class CiglaLangInterpreter(
   private val ciglaParser = new CiglaParser()
   private val parser = ciglaParser.parseBatch(batch)(t => t)
 
-  private val astBuilder = CiglaLangBuilder(batch, evaluator, sparkStatementParser)
+  private val astBuilder =
+    CiglaLangBuilder(batch, evaluator, sparkStatementParser)
   private val tree = astBuilder.visitBody(parser.body())
 
-  private val iter = new CiglaLangNestedIteratorStatement(tree.statements)
+  private val iter = CiglaBody(tree.statements)
 
   override def hasNext: Boolean = iter.hasNext
 
@@ -263,7 +285,9 @@ case class CiglaLangInterpreter(
 
 //noinspection ScalaStyle
 case class CiglaLangBuilder(
-    batch: String, evaluator: StatementBooleanEvaluator, sparkStatementParser: ParserInterface)
+    batch: String,
+    evaluator: StatementBooleanEvaluator,
+    sparkStatementParser: ParserInterface)
     extends CiglaBaseParserBaseVisitor[AnyRef] {
   override def visitSparkStatement(
       ctx: CiglaBaseParser.SparkStatementContext): SparkStatement = {
@@ -285,7 +309,15 @@ case class CiglaLangBuilder(
       val stmt = visit(child).asInstanceOf[RewindableStatement]
       buff += stmt
     }
-    CiglaBody(buff.toList)
+
+    // add all remove variable statements for any defined variables in this block.
+    val dropCommands = buff.filter(_.isInstanceOf[CiglaVarDeclareStatement]).map { stmt =>
+      val varName = stmt.asInstanceOf[CiglaVarDeclareStatement].varName
+      val command = "DROP TEMPORARY VARIABLE " + varName + ";"
+      val parsedPlan = sparkStatementParser.parsePlan(command)
+      SparkStatement(command, parsedPlan)
+    }
+    CiglaBody(buff.toList ++ dropCommands.reverse)
   }
 
   override def visitIfElseStatement(

@@ -20,7 +20,7 @@ package org.apache.spark.sql
 import org.apache.spark.SparkFunSuite
 
 import org.apache.spark.sql.catalyst.parser.{BoolEvaluableStatement, CiglaLangBuilder, CiglaLangNestedIteratorStatement, CiglaVarDeclareStatement, CiglaWhileStatement, LeafStatement, SparkStatement, StatementBooleanEvaluator}
-import org.apache.spark.sql.catalyst.QueryPlanningTracker
+import org.apache.spark.sql.catalyst.{ExtendedAnalysisException, QueryPlanningTracker}
 import org.apache.spark.sql.test.SharedSparkSession
 
 class CiglaLangSuite extends SparkFunSuite {
@@ -343,6 +343,42 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
       Seq.empty[Row], // Declare
       Seq.empty[Row], // SET
       Seq(Row(2)), // Select
+      Seq.empty[Row], // DROP Variable
+    )
+    verifyBatchResult(commands, expected, printRes = true)
+
+    // Make sure that var is no longer in scope.
+    assertThrows[ExtendedAnalysisException] {
+      sql("SELECT var").collect()
+    }
+  }
+
+  test("scoped var definition") {
+    val commands =
+      """
+        | IF SELECT TRUE;
+        | THEN
+        |   DECLARE var = 1;
+        |   SELECT var;
+        | END IF;
+        | IF SELECT TRUE;
+        | THEN
+        |   DECLARE var = 2;
+        |   SELECT var;
+        | END IF;
+        | IF SELECT FALSE;
+        | THEN
+        |   DECLARE var = 2;
+        |   SELECT var;
+        | END IF;
+        | """.stripMargin
+    val expected = Seq(
+      Seq.empty[Row], // Declare
+      Seq(Row(1)), // Select
+      Seq.empty[Row], // DROP Variable
+      Seq.empty[Row], // Declare
+      Seq(Row(2)), // Select
+      Seq.empty[Row], // DROP Variable
     )
     verifyBatchResult(commands, expected, printRes = true)
   }
