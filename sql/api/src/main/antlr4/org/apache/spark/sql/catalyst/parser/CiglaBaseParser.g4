@@ -5,7 +5,7 @@ options { tokenVocab = CiglaBaseLexer; }
 // TODO: Maybe we can differ between DML and DDL statements.
 // DDLs don't need to stream results back?
 sparkStatement
-    : (SELECT | INSERT | CREATE | TRUNCATE | UPDATE | DROP) expression SEMICOLON
+    : (SELECT | INSERT | CREATE | TRUNCATE | UPDATE | DROP | SET) expression SEMICOLON
     ;
 
 ifElseStatement
@@ -13,7 +13,7 @@ ifElseStatement
     ;
 
 whileStatement
-    : WHILE sparkStatement DO body END WHILE SEMICOLON
+    : WHILE expression DO body END WHILE SEMICOLON
     ;
 
 // Expression is a list of valid tokens.

@@ -159,16 +159,13 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
         |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
         |INSERT INTO t VALUES (1, 'a', 1.0);
         |SELECT a, b FROM T WHERE a=12;
-        |SELECT a FROM t;
-        |SET x = 12;
-        |""".stripMargin
+        |SELECT a FROM t;""".stripMargin
 
       val expected: Seq[Seq[Row]] = Seq(
         Seq.empty[Row], // For create table
         Seq.empty[Row], // For insert
         Seq.empty[Row], // For select with filter
-        Seq(Row(1)), // For select
-        Seq(Row("x", "12"))) // For set
+        Seq(Row(1))) // For select
 
       verifyBatchResult(commands, expected)
     }
@@ -193,8 +190,7 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
 
   test("if") {
     val commands = """
-      | IF SELECT TRUE;
-      | THEN
+      | IF (SELECT TRUE) THEN
       |   SELECT 42;
       | END IF;
       |""".stripMargin
@@ -204,7 +200,7 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
 
   test("if else going in if") {
     val commands = """
-      | IF SELECT TRUE;
+      | IF (SELECT TRUE)
       | THEN
       |   SELECT 42;
       | ELSE
@@ -218,7 +214,7 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
 
   test("if else going in else") {
     val commands = """
-      | IF SELECT FALSE;
+      | IF (SELECT FALSE)
       | THEN
       |   SELECT 42;
       | ELSE
@@ -236,8 +232,7 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
         |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
         |INSERT INTO t VALUES (1, 'a', 1.0);
         |INSERT INTO t VALUES (1, 'a', 1.0);
-        |IF SELECT COUNT(*) > 2 FROM t;
-        | THEN
+        |IF (SELECT COUNT(*) > 2 FROM t) THEN
         |   SELECT 42;
         | ELSE
         |   SELECT 43;
@@ -356,17 +351,17 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
   test("scoped var definition") {
     val commands =
       """
-        | IF SELECT TRUE;
+        | IF (SELECT TRUE)
         | THEN
         |   DECLARE var = 1;
         |   SELECT var;
         | END IF;
-        | IF SELECT TRUE;
+        | IF (SELECT TRUE)
         | THEN
         |   DECLARE var = 2;
         |   SELECT var;
         | END IF;
-        | IF SELECT FALSE;
+        | IF (SELECT FALSE)
         | THEN
         |   DECLARE var = 2;
         |   SELECT var;

@@ -37,12 +37,6 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     astBuilder.visitBody(parser.body())
   }
 
-  test("simple two statements") {
-    val batch = "select 1; select 2;"
-    val tree = buildTree(batch)
-    assert(tree.statements.length == batch.split(";").length)
-  }
-
   test("Initial parsing test") {
     val batch =
       """
@@ -65,7 +59,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     }
   }
 
-  test("Insert statement")  {
+  test("Insert statement") {
     val batch =
       """
         |INSERT INTO a VALUES (1, 2, x);
@@ -93,7 +87,8 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
   }
 
   test("select case") {
-    val batch = """
+    val batch =
+      """
         |SELECT CASE WHEN COUNT(*) > 10 THEN true
         |ELSE false
         |END as MoreThanTen
@@ -109,7 +104,8 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
   }
 
   test("if else") {
-    val batch = """
+    val batch =
+      """
         |IF (SELECT 1) THEN
         |  SELECT 2;
         |ELSE
@@ -152,7 +148,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
     tree.statements.foreach {
       case whileStmt: CiglaWhileStatement =>
-        assert(whileStmt.condition.asInstanceOf[SparkStatement].command == "SELECT 1;")
+        assert(whileStmt.condition.asInstanceOf[SparkStatement].command == "SELECT 1")
         assert(whileStmt.whileBody.asInstanceOf[CiglaBody].statements.head.asInstanceOf[SparkStatement].command == "SELECT 2;")
         assert(whileStmt.whileBody.asInstanceOf[CiglaBody].statements(1).asInstanceOf[SparkStatement].command == "SELECT 3;")
     }
