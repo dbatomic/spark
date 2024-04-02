@@ -19,7 +19,9 @@ package org.apache.spark.sql.catalyst.parser
 import scala.collection.mutable.ListBuffer
 
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.expressions.Alias
+import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, OneRowRelation, Project}
+import org.apache.spark.sql.types.BooleanType
 
 trait NodeStatement
 
@@ -326,15 +328,20 @@ case class CiglaLangBuilder(
 
   override def visitIfElseStatement(
       ctx: CiglaBaseParser.IfElseStatementContext): CiglaIfElseStatement = {
-    val condition = visitExpression(ctx.expression())
+
+    val condition = if (ctx.boolStatementOrExpression().sparkStatement() != null) {
+      visitSparkStatement(ctx.boolStatementOrExpression().sparkStatement())
+    } else if (ctx.boolStatementOrExpression().expression() != null) {
+      visitExpression(ctx.boolStatementOrExpression().expression())
+    } else {
+      throw new IllegalStateException("Only spark statement and expression are supported.")
+    }
     // TODO: Some more work is needed for else if.
     val ifBody = visitBody(ctx.body(0))
     val elseBody = Option(ctx.body(1)).map(visitBody)
     CiglaIfElseStatement(condition, ifBody, elseBody, evaluator)
   }
 
-  // TODO: For now we are returning Spark statement here.
-  // This needs to be changed.
   override def visitExpression(ctx: CiglaBaseParser.ExpressionContext): SparkStatement = {
     // this is same as visit spark statement for now.
     val start = ctx.start.getStartIndex
@@ -343,16 +350,32 @@ case class CiglaLangBuilder(
     // We can choose to parse the command here and get AST.
     // AST should be cacheable.
     // For now we are keeping raw string.
-    val parsedPlan = sparkStatementParser.parsePlan(command)
-    // sparkStatementParser.parseExpression(command) <-- should switch to this eventually.
-    // Also an option is to build fake plan out of this expression and execute that.
+    val expression = sparkStatementParser.parseExpression(command)
+
+    expression.dataType match {
+        case _: BooleanType => // do nothing
+        case _ => throw new IllegalStateException("Only boolean expressions are supported.")
+        // TODO: What are the other rules? E.g. we could say that int != 0 is same as true?
+        // We can do automatic cast to boolean here as well?
+    }
+
+    // We build fake logical plan here that is a simple projection against given expression.
+    val plan = Project(Seq(Alias(expression, "condition")()), OneRowRelation())
+
     // TODO: Add debug info here as well.
-    SparkStatement(command, parsedPlan)
+    SparkStatement(command, plan)
   }
 
   override def visitWhileStatement(
       ctx: CiglaBaseParser.WhileStatementContext): CiglaWhileStatement = {
-    val condition = visitExpression(ctx.expression())
+    val condition = if (ctx.boolStatementOrExpression().sparkStatement() != null) {
+      visitSparkStatement(ctx.boolStatementOrExpression().sparkStatement())
+    } else if (ctx.boolStatementOrExpression().expression() != null) {
+      visitExpression(ctx.boolStatementOrExpression().expression())
+    } else {
+      throw new IllegalStateException("Only spark statement and expression are supported.")
+    }
+
     val whileBody = visitBody(ctx.body)
     CiglaWhileStatement(condition, whileBody, evaluator)
   }

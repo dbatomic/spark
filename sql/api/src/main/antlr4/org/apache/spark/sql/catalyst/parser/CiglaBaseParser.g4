@@ -9,11 +9,11 @@ sparkStatement
     ;
 
 ifElseStatement
-    : IF LEFT_PAREN expression RIGHT_PAREN THEN body (ELSE body)? END IF
+    : IF LEFT_PAREN boolStatementOrExpression RIGHT_PAREN THEN body (ELSE body)? END IF
     ;
 
 whileStatement
-    : WHILE LEFT_PAREN expression RIGHT_PAREN DO body END WHILE
+    : WHILE LEFT_PAREN boolStatementOrExpression RIGHT_PAREN DO body END WHILE
     ;
 
 // Expression is a list of valid tokens.
@@ -26,6 +26,11 @@ expression
 expressionItem
     : stringLitOrIdentifierOrConstant+
     | (LEFT_PAREN expressionItem RIGHT_PAREN)
+    ;
+
+boolStatementOrExpression
+    : sparkStatement
+    | expression
     ;
 
 // Just capture the variable name. The rest will be handled by the spark.

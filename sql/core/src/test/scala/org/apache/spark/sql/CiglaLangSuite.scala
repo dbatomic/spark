@@ -244,6 +244,21 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
     }
   }
 
+  test("if with expression") {
+    val commands =
+      """
+        | IF (1=1)
+        | THEN
+        |   SELECT 42;
+        | ELSE
+        |   SELECT 43;
+        | END IF;
+        |""".stripMargin
+
+    val expected = Seq(Seq(Row(42)))
+    verifyBatchResult(commands, expected)
+  }
+
   test("while") {
     withTable("t") {
       val commands =

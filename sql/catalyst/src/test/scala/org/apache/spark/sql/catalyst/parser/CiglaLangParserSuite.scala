@@ -131,7 +131,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
   test("if else with expression") {
     val batch = """
-      |IF (SELECT 1) THEN
+      |IF (1=1) THEN
       |  SELECT 2;
       |ELSE
       |  SELECT 3;
@@ -141,7 +141,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
     tree.statements.foreach {
       case ifElse: CiglaIfElseStatement =>
-        assert(ifElse.condition.asInstanceOf[SparkStatement].command == "SELECT 1")
+        assert(ifElse.condition.asInstanceOf[SparkStatement].command == "1=1")
         assert(ifElse.ifBody.statements.head.asInstanceOf[SparkStatement].command == "SELECT 2")
         assert(ifElse.elseBody.head.statements.head.asInstanceOf[SparkStatement].command == "SELECT 3")
     }
