@@ -20,81 +20,33 @@ SEMICOLON: ';';
 
 LEFT_PAREN: '(';
 RIGHT_PAREN: ')';
-COMMA: ',';
-DOT: '.';
-LEFT_BRACKET: '[';
-RIGHT_BRACKET: ']';
 
 //============================
 // Start of the keywords list
 //============================
 //--CIGLA-KEYWORD-LIST-START
-ALTER: 'ALTER';
-ANALYZE: 'ANALYZE';
-AND: 'AND';
-DECLARE: 'DECLARE';
-DELETE: 'DELETE';
-DELIMITED: 'DELIMITED';
-DESCRIBE: 'DESCRIBE';
 ELSE: 'ELSE';
 END: 'END';
-EXPLAIN: 'EXPLAIN';
-FALSE: 'FALSE';
 FOR: 'FOR';
-FROM: 'FROM';
 IF: 'IF';
-INSERT: 'INSERT';
-NOT: 'NOT';
-NULL: 'NULL';
-OR: 'OR';
-SELECT: 'SELECT';
-CREATE: 'CREATE';
-TRUNCATE: 'TRUNCATE';
 WHILE: 'WHILE';
 DO: 'DO';
 SET: 'SET';
-SHOW: 'SHOW';
 THEN: 'THEN';
-EXECUTE: 'EXECUTE';
-TRUE: 'TRUE';
+DECLARE: 'DECLARE';
+
+SELECT: 'SELECT';
+INSERT: 'INSERT';
 UPDATE: 'UPDATE';
-USE: 'USE';
-WITH: 'WITH';
+CREATE: 'CREATE';
+DELETE: 'DELETE';
+DROP: 'DROP';
+ALTER: 'ALTER';
+TRUNCATE: 'TRUNCATE';
 
 //============================
 // End of the keywords list
 //============================
-
-EQ  : '=' | '==';
-NSEQ: '<=>';
-NEQ : '<>';
-NEQJ: '!=';
-LT  : '<';
-LTE : '<=' | '!>';
-GT  : '>';
-GTE : '>=' | '!<';
-
-PLUS: '+';
-MINUS: '-';
-ASTERISK: '*';
-SLASH: '/';
-PERCENT: '%';
-TILDE: '~';
-AMPERSAND: '&';
-PIPE: '|';
-CONCAT_PIPE: '||';
-HAT: '^';
-COLON: ':';
-DOUBLE_COLON: '::';
-ARROW: '->';
-FAT_ARROW : '=>';
-HENT_START: '/*+';
-HENT_END: '*/';
-QUESTION: '?';
-
-SINGLE_STATEMENT_ALLOWED_SEPARATORS
-    : COMMA | SEMICOLON | LEFT_PAREN | RIGHT_PAREN | DOT | LEFT_BRACKET | RIGHT_BRACKET | DOT
-    ;
 
 // Keeping string literal because I need to make sure that ';' is not treated as a delimiter if
 // in literal.
@@ -104,34 +56,17 @@ STRING_LITERAL
     | 'R"'(~'"')* '"'
     ;
 
-DOUBLEQUOTED_STRING
-    :'"' ( ~('"'|'\\') | ('\\' .) )* '"'
-    ;
-
 // Generalize the identifier to give a sensible INVALID_IDENTIFIER error message:
 // * Unicode letters rather than a-z and A-Z only
 // * URI paths for table references using paths
 // We then narrow down to ANSI rules in exitUnquotedIdentifier() in the parser.
+// TODO: This should actually be a regular expression that matches everything but ( and )
 IDENTIFIER
-    : (UNICODE_LETTER | DIGIT | '_')+
-    | UNICODE_LETTER+ '://' (UNICODE_LETTER | DIGIT | '_' | '/' | '-' | '.' | '?' | '=' | '&' | '#' | '%')+
-    ;
-
-INTEGER_VALUE
-    : DIGIT+
+    : (UNICODE_LETTER | DIGIT | '_' | '.' | ',' | '+' | '=' | '*' | '/' | '-' | '>' | '<')+
     ;
 
 BACKQUOTED_IDENTIFIER
     : '`' ( ~'`' | '``' )* '`'
-    ;
-
-fragment DECIMAL_DIGITS
-    : DIGIT+ '.' DIGIT*
-    | '.' DIGIT+
-    ;
-
-fragment EXPONENT
-    : 'E' [+-]? DIGIT+
     ;
 
 fragment DIGIT
@@ -152,15 +87,4 @@ SIMPLE_COMMENT
 
 WS
     : [ \r\n\t]+ -> channel(HIDDEN)
-    ;
-
-NOT_SEMICOLON_SEQUENCE
-    : ~[;]
-    ;
-
-// Catch-all for anything we can't recognize.
-// We use this to be able to ignore and recover all the text
-// when splitting statements with DelimiterLexer
-UNRECOGNIZED
-    : .
     ;

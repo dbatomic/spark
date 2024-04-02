@@ -5,28 +5,27 @@ options { tokenVocab = CiglaBaseLexer; }
 // TODO: Maybe we can differ between DML and DDL statements.
 // DDLs don't need to stream results back?
 sparkStatement
-    : SELECT stringLitOrIdentifierOrConstant+ SEMICOLON
-    | UPDATE stringLitOrIdentifierOrConstant+ SEMICOLON
-    | INSERT stringLitOrIdentifierOrConstant+ SEMICOLON
-    | CREATE stringLitOrIdentifierOrConstant+ SEMICOLON
-    | TRUNCATE stringLitOrIdentifierOrConstant+ SEMICOLON
-    | SET stringLitOrIdentifierOrConstant+ SEMICOLON
+    : (SELECT | INSERT | CREATE | TRUNCATE | UPDATE | DROP) expression SEMICOLON
     ;
 
 ifElseStatement
-    : IF sparkStatement THEN body (ELSE body)? END IF SEMICOLON
+    : IF LEFT_PAREN expression RIGHT_PAREN THEN body (ELSE body)? END IF SEMICOLON
     ;
 
 whileStatement
     : WHILE sparkStatement DO body END WHILE SEMICOLON
     ;
 
+// Expression is a list of valid tokens.
+// Parser rule doesn't really care about the content of the expression.
+// We just need to make sure that we properly handle brackets and capture the content.
 expression
-    : stringLitOrIdentifierOrConstant
-    | sparkStatement
-    // Add this stuff later to keep it simple for now.
-    // | LEFT_PAREN expression RIGHT_PAREN
-    // | expression (ASTERISK | PERCENT | PLUS | MINUS) expression
+    : expressionItem+
+    ;
+
+expressionItem
+    : stringLitOrIdentifierOrConstant+
+    | (LEFT_PAREN expressionItem RIGHT_PAREN)
     ;
 
 // Just capture the variable name. The rest will be handled by the spark.
@@ -40,7 +39,7 @@ varName
     ;
 
 body
-    : (sparkStatement | ifElseStatement | whileStatement | declareVar)*
+    : (ifElseStatement | whileStatement | declareVar | sparkStatement)*
     ;
 
 identifier
@@ -53,11 +52,7 @@ identifier
 stringLitOrIdentifierOrConstant
     : STRING_LITERAL
     | IDENTIFIER
-    | FROM
-    | SELECT | CREATE
-    | THEN | ELSE | END | TRUE | FALSE | WHILE | DO | IF
-    | LEFT_PAREN | RIGHT_PAREN | COMMA | DOT | EQ | NSEQ | NEQ | LT | LTE | GT | GTE | PLUS | MINUS | ASTERISK | PERCENT | TILDE | PIPE | LEFT_BRACKET | RIGHT_BRACKET | WS
+    | THEN | ELSE | END | WHILE | DO | IF
+    | SELECT | INSERT
+    | WS
     ;
-
-// TODO: Maybe try to fallback to sql parser if this fails.
-// E.g. if expression starts with an unknown keyword, try to parse it as a SQL expression.

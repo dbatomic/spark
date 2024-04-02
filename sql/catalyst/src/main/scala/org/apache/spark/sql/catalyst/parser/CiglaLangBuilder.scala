@@ -322,11 +322,28 @@ case class CiglaLangBuilder(
 
   override def visitIfElseStatement(
       ctx: CiglaBaseParser.IfElseStatementContext): CiglaIfElseStatement = {
-    val condition = visitSparkStatement(ctx.sparkStatement())
+    val condition = visitExpression(ctx.expression())
     // TODO: Some more work is needed for else if.
     val ifBody = visitBody(ctx.body(0))
     val elseBody = Option(ctx.body(1)).map(visitBody)
     CiglaIfElseStatement(condition, ifBody, elseBody, evaluator)
+  }
+
+  // TODO: For now we are returning Spark statement here.
+  // This needs to be changed.
+  override def visitExpression(ctx: CiglaBaseParser.ExpressionContext): SparkStatement = {
+    // this is same as visit spark statement for now.
+    val start = ctx.start.getStartIndex
+    val stop = ctx.stop.getStopIndex
+    val command = batch.substring(start, stop + 1)
+    // We can choose to parse the command here and get AST.
+    // AST should be cacheable.
+    // For now we are keeping raw string.
+    val parsedPlan = sparkStatementParser.parsePlan(command)
+    // sparkStatementParser.parseExpression(command) <-- should switch to this eventually.
+    // Also an option is to build fake plan out of this expression and execute that.
+    // TODO: Add debug info here as well.
+    SparkStatement(command, parsedPlan)
   }
 
   override def visitWhileStatement(

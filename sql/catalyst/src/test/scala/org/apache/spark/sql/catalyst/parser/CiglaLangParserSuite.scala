@@ -37,6 +37,12 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     astBuilder.visitBody(parser.body())
   }
 
+  test("simple two statements") {
+    val batch = "select 1; select 2;"
+    val tree = buildTree(batch)
+    assert(tree.statements.length == batch.split(";").length)
+  }
+
   test("Initial parsing test") {
     val batch =
       """
@@ -47,10 +53,13 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |SELECT a.b.c, d.e;
         |SELECT a, b FROM T WHERE x=y;
         |SELECT * FROM T;
-        |""".stripMargin
+        |SELECT COUNT(*) > 2 FROM T;
+        |SELECT 2;
+        |SELECT 3;""".stripMargin
 
     val tree = buildTree(batch)
 
+    assert(tree.statements.length == batch.split(";").length)
     batch.split(";").zip(tree.statements).foreach {
       case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
     }
@@ -60,10 +69,10 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val batch =
       """
         |INSERT INTO a VALUES (1, 2, x);
-        |INSERT INTO a VALUES (a, b, c);
-        |""".stripMargin
+        |INSERT INTO a VALUES (a, b, c);""".stripMargin
 
     val tree = buildTree(batch)
+    assert(tree.statements.length == batch.split(";").length)
     batch.split(";").zip(tree.statements).foreach {
       case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
     }
@@ -74,11 +83,10 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
       """
         |SELECT a, b, c
         |FROM T
-        |WHERE x=y;
-        |""".stripMargin
+        |WHERE x=y;""".stripMargin
 
     val tree = buildTree(batch)
-
+    assert(tree.statements.length == batch.split(";").length)
     batch.split(";").zip(tree.statements).foreach {
       case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
     }
@@ -93,6 +101,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |""".stripMargin
 
     val tree = buildTree(batch)
+    assert(tree.statements.length == 1)
 
     batch.split(";").zip(tree.statements).foreach {
       case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
@@ -100,19 +109,18 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
   }
 
   test("if else") {
-    val batch =
-      """
-        |IF SELECT 1;
-        |   THEN SELECT 2;
-        |ELSE SELECT 3;
-        |END IF;
-        |""".stripMargin
+    val batch = """
+        |IF (SELECT 1) THEN
+        |  SELECT 2;
+        |ELSE
+        |  SELECT 3;
+        |END IF;""".stripMargin
 
     val tree = buildTree(batch)
 
     tree.statements.foreach {
       case ifElse: CiglaIfElseStatement =>
-        assert(ifElse.condition.asInstanceOf[SparkStatement].command == "SELECT 1;")
+        assert(ifElse.condition.asInstanceOf[SparkStatement].command == "SELECT 1")
         assert(ifElse.ifBody.statements.head.asInstanceOf[SparkStatement].command == "SELECT 2;")
         assert(ifElse.elseBody.head.statements.head.asInstanceOf[SparkStatement].command == "SELECT 3;")
     }
@@ -168,7 +176,8 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
         |DECLARE y = 42;
         |""".stripMargin
     val tree = buildTree(batch)
-    assert(tree.statements.length == 2)
+    // We will automatically add drop statements at the end.
+    assert(tree.statements.length == 4)
     val stmt1 = tree.statements.head.asInstanceOf[CiglaVarDeclareStatement]
     val stmt2 = tree.statements(1).asInstanceOf[CiglaVarDeclareStatement]
     assert(stmt1.varName == "x")
@@ -176,5 +185,9 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
     assert(stmt2.varName == "y")
     assert(stmt2.command == "DECLARE y = 42;")
+    val stmt3 = tree.statements(2).asInstanceOf[SparkStatement]
+    val stmt4 = tree.statements(3).asInstanceOf[SparkStatement]
+    assert(stmt3.command == "DROP TEMPORARY VARIABLE y;")
+    assert(stmt4.command == "DROP TEMPORARY VARIABLE x;")
   }
 }
