@@ -249,7 +249,7 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
       val commands =
         """
           |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
-          |WHILE SELECT COUNT(*) < 2 FROM t; DO
+          |WHILE (SELECT COUNT(*) < 2 FROM t) DO
           |  INSERT INTO t VALUES (1, 'a', 1.0);
           |END WHILE;
           |SELECT COUNT(*) FROM t;
@@ -272,9 +272,9 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
         """
           |CREATE TABLE t1 (a INT) USING parquet;
           |CREATE TABLE t2 (a INT) USING parquet;
-          |WHILE SELECT COUNT(*) < 2 FROM t1; DO
+          |WHILE (SELECT COUNT(*) < 2 FROM t1) DO
           |  INSERT INTO t1 VALUES (1);
-          |  WHILE SELECT COUNT(*) < 2 FROM t2; DO
+          |  WHILE (SELECT COUNT(*) < 2 FROM t2) DO
           |   INSERT INTO t2 VALUES (1);
           |  END WHILE;
           |  TRUNCATE TABLE t2;
@@ -309,10 +309,10 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
           |CREATE TABLE t1 (a INT) USING parquet;
           |CREATE TABLE t2 (a INT) USING parquet;
           |DECLARE totalInsertCount = 0;
-          |WHILE SELECT COUNT(*) < 2 FROM t1; DO
+          |WHILE (SELECT COUNT(*) < 2 FROM t1) DO
           |  INSERT INTO t1 VALUES (1);
           |  SET VAR totalInsertCount = totalInsertCount + 1;
-          |  WHILE SELECT COUNT(*) < 2 FROM t2; DO
+          |  WHILE (SELECT COUNT(*) < 2 FROM t2) DO
           |   INSERT INTO t2 VALUES (1);
           |   SET VAR totalInsertCount = totalInsertCount + 1;
           |   SELECT COUNT(*) as T2Count FROM t2;

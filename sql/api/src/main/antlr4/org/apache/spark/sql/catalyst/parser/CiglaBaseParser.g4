@@ -5,15 +5,15 @@ options { tokenVocab = CiglaBaseLexer; }
 // TODO: Maybe we can differ between DML and DDL statements.
 // DDLs don't need to stream results back?
 sparkStatement
-    : (SELECT | INSERT | CREATE | TRUNCATE | UPDATE | DROP | SET) expression SEMICOLON
+    : (SELECT | INSERT | CREATE | TRUNCATE | UPDATE | DROP | SET) expression
     ;
 
 ifElseStatement
-    : IF LEFT_PAREN expression RIGHT_PAREN THEN body (ELSE body)? END IF SEMICOLON
+    : IF LEFT_PAREN expression RIGHT_PAREN THEN body (ELSE body)? END IF
     ;
 
 whileStatement
-    : WHILE expression DO body END WHILE SEMICOLON
+    : WHILE LEFT_PAREN expression RIGHT_PAREN DO body END WHILE
     ;
 
 // Expression is a list of valid tokens.
@@ -31,7 +31,7 @@ expressionItem
 // Just capture the variable name. The rest will be handled by the spark.
 // variable name is important in order to keep track of the variables in the scope.
 declareVar
-    : DECLARE varName stringLitOrIdentifierOrConstant+ SEMICOLON
+    : DECLARE varName stringLitOrIdentifierOrConstant+
     ;
 
 varName
@@ -39,7 +39,7 @@ varName
     ;
 
 body
-    : (ifElseStatement | whileStatement | declareVar | sparkStatement)*
+    : ((ifElseStatement | whileStatement | declareVar | sparkStatement) SEMICOLON)*
     ;
 
 identifier

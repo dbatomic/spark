@@ -37,6 +37,13 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     astBuilder.visitBody(parser.body())
   }
 
+  test("single select") {
+    val batch = "SELECT 1;"
+    val tree = buildTree(batch)
+    assert(tree.statements.length == 1)
+    assert(tree.statements.head.asInstanceOf[SparkStatement].command == "SELECT 1")
+  }
+
   test("Initial parsing test") {
     val batch =
       """
@@ -55,7 +62,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
     assert(tree.statements.length == batch.split(";").length)
     batch.split(";").zip(tree.statements).foreach {
-      case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
+      case (expected, actual: SparkStatement) => assert(expected.trim === actual.command.trim)
     }
   }
 
@@ -68,7 +75,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val tree = buildTree(batch)
     assert(tree.statements.length == batch.split(";").length)
     batch.split(";").zip(tree.statements).foreach {
-      case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
+      case (expected, actual: SparkStatement) => assert(expected.trim === actual.command.trim)
     }
   }
 
@@ -82,7 +89,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val tree = buildTree(batch)
     assert(tree.statements.length == batch.split(";").length)
     batch.split(";").zip(tree.statements).foreach {
-      case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
+      case (expected, actual: SparkStatement) => assert(expected.trim === actual.command.trim)
     }
   }
 
@@ -99,7 +106,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     assert(tree.statements.length == 1)
 
     batch.split(";").zip(tree.statements).foreach {
-      case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
+      case (expected, actual: SparkStatement) => assert(expected.trim === actual.command.trim)
     }
   }
 
@@ -117,8 +124,26 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     tree.statements.foreach {
       case ifElse: CiglaIfElseStatement =>
         assert(ifElse.condition.asInstanceOf[SparkStatement].command == "SELECT 1")
-        assert(ifElse.ifBody.statements.head.asInstanceOf[SparkStatement].command == "SELECT 2;")
-        assert(ifElse.elseBody.head.statements.head.asInstanceOf[SparkStatement].command == "SELECT 3;")
+        assert(ifElse.ifBody.statements.head.asInstanceOf[SparkStatement].command == "SELECT 2")
+        assert(ifElse.elseBody.head.statements.head.asInstanceOf[SparkStatement].command == "SELECT 3")
+    }
+  }
+
+  test("if else with expression") {
+    val batch = """
+      |IF (SELECT 1) THEN
+      |  SELECT 2;
+      |ELSE
+      |  SELECT 3;
+      |END IF;""".stripMargin
+
+    val tree = buildTree(batch)
+
+    tree.statements.foreach {
+      case ifElse: CiglaIfElseStatement =>
+        assert(ifElse.condition.asInstanceOf[SparkStatement].command == "SELECT 1")
+        assert(ifElse.ifBody.statements.head.asInstanceOf[SparkStatement].command == "SELECT 2")
+        assert(ifElse.elseBody.head.statements.head.asInstanceOf[SparkStatement].command == "SELECT 3")
     }
   }
 
@@ -131,14 +156,14 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
     val tree = buildTree(batch)
     batch.split(";").zip(tree.statements).foreach {
-      case (expected, actual: SparkStatement) => assert(expected.trim + ";" === actual.command.trim)
+      case (expected, actual: SparkStatement) => assert(expected.trim === actual.command.trim)
     }
   }
 
   test("while loop") {
     val batch =
       """
-        |WHILE SELECT 1; DO
+        |WHILE (SELECT 1) DO
         | SELECT 2;
         | SELECT 3;
         |END WHILE;
@@ -149,8 +174,8 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     tree.statements.foreach {
       case whileStmt: CiglaWhileStatement =>
         assert(whileStmt.condition.asInstanceOf[SparkStatement].command == "SELECT 1")
-        assert(whileStmt.whileBody.asInstanceOf[CiglaBody].statements.head.asInstanceOf[SparkStatement].command == "SELECT 2;")
-        assert(whileStmt.whileBody.asInstanceOf[CiglaBody].statements(1).asInstanceOf[SparkStatement].command == "SELECT 3;")
+        assert(whileStmt.whileBody.asInstanceOf[CiglaBody].statements.head.asInstanceOf[SparkStatement].command == "SELECT 2")
+        assert(whileStmt.whileBody.asInstanceOf[CiglaBody].statements(1).asInstanceOf[SparkStatement].command == "SELECT 3")
     }
   }
 
@@ -162,7 +187,7 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
 
     val tree = buildTree(batch)
     assert(tree.statements.length == 1)
-    assert(tree.statements.head.asInstanceOf[SparkStatement].command == "SELECT 'SELECT 1; SELECT 2;';")
+    assert(tree.statements.head.asInstanceOf[SparkStatement].command == "SELECT 'SELECT 1; SELECT 2;'")
   }
 
   test("parse variable") {
@@ -177,13 +202,13 @@ class CiglaLangParserSuite extends SparkFunSuite with SQLHelper {
     val stmt1 = tree.statements.head.asInstanceOf[CiglaVarDeclareStatement]
     val stmt2 = tree.statements(1).asInstanceOf[CiglaVarDeclareStatement]
     assert(stmt1.varName == "x")
-    assert(stmt1.command == "DECLARE x = 'testme';")
+    assert(stmt1.command == "DECLARE x = 'testme'")
 
     assert(stmt2.varName == "y")
-    assert(stmt2.command == "DECLARE y = 42;")
+    assert(stmt2.command == "DECLARE y = 42")
     val stmt3 = tree.statements(2).asInstanceOf[SparkStatement]
     val stmt4 = tree.statements(3).asInstanceOf[SparkStatement]
-    assert(stmt3.command == "DROP TEMPORARY VARIABLE y;")
-    assert(stmt4.command == "DROP TEMPORARY VARIABLE x;")
+    assert(stmt3.command == "DROP TEMPORARY VARIABLE y")
+    assert(stmt4.command == "DROP TEMPORARY VARIABLE x")
   }
 }

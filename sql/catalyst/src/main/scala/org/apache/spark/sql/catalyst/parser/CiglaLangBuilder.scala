@@ -307,13 +307,17 @@ case class CiglaLangBuilder(
     for (i <- 0 until ctx.getChildCount) {
       val child = ctx.getChild(i)
       val stmt = visit(child).asInstanceOf[RewindableStatement]
-      buff += stmt
+      // TODO: This is a hack. For some reason ';' is parsed as a statement.
+      // Just ignoring it here. Figure out later what is going on.
+      if (stmt != null) {
+        buff += stmt
+      }
     }
 
     // add all remove variable statements for any defined variables in this block.
     val dropCommands = buff.filter(_.isInstanceOf[CiglaVarDeclareStatement]).map { stmt =>
       val varName = stmt.asInstanceOf[CiglaVarDeclareStatement].varName
-      val command = "DROP TEMPORARY VARIABLE " + varName + ";"
+      val command = "DROP TEMPORARY VARIABLE " + varName
       val parsedPlan = sparkStatementParser.parsePlan(command)
       SparkStatement(command, parsedPlan)
     }
@@ -348,7 +352,7 @@ case class CiglaLangBuilder(
 
   override def visitWhileStatement(
       ctx: CiglaBaseParser.WhileStatementContext): CiglaWhileStatement = {
-    val condition = visitSparkStatement(ctx.sparkStatement())
+    val condition = visitExpression(ctx.expression())
     val whileBody = visitBody(ctx.body)
     CiglaWhileStatement(condition, whileBody, evaluator)
   }
