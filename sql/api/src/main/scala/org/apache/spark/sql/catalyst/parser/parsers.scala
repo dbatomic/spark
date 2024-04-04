@@ -32,40 +32,10 @@ import org.apache.spark.sql.errors.QueryParsingErrors
 import org.apache.spark.sql.internal.SqlApiConf
 import org.apache.spark.sql.types.{DataType, StructType}
 
-// TODO: Figure out class hierarchy.
-// Do I need base abstract parser?
-class CiglaParser extends Logging {
-  // Keep this public for now...
-  def parseBatch[T](batch: String)(toResult: CiglaBaseParser => T): T = {
-    logDebug(s"Parsing batch: $batch")
-
-    val lexer = new CiglaBaseLexer(new UpperCaseCharStream(CharStreams.fromString(batch)))
-    lexer.removeErrorListeners()
-    // TODO: Can I use same error listener?
-    lexer.addErrorListener(ParseErrorListener)
-
-    val tokenStream = new CommonTokenStream(lexer)
-    val parser = new CiglaBaseParser(tokenStream)
-
-    // TODO: Are the listeners same?
-    parser.addParseListener(PostProcessor)
-    parser.addParseListener(UnclosedCommentProcessor(batch, tokenStream))
-    parser.removeErrorListeners()
-    parser.addErrorListener(ParseErrorListener)
-
-    // TODO: Figure out exception handling later.
-    // For now let exception leak this context...
-    parser.setErrorHandler(new SparkParserBailErrorStrategy())
-    parser.getInterpreter.setPredictionMode(PredictionMode.LL)
-    toResult(parser)
-  }
-}
-
 /**
  * Base SQL parsing infrastructure.
  */
 abstract class AbstractParser extends DataTypeParserInterface with Logging {
-  // TODO: CiglaLang should also be exposed through this interface.
 
   /** Creates/Resolves DataType for a given SQL string. */
   override def parseDataType(sqlText: String): DataType = parse(sqlText) { parser =>

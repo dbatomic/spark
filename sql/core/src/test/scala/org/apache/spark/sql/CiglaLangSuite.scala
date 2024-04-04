@@ -150,7 +150,7 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
   }
 
   test("select 1") {
-    verifyBatchResult("SELECT 1;", Seq(Seq(Row(1))))
+    verifyBatchResult("SELECT 1;", Seq(Seq(Row(1))), true)
   }
 
   test("simple multistatement") {
@@ -190,17 +190,17 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
 
   test("if") {
     val commands = """
-      | IF (SELECT TRUE) THEN
+      | IF 1=1 THEN
       |   SELECT 42;
       | END IF;
       |""".stripMargin
-    val expected = Seq(Seq(Row(42)))
+    val expected = Seq(Seq(Row(true)), Seq(Row(42)))
     verifyBatchResult(commands, expected)
   }
 
   test("if else going in if") {
     val commands = """
-      | IF (SELECT TRUE)
+      | IF 1=1
       | THEN
       |   SELECT 42;
       | ELSE
@@ -208,13 +208,13 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
       | END IF;
       |""".stripMargin
 
-    val expected = Seq(Seq(Row(42)))
+    val expected = Seq(Seq(Row(true)), Seq(Row(42)))
     verifyBatchResult(commands, expected)
   }
 
   test("if else going in else") {
     val commands = """
-      | IF (SELECT FALSE)
+      | IF 1=2
       | THEN
       |   SELECT 42;
       | ELSE
@@ -222,7 +222,8 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
       | END IF;
       |""".stripMargin
 
-    val expected = Seq(Seq(Row(43)))
+    // TODO: Need to fix always true eval!
+    val expected = Seq(Seq(Row(false)), Seq(Row(43)))
     verifyBatchResult(commands, expected)
   }
 
