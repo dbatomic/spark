@@ -46,6 +46,10 @@ singleStatement
     : statement SEMICOLON* EOF
     ;
 
+batch
+    : batchBody EOF
+    ;
+
 batchBody
     : ((ifElseStatement | whileStatement | statement) SEMICOLON+)*
     ;

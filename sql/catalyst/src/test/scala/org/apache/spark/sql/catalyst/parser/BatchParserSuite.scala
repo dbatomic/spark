@@ -116,4 +116,46 @@ class BatchParserSuite extends SparkFunSuite with SQLHelper {
     assert(whileBody.collection.head.asInstanceOf[SparkStatement].getText(batch) == "SELECT 1")
     assert(whileBody.collection(1).asInstanceOf[SparkStatement].getText(batch) == "SELECT 2")
   }
+
+  test("while with query as condition") {
+    val batch =
+      """WHILE (SELECT a FROM T) DO
+        |  SELECT 1;
+        |  SELECT 2;
+        |END WHILE;
+      """.stripMargin
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[CiglaWhileStatement])
+    val whileStatement = tree.collection.head.asInstanceOf[CiglaWhileStatement]
+    assert(whileStatement.condition.isInstanceOf[SparkStatement])
+  }
+
+  test("variable declare and set") {
+    val batch =
+      """
+        |DECLARE totalInsertCount = 0;
+        |SET VAR totalInsertCount = totalInsertCount + 1;""".stripMargin
+    val tree = parseBatch(batch)
+
+    assert(tree.collection.length == 2)
+    assert(tree.collection.head.isInstanceOf[SparkStatement])
+    assert(tree.collection(1).isInstanceOf[SparkStatement])
+  }
+
+  test("SET VAR in IF") {
+    val batch =
+      """
+        |IF 1=1 THEN
+        |  SET VAR v = 1;
+        |END IF;
+        |""".stripMargin
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[CiglaIfElseStatement])
+    val ifElseStatement = tree.collection.head.asInstanceOf[CiglaIfElseStatement]
+    assert(ifElseStatement.ifBody.collection.length == 1)
+    assert(ifElseStatement.ifBody.collection.head.isInstanceOf[SparkStatement])
+    assert(ifElseStatement.ifBody.collection.head.asInstanceOf[SparkStatement].getText(batch) == "SET VAR v = 1")
+  }
 }

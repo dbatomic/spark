@@ -122,6 +122,10 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
   }
 
   // Batch processing methods (CIGLA)
+  override def visitBatch(ctx: BatchContext): CiglaBody = {
+    visit(ctx.batchBody()).asInstanceOf[CiglaBody]
+  }
+
   override def visitBatchBody(ctx: BatchBodyContext): CiglaBody = {
     val buff = ListBuffer[RewindableStatement]()
     var statementNum = 0 // TODO: this is a bit hacky
@@ -138,7 +142,8 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
             statement.start.getStartIndex, statement.stop.getStopIndex + 1)
           statementNum = statementNum + 1
         case stmt: RewindableStatement => buff += stmt
-        case _ => () // do nothing
+        case null => () // TODO: Debug when null is returned.
+        case _: AnyRef => () // do nothing
       }
     }
 

@@ -79,9 +79,9 @@ abstract class AbstractSqlParser extends AbstractParser with ParserInterface {
 
   /** Creates Sql batch for a given string */
   override def parseBatch(bodyText: String): CiglaBody = parse(bodyText) { parser =>
-    val ctx = parser.batchBody()
+    val ctx = parser.batch()
     withOrigin(ctx, Some(bodyText)) {
-      astBuilder.visitBatchBody(ctx) match {
+      astBuilder.visitBatch(ctx) match {
         case batch: CiglaBody => batch
         case _ =>
           // TODO: Figure out error reporting story.
