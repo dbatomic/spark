@@ -19,7 +19,7 @@ package org.apache.spark.sql.catalyst.parser
 import scala.collection.mutable.ListBuffer
 
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.catalyst.expressions.{Alias, Expression}
+import org.apache.spark.sql.catalyst.expressions.Alias
 import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, OneRowRelation, Project}
 import org.apache.spark.sql.types.BooleanType
 
@@ -57,15 +57,6 @@ case class SparkStatement(
   // If Interpreter needs to execute it, it will set this to true.
   var consumed = false
   override def rewind(): Unit = consumed = false
-}
-
-case class SparkExpression(
-    command: String,
-    parsedPlan: Expression,
-    sourceStart: Int = 0,
-    sourceEnd: Int = 0) extends LeafStatement with BoolEvaluableStatement {
-  var consumed = false
-  override def rewind(): Unit = consumed = true
 }
 
 // Same as spark statement. Idea is to capture the place of definition and use it to track scope.

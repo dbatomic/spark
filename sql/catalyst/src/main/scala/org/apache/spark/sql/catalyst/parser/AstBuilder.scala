@@ -150,6 +150,9 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
   override def visitIfElseStatement(ctx: IfElseStatementContext): CiglaIfElseStatement = {
     val condition = expression(ctx.booleanExpression())
 
+    // build a logical plan out of this expression.
+    val plan = Project(Seq(Alias(condition, "condition")()), OneRowRelation())
+
     val ifBody = visitBatchBody(ctx.batchBody(0))
 
     // matching here should be better... Refactor.
@@ -159,9 +162,9 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
       None
     }
     CiglaIfElseStatement(
-      SparkExpression(
+      SparkStatement(
         "PLACEHOLDER",
-        condition,
+        plan,
         ctx.booleanExpression().start.getStartIndex,
         ctx.booleanExpression().stop.getStopIndex + 1), ifBody, elseBody, AlwaysTrueEval)
   }

@@ -88,6 +88,9 @@ class BatchParserSuite extends SparkFunSuite with SQLHelper {
     assert(tree.statements.length == 1)
     assert(tree.statements.head.isInstanceOf[CiglaIfElseStatement])
     val ifStmt = tree.statements.head.asInstanceOf[CiglaIfElseStatement]
+    assert(ifStmt.condition.isInstanceOf[SparkStatement])
+    assert(getText(ifStmt.condition.asInstanceOf[SparkStatement], batch) == "1 = 1")
+
     assert(ifStmt.ifBody.statements.length == 1)
     assert(ifStmt.ifBody.statements.head.isInstanceOf[SparkStatement])
     assert(getText(ifStmt.ifBody.statements.head.asInstanceOf[SparkStatement], batch) == "SELECT 1")
