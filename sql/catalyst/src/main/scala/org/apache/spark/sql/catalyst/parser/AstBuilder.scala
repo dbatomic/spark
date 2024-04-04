@@ -139,11 +139,31 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
             // Keep start/stop offsets as debugging information.
             statement.start.getStartIndex, statement.stop.getStopIndex + 1)
           statementNum = statementNum + 1
-        case _ => // do nothing
+        case stmt: RewindableStatement => buff += stmt
+        case _ => () // do nothing
       }
     }
 
     CiglaBody(buff.toList)
+  }
+
+  override def visitIfElseStatement(ctx: IfElseStatementContext): CiglaIfElseStatement = {
+    val condition = expression(ctx.booleanExpression())
+
+    val ifBody = visitBatchBody(ctx.batchBody(0))
+
+    // matching here should be better... Refactor.
+    val elseBody = if (ctx.batchBody().size() == 2) {
+      Some(visitBatchBody(ctx.batchBody(1)))
+    } else {
+      None
+    }
+    CiglaIfElseStatement(
+      SparkExpression(
+        "PLACEHOLDER",
+        condition,
+        ctx.booleanExpression().start.getStartIndex,
+        ctx.booleanExpression().stop.getStopIndex + 1), ifBody, elseBody, AlwaysTrueEval)
   }
   // END OF - Batch processing methods (CIGLA)
 

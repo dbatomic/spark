@@ -75,4 +75,26 @@ class BatchParserSuite extends SparkFunSuite with SQLHelper {
       assert(statementText == expected)
     }
   }
+
+  test("if") {
+    val batch =
+      """IF 1 = 1 THEN
+        |  SELECT 1;
+        |ELSE
+        |  SELECT 2;
+        |END IF;
+        """.stripMargin
+    val tree = parseBatch(batch)
+    assert(tree.statements.length == 1)
+    assert(tree.statements.head.isInstanceOf[CiglaIfElseStatement])
+    val ifStmt = tree.statements.head.asInstanceOf[CiglaIfElseStatement]
+    assert(ifStmt.ifBody.statements.length == 1)
+    assert(ifStmt.ifBody.statements.head.isInstanceOf[SparkStatement])
+    assert(getText(ifStmt.ifBody.statements.head.asInstanceOf[SparkStatement], batch) == "SELECT 1")
+
+    assert(ifStmt.elseBody.isDefined)
+    assert(ifStmt.elseBody.get.statements.length == 1)
+    assert(ifStmt.elseBody.get.statements.head.isInstanceOf[SparkStatement])
+    assert(getText(ifStmt.elseBody.get.statements.head.asInstanceOf[SparkStatement], batch) == "SELECT 2")
+  }
 }

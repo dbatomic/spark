@@ -47,7 +47,11 @@ singleStatement
     ;
 
 batchBody
-    : (statement SEMICOLON+)* EOF
+    : ((ifElseStatement | statement) SEMICOLON+)*
+    ;
+
+ifElseStatement
+    : IF booleanExpression THEN batchBody (ELSE batchBody)? END IF
     ;
 
 singleExpression

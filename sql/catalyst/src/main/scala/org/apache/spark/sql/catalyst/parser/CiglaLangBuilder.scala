@@ -19,7 +19,7 @@ package org.apache.spark.sql.catalyst.parser
 import scala.collection.mutable.ListBuffer
 
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.catalyst.expressions.Alias
+import org.apache.spark.sql.catalyst.expressions.{Alias, Expression}
 import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, OneRowRelation, Project}
 import org.apache.spark.sql.types.BooleanType
 
@@ -59,6 +59,15 @@ case class SparkStatement(
   override def rewind(): Unit = consumed = false
 }
 
+case class SparkExpression(
+    command: String,
+    parsedPlan: Expression,
+    sourceStart: Int = 0,
+    sourceEnd: Int = 0) extends LeafStatement with BoolEvaluableStatement {
+  var consumed = false
+  override def rewind(): Unit = consumed = true
+}
+
 // Same as spark statement. Idea is to capture the place of definition and use it to track scope.
 // The main point is to remove all the variables at the end of the given scope.
 // E.g.:
@@ -76,6 +85,10 @@ case class CiglaVarDeclareStatement(
   override def rewind(): Unit = {
     // TODO: Probably just remove the variable from the session of rewind?
   }
+}
+
+case object AlwaysTrueEval extends StatementBooleanEvaluator {
+  override def eval(statement: BoolEvaluableStatement): Boolean = true
 }
 
 // Provide a way to evaluate a statement to a boolean.
