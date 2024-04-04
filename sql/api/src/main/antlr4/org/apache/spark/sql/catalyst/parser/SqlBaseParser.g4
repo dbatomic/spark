@@ -47,11 +47,15 @@ singleStatement
     ;
 
 batchBody
-    : ((ifElseStatement | statement) SEMICOLON+)*
+    : ((ifElseStatement | whileStatement | statement) SEMICOLON+)*
     ;
 
 ifElseStatement
     : IF booleanExpression THEN batchBody (ELSE batchBody)? END IF
+    ;
+
+whileStatement
+    : WHILE booleanExpression DO batchBody END WHILE
     ;
 
 singleExpression

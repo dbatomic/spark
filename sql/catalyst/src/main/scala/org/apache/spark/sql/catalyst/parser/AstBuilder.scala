@@ -168,6 +168,20 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
         ctx.booleanExpression().start.getStartIndex,
         ctx.booleanExpression().stop.getStopIndex + 1), ifBody, elseBody, AlwaysTrueEval)
   }
+
+  override def visitWhileStatement(ctx: WhileStatementContext): CiglaWhileStatement = {
+    val condition = expression(ctx.booleanExpression())
+
+    // build a logical plan out of this expression.
+    val plan = Project(Seq(Alias(condition, "condition")()), OneRowRelation())
+    val whileBody = visitBatchBody(ctx.batchBody)
+    CiglaWhileStatement(
+      SparkStatement(
+        "PLACEHOLDER",
+        plan,
+        ctx.booleanExpression().start.getStartIndex,
+        ctx.booleanExpression().stop.getStopIndex + 1), whileBody, AlwaysTrueEval)
+  }
   // END OF - Batch processing methods (CIGLA)
 
   override def visitSingleTableIdentifier(

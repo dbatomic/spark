@@ -76,7 +76,7 @@ class BatchParserSuite extends SparkFunSuite with SQLHelper {
     }
   }
 
-  test("if") {
+  test("if else") {
     val batch =
       """IF 1 = 1 THEN
         |  SELECT 1;
@@ -99,5 +99,26 @@ class BatchParserSuite extends SparkFunSuite with SQLHelper {
     assert(ifStmt.elseBody.get.statements.length == 1)
     assert(ifStmt.elseBody.get.statements.head.isInstanceOf[SparkStatement])
     assert(getText(ifStmt.elseBody.get.statements.head.asInstanceOf[SparkStatement], batch) == "SELECT 2")
+  }
+
+  test("while") {
+    val batch =
+      """WHILE 1 = 1 DO
+        |  SELECT 1;
+        |  SELECT 2;
+        |END WHILE;
+      """.stripMargin
+    val tree = parseBatch(batch)
+    assert(tree.statements.length == 1)
+    assert(tree.statements.head.isInstanceOf[CiglaWhileStatement])
+    val whileStatement = tree.statements.head.asInstanceOf[CiglaWhileStatement]
+    assert(whileStatement.condition.isInstanceOf[SparkStatement])
+    assert(getText(whileStatement.condition.asInstanceOf[SparkStatement], batch) == "1 = 1")
+
+    assert(whileStatement.whileBody.asInstanceOf[CiglaBody].statements.length == 2)
+    val whileBody = whileStatement.whileBody.asInstanceOf[CiglaBody]
+    assert(whileBody.statements.head.isInstanceOf[SparkStatement])
+    assert(getText(whileBody.statements.head.asInstanceOf[SparkStatement], batch) == "SELECT 1")
+    assert(getText(whileBody.statements(1).asInstanceOf[SparkStatement], batch) == "SELECT 2")
   }
 }
