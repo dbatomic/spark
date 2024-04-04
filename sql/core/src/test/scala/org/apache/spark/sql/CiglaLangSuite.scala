@@ -42,7 +42,7 @@ class CiglaLangSuite extends SparkFunSuite {
   }
 
   class TestWhile(condition: BoolEvaluableStatement, body: TestBody, reps: Int)
-    extends CiglaWhileStatement(condition, body, RepEval(reps))
+    extends CiglaWhileStatement(condition, body, Some(RepEval(reps)))
 
   test("test body single statement") {
     val nestedIterator = new TestBody(
@@ -194,7 +194,7 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
       |   SELECT 42;
       | END IF;
       |""".stripMargin
-    val expected = Seq(Seq(Row(true)), Seq(Row(42)))
+    val expected = Seq(Seq(Row(42)))
     verifyBatchResult(commands, expected)
   }
 
@@ -208,7 +208,7 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
       | END IF;
       |""".stripMargin
 
-    val expected = Seq(Seq(Row(true)), Seq(Row(42)))
+    val expected = Seq(Seq(Row(42)))
     verifyBatchResult(commands, expected)
   }
 
@@ -222,8 +222,7 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
       | END IF;
       |""".stripMargin
 
-    // TODO: Need to fix always true eval!
-    val expected = Seq(Seq(Row(false)), Seq(Row(43)))
+    val expected = Seq(Seq(Row(43)))
     verifyBatchResult(commands, expected)
   }
 

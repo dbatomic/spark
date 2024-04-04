@@ -142,7 +142,7 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
       }
     }
 
-    CiglaBody(buff.toList)
+    new CiglaBody(buff.toList)
   }
 
   override def visitIfElseStatement(ctx: IfElseStatementContext): CiglaIfElseStatement = {
@@ -163,7 +163,7 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
       SparkStatement(
         plan,
         ctx.booleanExpression().start.getStartIndex,
-        ctx.booleanExpression().stop.getStopIndex + 1), ifBody, elseBody, AlwaysTrueEval)
+        ctx.booleanExpression().stop.getStopIndex + 1), ifBody, elseBody, None)
   }
 
   override def visitWhileStatement(ctx: WhileStatementContext): CiglaWhileStatement = {
@@ -176,7 +176,7 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
       SparkStatement(
         plan,
         ctx.booleanExpression().start.getStartIndex,
-        ctx.booleanExpression().stop.getStopIndex + 1), whileBody, AlwaysTrueEval)
+        ctx.booleanExpression().stop.getStopIndex + 1), whileBody, None)
   }
   // END OF - Batch processing methods (CIGLA)
 

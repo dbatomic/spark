@@ -29,21 +29,21 @@ class BatchParserSuite extends SparkFunSuite with SQLHelper {
   test("single select") {
     val batch = "SELECT 1;"
     val tree = parseBatch(batch)
-    assert(tree.statements.length == 1)
-    assert(tree.statements.head.isInstanceOf[SparkStatement])
-    val sparkStatement = tree.statements.head.asInstanceOf[SparkStatement]
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[SparkStatement])
+    val sparkStatement = tree.collection.head.asInstanceOf[SparkStatement]
     assert(sparkStatement.getText(batch) == "SELECT 1")
   }
 
   test("multi select") {
     val batch = "SELECT 1;SELECT 2;"
     val tree = parseBatch(batch)
-    assert(tree.statements.length == 2)
-    assert(tree.statements.forall(_.isInstanceOf[SparkStatement]))
+    assert(tree.collection.length == 2)
+    assert(tree.collection.forall(_.isInstanceOf[SparkStatement]))
 
     batch.split(";")
       .map(_.replace("\n", ""))
-      .zip(tree.statements)
+      .zip(tree.collection)
       .foreach { case (expected, statement) =>
         val sparkStatement = statement.asInstanceOf[SparkStatement]
         val statementText = sparkStatement.getText(batch)
@@ -59,11 +59,11 @@ class BatchParserSuite extends SparkFunSuite with SQLHelper {
       |SELECT * FROM T;
         """.stripMargin
     val tree = parseBatch(batch)
-    assert(tree.statements.length == 5)
-    assert(tree.statements.forall(_.isInstanceOf[SparkStatement]))
+    assert(tree.collection.length == 5)
+    assert(tree.collection.forall(_.isInstanceOf[SparkStatement]))
     batch.split(";")
       .map(_.replace("\n", ""))
-      .zip(tree.statements)
+      .zip(tree.collection)
       .foreach { case (expected, statement) =>
       val sparkStatement = statement.asInstanceOf[SparkStatement]
       val statementText = sparkStatement.getText(batch)
@@ -80,20 +80,20 @@ class BatchParserSuite extends SparkFunSuite with SQLHelper {
         |END IF;
         """.stripMargin
     val tree = parseBatch(batch)
-    assert(tree.statements.length == 1)
-    assert(tree.statements.head.isInstanceOf[CiglaIfElseStatement])
-    val ifStmt = tree.statements.head.asInstanceOf[CiglaIfElseStatement]
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[CiglaIfElseStatement])
+    val ifStmt = tree.collection.head.asInstanceOf[CiglaIfElseStatement]
     assert(ifStmt.condition.isInstanceOf[SparkStatement])
     assert(ifStmt.condition.asInstanceOf[SparkStatement].getText(batch) == "1 = 1")
 
-    assert(ifStmt.ifBody.statements.length == 1)
-    assert(ifStmt.ifBody.statements.head.isInstanceOf[SparkStatement])
-    assert(ifStmt.ifBody.statements.head.asInstanceOf[SparkStatement].getText(batch) == "SELECT 1")
+    assert(ifStmt.ifBody.collection.length == 1)
+    assert(ifStmt.ifBody.collection.head.isInstanceOf[SparkStatement])
+    assert(ifStmt.ifBody.collection.head.asInstanceOf[SparkStatement].getText(batch) == "SELECT 1")
 
     assert(ifStmt.elseBody.isDefined)
-    assert(ifStmt.elseBody.get.statements.length == 1)
-    assert(ifStmt.elseBody.get.statements.head.isInstanceOf[SparkStatement])
-    assert(ifStmt.elseBody.get.statements.head.asInstanceOf[SparkStatement].getText(batch) == "SELECT 2")
+    assert(ifStmt.elseBody.get.collection.length == 1)
+    assert(ifStmt.elseBody.get.collection.head.isInstanceOf[SparkStatement])
+    assert(ifStmt.elseBody.get.collection.head.asInstanceOf[SparkStatement].getText(batch) == "SELECT 2")
   }
 
   test("while") {
@@ -104,16 +104,16 @@ class BatchParserSuite extends SparkFunSuite with SQLHelper {
         |END WHILE;
       """.stripMargin
     val tree = parseBatch(batch)
-    assert(tree.statements.length == 1)
-    assert(tree.statements.head.isInstanceOf[CiglaWhileStatement])
-    val whileStatement = tree.statements.head.asInstanceOf[CiglaWhileStatement]
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[CiglaWhileStatement])
+    val whileStatement = tree.collection.head.asInstanceOf[CiglaWhileStatement]
     assert(whileStatement.condition.isInstanceOf[SparkStatement])
     assert(whileStatement.condition.asInstanceOf[SparkStatement].getText(batch) == "1 = 1")
 
-    assert(whileStatement.whileBody.asInstanceOf[CiglaBody].statements.length == 2)
+    assert(whileStatement.whileBody.asInstanceOf[CiglaBody].collection.length == 2)
     val whileBody = whileStatement.whileBody.asInstanceOf[CiglaBody]
-    assert(whileBody.statements.head.isInstanceOf[SparkStatement])
-    assert(whileBody.statements.head.asInstanceOf[SparkStatement].getText(batch) == "SELECT 1")
-    assert(whileBody.statements(1).asInstanceOf[SparkStatement].getText(batch) == "SELECT 2")
+    assert(whileBody.collection.head.isInstanceOf[SparkStatement])
+    assert(whileBody.collection.head.asInstanceOf[SparkStatement].getText(batch) == "SELECT 1")
+    assert(whileBody.collection(1).asInstanceOf[SparkStatement].getText(batch) == "SELECT 2")
   }
 }

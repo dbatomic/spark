@@ -93,8 +93,9 @@ trait StatementBooleanEvaluator {
 case class CiglaIfElseStatement(
     condition: BoolEvaluableStatement,
     ifBody: CiglaBody,
-    elseBody: Option[CiglaBody],
-    evaluator: StatementBooleanEvaluator) extends NonLeafStatement {
+    elseBody: Option[CiglaLangNestedIteratorStatement],
+    evaluator: Option[StatementBooleanEvaluator])
+    extends NonLeafStatement {
   private object IfElseState extends Enumeration {
     val Condition, IfBody, ElseBody = Value
   }
@@ -113,11 +114,12 @@ case class CiglaIfElseStatement(
   override def hasNext: Boolean = curr.nonEmpty
 
   override def next(): RewindableStatement = {
+    assert(evaluator.nonEmpty, "Evaluator must be set for execution")
     state match {
       case IfElseState.Condition =>
         logInfo("Entering condition")
         assert(curr.get.isInstanceOf[SparkStatement])
-        val evalRes = evaluator.eval(condition)
+        val evalRes = evaluator.get.eval(condition)
         if (evalRes) {
           state = IfElseState.IfBody
           curr = Some(ifBody)
@@ -144,9 +146,10 @@ case class CiglaIfElseStatement(
 }
 
 case class CiglaWhileStatement(
-   condition: BoolEvaluableStatement,
-   whileBody: CiglaLangNestedIteratorStatement,
-   evaluator: StatementBooleanEvaluator) extends NonLeafStatement {
+    condition: BoolEvaluableStatement,
+    whileBody: CiglaLangNestedIteratorStatement,
+    evaluator: Option[StatementBooleanEvaluator])
+    extends NonLeafStatement {
   private object WhileState extends Enumeration {
     val Condition, Body = Value
   }
@@ -156,9 +159,10 @@ case class CiglaWhileStatement(
 
   override def hasNext: Boolean = curr.nonEmpty
   override def next(): RewindableStatement = {
+    assert(evaluator.nonEmpty, "Evaluator must be set for execution")
     state match {
       case WhileState.Condition =>
-        if (evaluator.eval(condition)) {
+        if (evaluator.get.eval(condition)) {
           whileBody.rewind()
           state = WhileState.Body
           curr = Some(whileBody)
@@ -187,7 +191,7 @@ case class CiglaWhileStatement(
 
 // This is base class for all nested cigla lang statements.
 // e.g. if/else/while or even regular body.
-class CiglaLangNestedIteratorStatement(collection: Seq[RewindableStatement])
+case class CiglaLangNestedIteratorStatement(collection: List[RewindableStatement])
     extends NonLeafStatement {
 
   var localIterator = collection.iterator
@@ -234,7 +238,7 @@ class CiglaLangNestedIteratorStatement(collection: Seq[RewindableStatement])
   }
 }
 
-case class CiglaBody(statements: List[RewindableStatement])
+class CiglaBody(statements: List[RewindableStatement])
     extends CiglaLangNestedIteratorStatement(statements) {
 
   val variables = ListBuffer[String]()
@@ -273,8 +277,33 @@ case class CiglaLangInterpreter(
     evaluator: StatementBooleanEvaluator,
     sparkStatementParser: ParserInterface)
     extends ProceduralLangInterpreter {
-  private val tree = sparkStatementParser.parseBatch(batch)
-  private val iter = CiglaBody(tree.statements)
+  private val treeNoEval = sparkStatementParser.parseBatch(batch)
+
+  private def transformTreeIntoEvaluable(node: RewindableStatement): RewindableStatement = {
+    // Set evaluator where needed.
+    node match {
+      case body: CiglaBody =>
+        new CiglaBody(body.collection.map(stmt => transformTreeIntoEvaluable(stmt)))
+      case whileStmt: CiglaWhileStatement =>
+        CiglaWhileStatement(
+          whileStmt.condition,
+          new CiglaBody(
+            whileStmt.whileBody.collection.map(stmt => transformTreeIntoEvaluable(stmt))),
+          Some(evaluator))
+      case ifStmt: CiglaIfElseStatement =>
+        CiglaIfElseStatement(
+          ifStmt.condition,
+          new CiglaBody(ifStmt.ifBody.collection.map(stmt => transformTreeIntoEvaluable(stmt))),
+          ifStmt.elseBody.map(elseBody =>
+            new CiglaBody(elseBody.collection.map(stmt => transformTreeIntoEvaluable(stmt)))),
+          Some(evaluator))
+      case node: RewindableStatement => node
+    }
+  }
+
+  private val tree = transformTreeIntoEvaluable(treeNoEval).asInstanceOf[CiglaBody]
+
+  private val iter = new CiglaBody(tree.collection)
   override def hasNext: Boolean = iter.hasNext
   override def next(): RewindableStatement = iter.next()
 }

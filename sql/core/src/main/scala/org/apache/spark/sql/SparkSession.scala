@@ -770,7 +770,7 @@ class SparkSession private(
   def sqlBatchExec(batchText: String): Iterator[DataFrame] = {
     sqlBatch(batchText).flatMap { statement =>
       val df = statement match {
-        case st: SparkStatement if !st.consumed => Some(sql(st.command))
+        case st: SparkStatement if !st.consumed => Some(sql(st.getText(batchText)))
         case st: CiglaVarDeclareStatement => Some(sql(st.command))
         // Remove everything that is not spark statement.
         case _ => None
