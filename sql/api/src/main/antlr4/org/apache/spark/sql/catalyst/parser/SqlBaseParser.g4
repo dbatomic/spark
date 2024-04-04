@@ -46,6 +46,10 @@ singleStatement
     : statement SEMICOLON* EOF
     ;
 
+batchBody
+    : (statement SEMICOLON+)* EOF
+    ;
+
 singleExpression
     : namedExpression EOF
     ;

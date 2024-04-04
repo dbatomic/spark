@@ -20,7 +20,7 @@ package org.apache.spark.sql.catalyst.parser
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-import scala.collection.mutable.{ArrayBuffer, Set}
+import scala.collection.mutable.{ArrayBuffer, ListBuffer, Set}
 import scala.jdk.CollectionConverters._
 import scala.util.{Left, Right}
 
@@ -29,8 +29,8 @@ import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.{ParseTree, RuleNode, TerminalNode}
 import org.apache.commons.codec.DecoderException
 import org.apache.commons.codec.binary.Hex
-
 import org.apache.spark.{SparkArithmeticException, SparkException, SparkIllegalArgumentException, SparkThrowable}
+
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.{FunctionIdentifier, SQLConfHelper, TableIdentifier}
 import org.apache.spark.sql.catalyst.analysis._
@@ -47,7 +47,7 @@ import org.apache.spark.sql.catalyst.util.{CharVarcharUtils, DateTimeUtils, Inte
 import org.apache.spark.sql.catalyst.util.DateTimeUtils.{convertSpecialDate, convertSpecialTimestamp, convertSpecialTimestampNTZ, getZoneId, stringToDate, stringToTimestamp, stringToTimestampWithoutTimeZone}
 import org.apache.spark.sql.connector.catalog.{CatalogV2Util, SupportsNamespaces, TableCatalog}
 import org.apache.spark.sql.connector.catalog.TableChange.ColumnPosition
-import org.apache.spark.sql.connector.expressions.{ApplyTransform, BucketTransform, DaysTransform, Expression => V2Expression, FieldReference, HoursTransform, IdentityTransform, LiteralValue, MonthsTransform, Transform, YearsTransform}
+import org.apache.spark.sql.connector.expressions.{ApplyTransform, BucketTransform, DaysTransform, FieldReference, HoursTransform, IdentityTransform, LiteralValue, MonthsTransform, Transform, YearsTransform, Expression => V2Expression}
 import org.apache.spark.sql.errors.{QueryCompilationErrors, QueryParsingErrors}
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types._
@@ -120,6 +120,32 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
   override def visitSingleExpression(ctx: SingleExpressionContext): Expression = withOrigin(ctx) {
     visitNamedExpression(ctx.namedExpression)
   }
+
+  // Batch processing methods (CIGLA)
+  override def visitBatchBody(ctx: BatchBodyContext): CiglaBody = {
+    val buff = ListBuffer[RewindableStatement]()
+    var statementNum = 0 // TODO: this is a bit hacky
+    for (i <- 0 until ctx.getChildCount) {
+      val child = visit(ctx.getChild(i))
+
+      child match {
+        case logicalPlan: LogicalPlan =>
+          // If this is a logical plan we know that we parsed statement.
+          // Figure out this flow later on.
+          val statement = ctx.statement(statementNum)
+          buff += SparkStatement(
+            "PLACEHOLDER",
+            logicalPlan,
+            // Keep start/stop offsets as debugging information.
+            statement.start.getStartIndex, statement.stop.getStopIndex + 1)
+          statementNum = statementNum + 1
+        case _ => // do nothing
+      }
+    }
+
+    CiglaBody(buff.toList)
+  }
+  // END OF - Batch processing methods (CIGLA)
 
   override def visitSingleTableIdentifier(
       ctx: SingleTableIdentifierContext): TableIdentifier = withOrigin(ctx) {

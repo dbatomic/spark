@@ -48,7 +48,8 @@ abstract class NonLeafStatement
 trait BoolEvaluableStatement extends RewindableStatement
 
 // Statement that is supposed to be executed against Spark.
-case class SparkStatement(command: String, parsedPlan: LogicalPlan)
+case class SparkStatement(
+    command: String, parsedPlan: LogicalPlan, sourceStart: Int = 0, sourceEnd: Int = 0)
     extends LeafStatement with BoolEvaluableStatement {
   // Execution can either be done outside
   // (e.g. you can just get command text and execute it locally).
@@ -398,4 +399,3 @@ object CiglaLangBuilder {
   // Internally it is rewinding statement but from outside it is just a language statement.
   type CiglaLanguageStatement = RewindableStatement
 }
-
