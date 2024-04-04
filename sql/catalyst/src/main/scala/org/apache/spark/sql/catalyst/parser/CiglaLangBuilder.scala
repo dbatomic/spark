@@ -47,7 +47,7 @@ trait BoolEvaluableStatement extends RewindableStatement
 
 // Statement that is supposed to be executed against Spark.
 case class SparkStatement(
-    command: String, parsedPlan: LogicalPlan, sourceStart: Int = 0, sourceEnd: Int = 0)
+    parsedPlan: LogicalPlan, sourceStart: Int, sourceEnd: Int)
     extends LeafStatement with BoolEvaluableStatement {
   // Execution can either be done outside
   // (e.g. you can just get command text and execute it locally).
@@ -55,6 +55,8 @@ case class SparkStatement(
   // If Interpreter needs to execute it, it will set this to true.
   var consumed = false
   override def rewind(): Unit = consumed = false
+
+  def getText(batch: String): String = batch.substring(sourceStart, sourceEnd)
 }
 
 // Same as spark statement. Idea is to capture the place of definition and use it to track scope.

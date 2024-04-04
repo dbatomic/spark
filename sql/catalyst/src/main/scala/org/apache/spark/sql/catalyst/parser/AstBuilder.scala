@@ -134,9 +134,7 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
           // Figure out this flow later on.
           val statement = ctx.statement(statementNum)
           buff += SparkStatement(
-            "PLACEHOLDER",
             logicalPlan,
-            // Keep start/stop offsets as debugging information.
             statement.start.getStartIndex, statement.stop.getStopIndex + 1)
           statementNum = statementNum + 1
         case stmt: RewindableStatement => buff += stmt
@@ -163,7 +161,6 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
     }
     CiglaIfElseStatement(
       SparkStatement(
-        "PLACEHOLDER",
         plan,
         ctx.booleanExpression().start.getStartIndex,
         ctx.booleanExpression().stop.getStopIndex + 1), ifBody, elseBody, AlwaysTrueEval)
@@ -177,7 +174,6 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
     val whileBody = visitBatchBody(ctx.batchBody)
     CiglaWhileStatement(
       SparkStatement(
-        "PLACEHOLDER",
         plan,
         ctx.booleanExpression().start.getStartIndex,
         ctx.booleanExpression().stop.getStopIndex + 1), whileBody, AlwaysTrueEval)

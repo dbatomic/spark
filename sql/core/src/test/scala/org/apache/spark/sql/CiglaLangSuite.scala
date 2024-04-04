@@ -126,7 +126,7 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
     val result = commands.flatMap {
       case stmt: SparkStatement =>
         if (printRes) {
-          println("Executing: " + stmt.command)
+          println("Executing: " + stmt.getText(batch))
         }
 
         // If expression will be executed on interpreter side.
