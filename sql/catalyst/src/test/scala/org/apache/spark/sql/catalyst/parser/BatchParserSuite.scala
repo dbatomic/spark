@@ -20,6 +20,7 @@ package org.apache.spark.sql.catalyst.parser
 import org.apache.spark.SparkFunSuite
 
 import org.apache.spark.sql.catalyst.plans.SQLHelper
+import org.apache.spark.sql.catalyst.plans.logical.CreateVariable
 
 
 //noinspection ScalaStyle
@@ -157,5 +158,21 @@ class BatchParserSuite extends SparkFunSuite with SQLHelper {
     assert(ifElseStatement.ifBody.collection.length == 1)
     assert(ifElseStatement.ifBody.collection.head.isInstanceOf[SparkStatementWithPlan])
     assert(ifElseStatement.ifBody.collection.head.asInstanceOf[SparkStatementWithPlan].getText(batch) == "SET VAR v = 1")
+  }
+
+  test("capture set var") {
+    val batch = "DECLARE v = 1;"
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[SparkStatementWithPlan])
+    val stmt = tree.collection.head.asInstanceOf[SparkStatementWithPlan]
+
+    val varName = stmt.parsedPlan.map {
+      case p: CreateVariable => Some(p.name)
+      case _ => None
+    }
+
+    // varName is again logical plan here...
+    println(varName)
   }
 }

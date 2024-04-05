@@ -21,6 +21,7 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 
 trait BatchStatementExec extends Logging {
   def rewind(): Unit
+  val isInternal: Boolean = false
 }
 
 // Interpreter debugger can point to leaf statement.
@@ -36,7 +37,7 @@ abstract class NonLeafStatementExec
 // Statement that is supposed to be executed against Spark.
 // Same object is used in both plan and execution.
 case class SparkStatementWithPlanExec(
-  parsedPlan: LogicalPlan, sourceStart: Int, sourceEnd: Int)
+  parsedPlan: LogicalPlan, sourceStart: Int, sourceEnd: Int, internal: Boolean)
     extends LeafStatementExec {
   // Execution can either be done outside
   // (e.g. you can just get command text and execute it locally).
@@ -44,6 +45,7 @@ case class SparkStatementWithPlanExec(
   // If Interpreter needs to execute it, it will set this to true.
   var consumed = false
   override def rewind(): Unit = consumed = false
+  override val isInternal: Boolean = internal
   def getText(batch: String): String = batch.substring(sourceStart, sourceEnd)
 }
 

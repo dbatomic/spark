@@ -17,7 +17,9 @@
 
 package org.apache.spark.sql.catalyst.batchinterpreter
 
+import org.apache.spark.sql.catalyst.analysis.UnresolvedIdentifier
 import org.apache.spark.sql.catalyst.parser.{BatchBody, BatchIfElseStatement, BatchPlanStatement, BatchWhileStatement, ParserInterface, SparkStatementWithPlan}
+import org.apache.spark.sql.catalyst.plans.logical.{CreateVariable, DropVariable, LogicalPlan}
 
 
 trait ProceduralLangInterface {
@@ -44,28 +46,42 @@ case class CiglaLangInterpreter(
   extends ProceduralLangInterpreter {
   private val treeNoEval = sparkStatementParser.parseBatch(batch)
 
+  private def getDeclareVarNameFromPlan(
+      plan: LogicalPlan): Option[UnresolvedIdentifier] = plan match {
+    case CreateVariable(name, _, _) => name match {
+      case u: UnresolvedIdentifier => Some(u)
+    }
+    case _ => None
+  }
+
   private def transformTreeIntoEvaluable(node: BatchPlanStatement): BatchStatementExec = {
     // Set evaluator where needed.
     node match {
       case body: BatchBody =>
-        new BatchBodyExec(body.collection.map(stmt => transformTreeIntoEvaluable(stmt)))
+        // Find all variables in this scope
+        val variables = body.collection.flatMap {
+          case st: SparkStatementWithPlan => getDeclareVarNameFromPlan(st.parsedPlan)
+          case _ => None
+        }
+        val dropVars = variables.map(varName => DropVariable(varName, ifExists = true))
+          .map(SparkStatementWithPlanExec(_, 0, 0, internal = true)).reverse
+        new BatchBodyExec(body.collection.map(stmt => transformTreeIntoEvaluable(stmt)) ++ dropVars)
       case BatchWhileStatement(condition, body) =>
         BatchWhileStatementExec(
           SparkStatementWithPlanExec(
-            condition.parsedPlan, condition.sourceStart, condition.sourceEnd),
-          new BatchBodyExec(
-            body.collection.map(stmt => transformTreeIntoEvaluable(stmt))),
+            condition.parsedPlan, condition.sourceStart, condition.sourceEnd, internal = false),
+          transformTreeIntoEvaluable(body).asInstanceOf[BatchBodyExec],
           Some(evaluator))
       case BatchIfElseStatement(condition, ifBody, elseBody) =>
         BatchIfElseStatementExec(
           SparkStatementWithPlanExec(
-            condition.parsedPlan, condition.sourceStart, condition.sourceEnd),
-          new BatchBodyExec(ifBody.collection.map(stmt => transformTreeIntoEvaluable(stmt))),
-          elseBody.map(elseBody =>
-            new BatchBodyExec(elseBody.collection.map(stmt => transformTreeIntoEvaluable(stmt)))),
+            condition.parsedPlan, condition.sourceStart, condition.sourceEnd, internal = false),
+          transformTreeIntoEvaluable(ifBody).asInstanceOf[BatchBodyExec], // TODO deal with this.
+          elseBody.map(transformTreeIntoEvaluable(_)).asInstanceOf[Option[BatchBodyExec]],
           Some(evaluator))
       case node: SparkStatementWithPlan =>
-        SparkStatementWithPlanExec(node.parsedPlan, node.sourceStart, node.sourceEnd)
+        SparkStatementWithPlanExec(
+          node.parsedPlan, node.sourceStart, node.sourceEnd, internal = false)
       case _ => throw new IllegalStateException("Unknown statement type")
     }
   }
