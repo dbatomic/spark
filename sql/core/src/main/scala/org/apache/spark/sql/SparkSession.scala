@@ -40,7 +40,7 @@ import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis.{NameParameterizedQuery, PosParameterizedQuery, UnresolvedRelation}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
-import org.apache.spark.sql.catalyst.parser.{BoolEvaluableStatement, CiglaLangBuilder, CiglaVarDeclareStatement, SparkStatement, StatementBooleanEvaluator}
+import org.apache.spark.sql.catalyst.parser.{BatchStatementExec, BoolEvaluableStatement, SparkStatement, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Range}
 import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.catalyst.util.CharVarcharUtils
@@ -713,7 +713,7 @@ class SparkSession private(
 
   private[sql] def sqlBatch(
       batchText: String,
-      tracker: QueryPlanningTracker): Iterator[CiglaLangBuilder.CiglaLanguageStatement] =
+      tracker: QueryPlanningTracker): Iterator[BatchStatementExec] =
     withActive {
       val session = this
       object DataFrameEvaluator extends StatementBooleanEvaluator {
@@ -763,7 +763,7 @@ class SparkSession private(
     sql(sqlText, args, new QueryPlanningTracker)
   }
 
-  def sqlBatch(batchText: String): Iterator[CiglaLangBuilder.CiglaLanguageStatement] = {
+  def sqlBatch(batchText: String): Iterator[BatchStatementExec] = {
     sqlBatch(batchText, new QueryPlanningTracker)
   }
 
@@ -771,8 +771,6 @@ class SparkSession private(
     sqlBatch(batchText).flatMap { statement =>
       val df = statement match {
         case st: SparkStatement if !st.consumed => Some(sql(st.getText(batchText)))
-        case st: CiglaVarDeclareStatement => Some(sql(st.command))
-        // Remove everything that is not spark statement.
         case _ => None
       }
       df

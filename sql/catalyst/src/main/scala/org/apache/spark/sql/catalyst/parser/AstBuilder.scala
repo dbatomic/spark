@@ -122,12 +122,12 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
   }
 
   // Batch processing methods (CIGLA)
-  override def visitBatch(ctx: BatchContext): CiglaBody = {
-    visit(ctx.batchBody()).asInstanceOf[CiglaBody]
+  override def visitBatch(ctx: BatchContext): BatchBody = {
+    visit(ctx.batchBody()).asInstanceOf[BatchBody]
   }
 
-  override def visitBatchBody(ctx: BatchBodyContext): CiglaBody = {
-    val buff = ListBuffer[RewindableStatement]()
+  override def visitBatchBody(ctx: BatchBodyContext): BatchBody = {
+    val buff = ListBuffer[BatchPlanStatement]()
     var statementNum = 0 // TODO: this is a bit hacky
     for (i <- 0 until ctx.getChildCount) {
       val child = visit(ctx.getChild(i))
@@ -141,16 +141,17 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
             logicalPlan,
             statement.start.getStartIndex, statement.stop.getStopIndex + 1)
           statementNum = statementNum + 1
-        case stmt: RewindableStatement => buff += stmt
+        case stmt: BatchPlanStatement => buff += stmt
         case null => () // TODO: Debug when null is returned.
-        case _: AnyRef => () // do nothing
+        case t: AnyRef =>
+          throw new SparkException("Unexpected type returned from visit: " + t.getClass)
       }
     }
 
-    new CiglaBody(buff.toList)
+    new BatchBody(buff.toList)
   }
 
-  override def visitIfElseStatement(ctx: IfElseStatementContext): CiglaIfElseStatement = {
+  override def visitIfElseStatement(ctx: IfElseStatementContext): BatchIfElseStatement = {
     val condition = expression(ctx.booleanExpression())
 
     // build a logical plan out of this expression.
@@ -164,24 +165,24 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
     } else {
       None
     }
-    CiglaIfElseStatement(
+    BatchIfElseStatement(
       SparkStatement(
         plan,
         ctx.booleanExpression().start.getStartIndex,
-        ctx.booleanExpression().stop.getStopIndex + 1), ifBody, elseBody, None)
+        ctx.booleanExpression().stop.getStopIndex + 1), ifBody, elseBody)
   }
 
-  override def visitWhileStatement(ctx: WhileStatementContext): CiglaWhileStatement = {
+  override def visitWhileStatement(ctx: WhileStatementContext): BatchWhileStatement = {
     val condition = expression(ctx.booleanExpression())
 
     // build a logical plan out of this expression.
     val plan = Project(Seq(Alias(condition, "condition")()), OneRowRelation())
     val whileBody = visitBatchBody(ctx.batchBody)
-    CiglaWhileStatement(
+    BatchWhileStatement(
       SparkStatement(
         plan,
         ctx.booleanExpression().start.getStartIndex,
-        ctx.booleanExpression().stop.getStopIndex + 1), whileBody, None)
+        ctx.booleanExpression().stop.getStopIndex + 1), whileBody)
   }
   // END OF - Batch processing methods (CIGLA)
 

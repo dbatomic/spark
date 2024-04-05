@@ -16,66 +16,41 @@
  */
 package org.apache.spark.sql.catalyst.parser
 
-import scala.collection.mutable.ListBuffer
-
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 
-trait NodeStatement
+trait BatchPlanStatement
 
-// Interface suggesting that operation can be rewound.
-// E.g. iterator can be set back to beginning if in while loop.
-trait Rewindable {
+trait BatchStatementExec extends Logging {
   def rewind(): Unit
 }
-
-trait RewindableStatement extends NodeStatement with Rewindable with Logging
 
 // Interpreter debugger can point to leaf statement.
 // This can either be a Spark statement or Cigla statement (e.g. var assignment or trace).
 // TODO: Add all debugging info here.
-abstract class LeafStatement extends RewindableStatement
+trait LeafStatementExec extends BatchStatementExec
 
 // Non leaf statement hosts other statements. It can return iterator to it's children.
 // It can also be executed multiple times (e.g. while loop).
-abstract class NonLeafStatement
-  extends RewindableStatement with Iterator[RewindableStatement]
+abstract class NonLeafStatementExec
+  extends BatchStatementExec with Iterator[BatchStatementExec]
 
 // Statement that can be evaluated to a boolean.
 // It can go in if/else condition or while loop.
-trait BoolEvaluableStatement extends RewindableStatement
+trait BoolEvaluableStatement extends BatchPlanStatement with BatchStatementExec
 
 // Statement that is supposed to be executed against Spark.
+// Same object is used in both plan and execution.
 case class SparkStatement(
     parsedPlan: LogicalPlan, sourceStart: Int, sourceEnd: Int)
-    extends LeafStatement with BoolEvaluableStatement {
+    extends BatchPlanStatement with LeafStatementExec with BoolEvaluableStatement {
   // Execution can either be done outside
   // (e.g. you can just get command text and execute it locally).
   // Or internally (e.g. in case of SQL in IF branch.)
   // If Interpreter needs to execute it, it will set this to true.
   var consumed = false
   override def rewind(): Unit = consumed = false
-
   def getText(batch: String): String = batch.substring(sourceStart, sourceEnd)
-}
-
-// Same as spark statement. Idea is to capture the place of definition and use it to track scope.
-// The main point is to remove all the variables at the end of the given scope.
-// E.g.:
-// while (x < 10) {
-//    declare y = 10;
-//    set var y = y + 1;
-//    // <- interpreter removes var declaration here ->
-// }
-// declare y = 22; // <-- this is now fine.
-// Trickier situation will happen during procedure calls.
-// Interpreter will have to remove all the variables in current scope
-// and then restore them after the call.
-case class CiglaVarDeclareStatement(
-    varName: String, command: String, parsedPlan: LogicalPlan) extends LeafStatement {
-  override def rewind(): Unit = {
-    // TODO: Probably just remove the variable from the session of rewind?
-  }
 }
 
 case object AlwaysTrueEval extends StatementBooleanEvaluator {
@@ -90,18 +65,23 @@ trait StatementBooleanEvaluator {
   def eval(statement: BoolEvaluableStatement): Boolean
 }
 
-case class CiglaIfElseStatement(
+case class BatchIfElseStatement(
+  condition: BoolEvaluableStatement,
+  ifBody: BatchBody,
+  elseBody: Option[BatchBody]) extends BatchPlanStatement
+
+case class BatchIfElseStatementExec(
     condition: BoolEvaluableStatement,
-    ifBody: CiglaBody,
+    ifBody: BatchBodyExec,
     elseBody: Option[CiglaLangNestedIteratorStatement],
     evaluator: Option[StatementBooleanEvaluator])
-    extends NonLeafStatement {
+    extends NonLeafStatementExec {
   private object IfElseState extends Enumeration {
     val Condition, IfBody, ElseBody = Value
   }
 
   private var state = IfElseState.Condition
-  private var curr: Option[RewindableStatement] = Some(condition)
+  private var curr: Option[BatchStatementExec] = Some(condition)
 
   override def rewind(): Unit = {
     state = IfElseState.Condition
@@ -113,7 +93,7 @@ case class CiglaIfElseStatement(
 
   override def hasNext: Boolean = curr.nonEmpty
 
-  override def next(): RewindableStatement = {
+  override def next(): BatchStatementExec = {
     assert(evaluator.nonEmpty, "Evaluator must be set for execution")
     state match {
       case IfElseState.Condition =>
@@ -145,20 +125,24 @@ case class CiglaIfElseStatement(
   }
 }
 
-case class CiglaWhileStatement(
+case class BatchWhileStatement(
+  condition: BoolEvaluableStatement,
+  whileBody: BatchBody) extends BatchPlanStatement
+
+case class BatchWhileStatementExec(
     condition: BoolEvaluableStatement,
     whileBody: CiglaLangNestedIteratorStatement,
     evaluator: Option[StatementBooleanEvaluator])
-    extends NonLeafStatement {
+    extends NonLeafStatementExec {
   private object WhileState extends Enumeration {
     val Condition, Body = Value
   }
 
   private var state = WhileState.Condition
-  private var curr: Option[RewindableStatement] = Some(condition)
+  private var curr: Option[BatchStatementExec] = Some(condition)
 
   override def hasNext: Boolean = curr.nonEmpty
-  override def next(): RewindableStatement = {
+  override def next(): BatchStatementExec = {
     assert(evaluator.nonEmpty, "Evaluator must be set for execution")
     state match {
       case WhileState.Condition =>
@@ -191,34 +175,34 @@ case class CiglaWhileStatement(
 
 // This is base class for all nested cigla lang statements.
 // e.g. if/else/while or even regular body.
-case class CiglaLangNestedIteratorStatement(collection: List[RewindableStatement])
-    extends NonLeafStatement {
+case class CiglaLangNestedIteratorStatement(collection: List[BatchStatementExec])
+    extends NonLeafStatementExec {
 
   var localIterator = collection.iterator
   var curr = if (localIterator.hasNext) Some(localIterator.next()) else None
 
   // Called when a leaf statement is encountered.
-  protected def processStatement(stmt: LeafStatement) = ()
+  protected def processStatement(stmt: LeafStatementExec) = ()
 
   override def hasNext: Boolean = {
     val childHasNext = curr match {
-      case Some(body: NonLeafStatement) => body.hasNext
-      case Some(_: LeafStatement) => true
+      case Some(body: NonLeafStatementExec) => body.hasNext
+      case Some(_: LeafStatementExec) => true
       case None => false
       case _ => throw new IllegalStateException("Unknown statement type")
     }
     val hasNext = localIterator.hasNext || childHasNext
     hasNext
   }
-  override def next(): RewindableStatement = {
+  override def next(): BatchStatementExec = {
     curr match {
       case None => throw new IllegalStateException("No more elements")
-      case Some(stmt: LeafStatement) =>
+      case Some(stmt: LeafStatementExec) =>
         processStatement(stmt)
         if (localIterator.hasNext) curr = Some(localIterator.next())
         else curr = None
         stmt
-      case Some(body: NonLeafStatement) =>
+      case Some(body: NonLeafStatementExec) =>
         if (body.hasNext) {
           // progress body.
           body.next()
@@ -238,22 +222,10 @@ case class CiglaLangNestedIteratorStatement(collection: List[RewindableStatement
   }
 }
 
-class CiglaBody(statements: List[RewindableStatement])
-    extends CiglaLangNestedIteratorStatement(statements) {
+case class BatchBody(collection: List[BatchPlanStatement]) extends BatchPlanStatement
 
-  val variables = ListBuffer[String]()
-  override def processStatement(stmt: LeafStatement): Unit = {
-    stmt match {
-      case CiglaVarDeclareStatement(varName, _, _) => variables += varName
-      case _ =>
-    }
-  }
-
-  override def rewind(): Unit = {
-    super.rewind()
-    variables.clear()
-  }
-}
+class BatchBodyExec(statements: List[BatchStatementExec])
+    extends CiglaLangNestedIteratorStatement(statements)
 
 trait ProceduralLangInterface {
   def buildInterpreter(
@@ -270,7 +242,7 @@ case class CiglaLangDispatcher() extends ProceduralLangInterface {
     = CiglaLangInterpreter(batch, evaluator, sparkStatementParser)
 }
 
-trait ProceduralLangInterpreter extends Iterator[RewindableStatement]
+trait ProceduralLangInterpreter extends Iterator[BatchStatementExec]
 
 case class CiglaLangInterpreter(
     batch: String,
@@ -279,37 +251,32 @@ case class CiglaLangInterpreter(
     extends ProceduralLangInterpreter {
   private val treeNoEval = sparkStatementParser.parseBatch(batch)
 
-  private def transformTreeIntoEvaluable(node: RewindableStatement): RewindableStatement = {
+  private def transformTreeIntoEvaluable(node: BatchPlanStatement): BatchStatementExec = {
     // Set evaluator where needed.
     node match {
-      case body: CiglaBody =>
-        new CiglaBody(body.collection.map(stmt => transformTreeIntoEvaluable(stmt)))
-      case whileStmt: CiglaWhileStatement =>
-        CiglaWhileStatement(
+      case body: BatchBody =>
+        new BatchBodyExec(body.collection.map(stmt => transformTreeIntoEvaluable(stmt)))
+      case whileStmt: BatchWhileStatement =>
+        BatchWhileStatementExec(
           whileStmt.condition,
-          new CiglaBody(
+          new BatchBodyExec(
             whileStmt.whileBody.collection.map(stmt => transformTreeIntoEvaluable(stmt))),
           Some(evaluator))
-      case ifStmt: CiglaIfElseStatement =>
-        CiglaIfElseStatement(
+      case ifStmt: BatchIfElseStatement =>
+        BatchIfElseStatementExec(
           ifStmt.condition,
-          new CiglaBody(ifStmt.ifBody.collection.map(stmt => transformTreeIntoEvaluable(stmt))),
+          new BatchBodyExec(ifStmt.ifBody.collection.map(stmt => transformTreeIntoEvaluable(stmt))),
           ifStmt.elseBody.map(elseBody =>
-            new CiglaBody(elseBody.collection.map(stmt => transformTreeIntoEvaluable(stmt)))),
+            new BatchBodyExec(elseBody.collection.map(stmt => transformTreeIntoEvaluable(stmt)))),
           Some(evaluator))
-      case node: RewindableStatement => node
+      case node: SparkStatement => node
+      case _ => throw new IllegalStateException("Unknown statement type")
     }
   }
 
-  private val tree = transformTreeIntoEvaluable(treeNoEval).asInstanceOf[CiglaBody]
+  private val tree = transformTreeIntoEvaluable(treeNoEval).asInstanceOf[BatchBodyExec]
 
-  private val iter = new CiglaBody(tree.collection)
+  private val iter = new BatchBodyExec(tree.collection)
   override def hasNext: Boolean = iter.hasNext
-  override def next(): RewindableStatement = iter.next()
-}
-
-object CiglaLangBuilder {
-  // Export friendly name.
-  // Internally it is rewinding statement but from outside it is just a language statement.
-  type CiglaLanguageStatement = RewindableStatement
+  override def next(): BatchStatementExec = iter.next()
 }

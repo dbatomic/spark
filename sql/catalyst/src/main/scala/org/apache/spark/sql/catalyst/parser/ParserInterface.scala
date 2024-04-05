@@ -35,10 +35,10 @@ trait ParserInterface extends DataTypeParserInterface {
 
 
   /**
-   * Parse a string to a [[CiglaBody]].
+   * Parse a string to a [[BatchBody]].
    */
   @throws[ParseException]("Text cannot be parsed to a CiglaBody")
-  def parseBatch(sqlText: String): CiglaBody
+  def parseBatch(sqlText: String): BatchBody
 
   /**
    * Parse a string to an [[Expression]].

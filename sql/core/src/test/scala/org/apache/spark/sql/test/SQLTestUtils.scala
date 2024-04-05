@@ -37,7 +37,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.FunctionIdentifier
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.catalog.SessionCatalog.DEFAULT_DATABASE
-import org.apache.spark.sql.catalyst.parser.CiglaLangBuilder
+import org.apache.spark.sql.catalyst.parser.BatchStatementExec
 import org.apache.spark.sql.catalyst.plans.PlanTest
 import org.apache.spark.sql.catalyst.plans.PlanTestBase
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
@@ -234,7 +234,7 @@ private[sql] trait SQLTestUtilsBase
   protected lazy val sql: String => DataFrame = spark.sql _
 
   protected lazy val sqlBatch: String =>
-    Iterator[CiglaLangBuilder.CiglaLanguageStatement] = spark.sqlBatch _
+    Iterator[BatchStatementExec] = spark.sqlBatch _
 
   /**
    * A helper object for importing SQL implicits.

@@ -19,17 +19,17 @@ package org.apache.spark.sql
 
 import org.apache.spark.SparkFunSuite
 
-import org.apache.spark.sql.catalyst.parser.{BoolEvaluableStatement, CiglaLangBuilder, CiglaLangNestedIteratorStatement, CiglaVarDeclareStatement, CiglaWhileStatement, LeafStatement, SparkStatement, StatementBooleanEvaluator}
+import org.apache.spark.sql.catalyst.parser.{BatchStatementExec, BatchWhileStatementExec, BoolEvaluableStatement, CiglaLangNestedIteratorStatement, LeafStatementExec, SparkStatement, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalyst.{ExtendedAnalysisException, QueryPlanningTracker}
 import org.apache.spark.sql.test.SharedSparkSession
 
 class CiglaLangSuite extends SparkFunSuite {
   // mocks...
-  case class TestStatement(myval: String) extends LeafStatement with BoolEvaluableStatement {
+  case class TestStatement(myval: String) extends LeafStatementExec with BoolEvaluableStatement {
     override def rewind(): Unit = ()
   }
 
-  class TestBody(stmts: List[CiglaLangBuilder.CiglaLanguageStatement])
+  class TestBody(stmts: List[BatchStatementExec])
     extends CiglaLangNestedIteratorStatement(stmts)
 
   // Return false every reps-th time.
@@ -42,7 +42,7 @@ class CiglaLangSuite extends SparkFunSuite {
   }
 
   class TestWhile(condition: BoolEvaluableStatement, body: TestBody, reps: Int)
-    extends CiglaWhileStatement(condition, body, Some(RepEval(reps)))
+    extends BatchWhileStatementExec(condition, body, Some(RepEval(reps)))
 
   test("test body single statement") {
     val nestedIterator = new TestBody(
@@ -137,11 +137,6 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
         } else {
           Some(Dataset.ofRows(spark, stmt.parsedPlan, new QueryPlanningTracker))
         }
-      case stmt: CiglaVarDeclareStatement =>
-        if (printRes) {
-          println("Executing: " + stmt.command)
-        }
-        Some(Dataset.ofRows(spark, stmt.parsedPlan, new QueryPlanningTracker))
       case _ => None
     }.toArray
 
