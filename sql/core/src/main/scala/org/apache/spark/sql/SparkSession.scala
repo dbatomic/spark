@@ -769,7 +769,8 @@ class SparkSession private(
   def sqlBatchExec(batchText: String): Iterator[DataFrame] = {
     sqlBatch(batchText).flatMap { statement =>
       statement match {
-        case st: SparkStatementWithPlanExec if !st.consumed => Some(sql(st.getText(batchText)))
+        case st: SparkStatementWithPlanExec if !st.consumed =>
+          Some(Dataset.ofRows (this, st.parsedPlan))
         case _ => None
       }
     }
