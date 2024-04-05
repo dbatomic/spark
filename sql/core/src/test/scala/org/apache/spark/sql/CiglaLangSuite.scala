@@ -19,29 +19,29 @@ package org.apache.spark.sql
 
 import org.apache.spark.SparkFunSuite
 
-import org.apache.spark.sql.catalyst.parser.{BatchStatementExec, BatchWhileStatementExec, BoolEvaluableStatement, CiglaLangNestedIteratorStatement, LeafStatementExec, SparkStatement, StatementBooleanEvaluator}
+import org.apache.spark.sql.catalyst.batchinterpreter.{BatchNestedIteratorStatementExec, BatchStatementExec, BatchWhileStatementExec, LeafStatementExec, SparkStatementWithPlanExec, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalyst.{ExtendedAnalysisException, QueryPlanningTracker}
 import org.apache.spark.sql.test.SharedSparkSession
 
 class CiglaLangSuite extends SparkFunSuite {
   // mocks...
-  case class TestStatement(myval: String) extends LeafStatementExec with BoolEvaluableStatement {
+  case class TestStatement(myval: String) extends LeafStatementExec {
     override def rewind(): Unit = ()
   }
 
   class TestBody(stmts: List[BatchStatementExec])
-    extends CiglaLangNestedIteratorStatement(stmts)
+    extends BatchNestedIteratorStatementExec(stmts)
 
   // Return false every reps-th time.
   case class RepEval(reps: Int) extends StatementBooleanEvaluator {
     var callCount = 0
-    override def eval(statement: BoolEvaluableStatement): Boolean = {
+    override def eval(statement: LeafStatementExec): Boolean = {
       callCount += 1
       !(callCount % (reps + 1) == 0)
     }
   }
 
-  class TestWhile(condition: BoolEvaluableStatement, body: TestBody, reps: Int)
+  class TestWhile(condition: LeafStatementExec, body: TestBody, reps: Int)
     extends BatchWhileStatementExec(condition, body, Some(RepEval(reps)))
 
   test("test body single statement") {
@@ -124,7 +124,7 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
       batch: String, expected: Seq[Seq[Row]], printRes: Boolean = false): Unit = {
     val commands = sqlBatch(batch)
     val result = commands.flatMap {
-      case stmt: SparkStatement =>
+      case stmt: SparkStatementWithPlanExec =>
         if (printRes) {
           println("Executing: " + stmt.getText(batch))
         }

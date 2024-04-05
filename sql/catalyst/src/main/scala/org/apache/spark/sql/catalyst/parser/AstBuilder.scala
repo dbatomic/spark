@@ -137,7 +137,7 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
           // If this is a logical plan we know that we parsed statement.
           // Figure out this flow later on.
           val statement = ctx.statement(statementNum)
-          buff += SparkStatement(
+          buff += SparkStatementWithPlan(
             logicalPlan,
             statement.start.getStartIndex, statement.stop.getStopIndex + 1)
           statementNum = statementNum + 1
@@ -166,7 +166,7 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
       None
     }
     BatchIfElseStatement(
-      SparkStatement(
+      SparkStatementWithPlan(
         plan,
         ctx.booleanExpression().start.getStartIndex,
         ctx.booleanExpression().stop.getStopIndex + 1), ifBody, elseBody)
@@ -179,7 +179,7 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
     val plan = Project(Seq(Alias(condition, "condition")()), OneRowRelation())
     val whileBody = visitBatchBody(ctx.batchBody)
     BatchWhileStatement(
-      SparkStatement(
+      SparkStatementWithPlan(
         plan,
         ctx.booleanExpression().start.getStartIndex,
         ctx.booleanExpression().stop.getStopIndex + 1), whileBody)

@@ -27,9 +27,10 @@ import org.apache.spark.annotation.Unstable
 import org.apache.spark.sql._
 import org.apache.spark.sql.artifact.ArtifactManager
 import org.apache.spark.sql.catalyst.analysis.{Analyzer, FunctionRegistry, TableFunctionRegistry}
+import org.apache.spark.sql.catalyst.batchinterpreter.ProceduralLangInterface
 import org.apache.spark.sql.catalyst.catalog._
 import org.apache.spark.sql.catalyst.optimizer.Optimizer
-import org.apache.spark.sql.catalyst.parser.{ParserInterface, ProceduralLangInterface}
+import org.apache.spark.sql.catalyst.parser.ParserInterface
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.connector.catalog.CatalogManager
@@ -80,7 +81,7 @@ private[sql] class SessionState(
     val dataSourceRegistration: DataSourceRegistration,
     catalogBuilder: () => SessionCatalog,
     val sqlParser: ParserInterface,
-    val proceduralDispatcher: ProceduralLangInterface,
+    val sqlBatchInterpreter: ProceduralLangInterface,
     analyzerBuilder: () => Analyzer,
     optimizerBuilder: () => Optimizer,
     val planner: SparkPlanner,

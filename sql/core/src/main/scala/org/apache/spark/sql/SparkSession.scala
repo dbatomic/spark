@@ -38,9 +38,9 @@ import org.apache.spark.sql.artifact.ArtifactManager
 import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis.{NameParameterizedQuery, PosParameterizedQuery, UnresolvedRelation}
+import org.apache.spark.sql.catalyst.batchinterpreter.{BatchStatementExec, LeafStatementExec, SparkStatementWithPlanExec, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
-import org.apache.spark.sql.catalyst.parser.{BatchStatementExec, BoolEvaluableStatement, SparkStatement, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Range}
 import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.catalyst.util.CharVarcharUtils
@@ -717,26 +717,25 @@ class SparkSession private(
     withActive {
       val session = this
       object DataFrameEvaluator extends StatementBooleanEvaluator {
-        override def eval(statement: BoolEvaluableStatement): Boolean = {
-          statement match {
-            case st: SparkStatement =>
-              assert(!st.consumed)
-              st.consumed = true
-              val df = Dataset.ofRows(session, st.parsedPlan, tracker)
+        override def eval(statement: LeafStatementExec): Boolean = statement match {
+          case stmt: SparkStatementWithPlanExec =>
+            assert (!stmt.consumed)
+            stmt.consumed = true
+            val df = Dataset.ofRows (session, stmt.parsedPlan, tracker)
 
-              // Rules to check whether this dataframe evaluates to true:
-              // True only if single row with single column of a boolean type
-              // with value TRUE.
-              (df.count(), df.schema.fields) match {
-                case (1, Array(field)) if field.dataType == BooleanType =>
-                  df.collect()(0).getBoolean(0)
-                case _ => false
-              }
-          }
+            // Rules to check whether this dataframe evaluates to true:
+            // True only if single row with single column of a boolean type
+            // with value TRUE.
+            (df.count (), df.schema.fields) match {
+              case (1, Array (field) ) if field.dataType == BooleanType =>
+                df.collect () (0).getBoolean (0)
+              case _ => false
+            }
+          case _ => false
         }
       }
 
-      val interpreter = sessionState.proceduralDispatcher.buildInterpreter(
+      val interpreter = sessionState.sqlBatchInterpreter.buildInterpreter(
         batchText, DataFrameEvaluator, sessionState.sqlParser)
       interpreter
     }
@@ -769,11 +768,10 @@ class SparkSession private(
 
   def sqlBatchExec(batchText: String): Iterator[DataFrame] = {
     sqlBatch(batchText).flatMap { statement =>
-      val df = statement match {
-        case st: SparkStatement if !st.consumed => Some(sql(st.getText(batchText)))
+      statement match {
+        case st: SparkStatementWithPlanExec if !st.consumed => Some(sql(st.getText(batchText)))
         case _ => None
       }
-      df
     }
   }
 

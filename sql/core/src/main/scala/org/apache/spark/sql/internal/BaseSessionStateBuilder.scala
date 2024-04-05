@@ -20,10 +20,11 @@ import org.apache.spark.annotation.Unstable
 import org.apache.spark.sql.{ExperimentalMethods, SparkSession, UDFRegistration, _}
 import org.apache.spark.sql.artifact.ArtifactManager
 import org.apache.spark.sql.catalyst.analysis.{Analyzer, EvalSubqueriesForTimeTravel, FunctionRegistry, ReplaceCharWithVarchar, ResolveSessionCatalog, TableFunctionRegistry}
+import org.apache.spark.sql.catalyst.batchinterpreter.{CiglaLangDispatcher, ProceduralLangInterface}
 import org.apache.spark.sql.catalyst.catalog.{FunctionExpressionBuilder, SessionCatalog}
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.optimizer.Optimizer
-import org.apache.spark.sql.catalyst.parser.{CiglaLangDispatcher, ParserInterface, ProceduralLangInterface}
+import org.apache.spark.sql.catalyst.parser.ParserInterface
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.connector.catalog.CatalogManager
