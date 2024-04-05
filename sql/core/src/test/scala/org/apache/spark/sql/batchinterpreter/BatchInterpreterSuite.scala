@@ -15,111 +15,16 @@
  * limitations under the License.
  */
 
-package org.apache.spark.sql
+package org.apache.spark.sql.batchinterpreter
 
-import org.apache.spark.SparkFunSuite
-
-import org.apache.spark.sql.catalyst.batchinterpreter.{BatchNestedIteratorStatementExec, BatchStatementExec, BatchWhileStatementExec, LeafStatementExec, SparkStatementWithPlanExec, StatementBooleanEvaluator}
+import org.apache.spark.sql.catalyst.batchinterpreter.SparkStatementWithPlanExec
 import org.apache.spark.sql.catalyst.{ExtendedAnalysisException, QueryPlanningTracker}
 import org.apache.spark.sql.test.SharedSparkSession
+import org.apache.spark.sql.{Dataset, QueryTest, Row}
 
-class CiglaLangSuite extends SparkFunSuite {
-  // mocks...
-  case class TestStatement(myval: String) extends LeafStatementExec {
-    override def rewind(): Unit = ()
-  }
-
-  class TestBody(stmts: List[BatchStatementExec])
-    extends BatchNestedIteratorStatementExec(stmts)
-
-  // Return false every reps-th time.
-  case class RepEval(reps: Int) extends StatementBooleanEvaluator {
-    var callCount = 0
-    override def eval(statement: LeafStatementExec): Boolean = {
-      callCount += 1
-      !(callCount % (reps + 1) == 0)
-    }
-  }
-
-  class TestWhile(condition: LeafStatementExec, body: TestBody, reps: Int)
-    extends BatchWhileStatementExec(condition, body, Some(RepEval(reps)))
-
-  test("test body single statement") {
-    val nestedIterator = new TestBody(
-      List(TestStatement("one")))
-    val statements = nestedIterator.map {
-      case stmt: TestStatement => stmt.myval
-      case _ => fail("Unexpected statement type")
-    }.toList
-
-    assert(statements === List("one"))
-  }
-
-  test("test body no nesting") {
-    val nestedIterator = new TestBody(
-      List(TestStatement("one"), TestStatement("two"), TestStatement("three")))
-    val statements = nestedIterator.map {
-      case TestStatement(v) => v
-    }.toList
-
-    assert(statements === List("one", "two", "three"))
-  }
-
-  test("test body in body") {
-    val nestedIterator = new TestBody(List(
-      new TestBody(List(TestStatement("one"), TestStatement("two"))),
-      TestStatement("three"),
-      new TestBody(List(TestStatement("four"), TestStatement("five")))))
-
-    val statements = nestedIterator.map {
-      case stmt: TestStatement => stmt.myval
-      case _ => fail("Unexpected statement type")
-    }.toList
-
-    assert(statements === List("one", "two", "three", "four", "five"))
-  }
-
-  test("test while loop") {
-    val iter = new TestBody(List(
-      new TestWhile(
-        TestStatement("condition"),
-        new TestBody(List(TestStatement("42"))), 3)
-    ))
-    val statements = iter.map {
-      case stmt: TestStatement => stmt.myval
-      case _ => fail("Unexpected statement type")
-    }.toList
-    assert(statements === List(
-      "condition", "42", "condition", "42", "condition", "42", "condition"))
-  }
-
-  test("nested while loop") {
-    // inner 2x, outer 3x
-    val iter = new TestBody(List(
-      new TestWhile(
-        TestStatement("con1"),
-        new TestBody(List(
-          TestStatement("42"),
-          new TestWhile(
-            TestStatement("con2"),
-              new TestBody(List(TestStatement("43"))), 2)
-        )), 3)
-    ))
-    val statements = iter.map {
-      case stmt: TestStatement => stmt.myval
-      case _ => fail("Unexpected statement type")
-    }.toList
-    assert(statements === List(
-      "con1", "42", "con2", "43", "con2", "43", "con2",
-      "con1", "42", "con2", "43", "con2", "43", "con2",
-      "con1", "42", "con2", "43", "con2", "43", "con2",
-      "con1"
-    ))
-  }
-}
 
 //noinspection ScalaStyle
-class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
+class BatchInterpreterSuite extends QueryTest with SharedSparkSession {
   private def verifyBatchResult(
       batch: String, expected: Seq[Seq[Row]], printRes: Boolean = false): Unit = {
     val commands = sqlBatch(batch)
@@ -151,10 +56,10 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
   test("simple multistatement") {
     withTable("t") {
       val commands = """
-        |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
-        |INSERT INTO t VALUES (1, 'a', 1.0);
-        |SELECT a, b FROM T WHERE a=12;
-        |SELECT a FROM t;""".stripMargin
+                       |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
+                       |INSERT INTO t VALUES (1, 'a', 1.0);
+                       |SELECT a, b FROM T WHERE a=12;
+                       |SELECT a FROM t;""".stripMargin
 
       val expected: Seq[Seq[Row]] = Seq(
         Seq.empty[Row], // For create table
@@ -169,14 +74,14 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
   test("count multistatement") {
     withTable("t") {
       val commands = """
-        |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
-        |INSERT INTO t VALUES (1, 'a', 1.0);
-        |INSERT INTO t VALUES (1, 'a', 1.0);
-        |SELECT CASE WHEN COUNT(*) > 10 THEN true
-        |ELSE false
-        |END as MoreThanTen
-        |FROM t;
-        |""".stripMargin
+                       |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
+                       |INSERT INTO t VALUES (1, 'a', 1.0);
+                       |INSERT INTO t VALUES (1, 'a', 1.0);
+                       |SELECT CASE WHEN COUNT(*) > 10 THEN true
+                       |ELSE false
+                       |END as MoreThanTen
+                       |FROM t;
+                       |""".stripMargin
 
       val expected = Seq(Seq.empty[Row], Seq.empty[Row], Seq.empty[Row], Seq(Row(false)))
       verifyBatchResult(commands, expected)
@@ -185,23 +90,23 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
 
   test("if") {
     val commands = """
-      | IF 1=1 THEN
-      |   SELECT 42;
-      | END IF;
-      |""".stripMargin
+                     | IF 1=1 THEN
+                     |   SELECT 42;
+                     | END IF;
+                     |""".stripMargin
     val expected = Seq(Seq(Row(42)))
     verifyBatchResult(commands, expected)
   }
 
   test("if else going in if") {
     val commands = """
-      | IF 1=1
-      | THEN
-      |   SELECT 42;
-      | ELSE
-      |   SELECT 43;
-      | END IF;
-      |""".stripMargin
+                     | IF 1=1
+                     | THEN
+                     |   SELECT 42;
+                     | ELSE
+                     |   SELECT 43;
+                     | END IF;
+                     |""".stripMargin
 
     val expected = Seq(Seq(Row(42)))
     verifyBatchResult(commands, expected)
@@ -209,13 +114,13 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
 
   test("if else going in else") {
     val commands = """
-      | IF 1=2
-      | THEN
-      |   SELECT 42;
-      | ELSE
-      |   SELECT 43;
-      | END IF;
-      |""".stripMargin
+                     | IF 1=2
+                     | THEN
+                     |   SELECT 42;
+                     | ELSE
+                     |   SELECT 43;
+                     | END IF;
+                     |""".stripMargin
 
     val expected = Seq(Seq(Row(43)))
     verifyBatchResult(commands, expected)
@@ -224,15 +129,15 @@ class CiglaLangSuiteE2E extends QueryTest with SharedSparkSession {
   test("if with count") {
     withTable("t") {
       val commands = """
-        |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
-        |INSERT INTO t VALUES (1, 'a', 1.0);
-        |INSERT INTO t VALUES (1, 'a', 1.0);
-        |IF (SELECT COUNT(*) > 2 FROM t) THEN
-        |   SELECT 42;
-        | ELSE
-        |   SELECT 43;
-        | END IF;
-        |""".stripMargin
+                       |CREATE TABLE t (a INT, b STRING, c DOUBLE) USING parquet;
+                       |INSERT INTO t VALUES (1, 'a', 1.0);
+                       |INSERT INTO t VALUES (1, 'a', 1.0);
+                       |IF (SELECT COUNT(*) > 2 FROM t) THEN
+                       |   SELECT 42;
+                       | ELSE
+                       |   SELECT 43;
+                       | END IF;
+                       |""".stripMargin
 
       val expected = Seq(Seq.empty[Row], Seq.empty[Row], Seq.empty[Row], Seq(Row(43)))
       verifyBatchResult(commands, expected)
