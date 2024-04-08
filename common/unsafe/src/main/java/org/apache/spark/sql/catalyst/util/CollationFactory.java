@@ -214,4 +214,153 @@ public final class CollationFactory {
     int collationId = collationNameToId(collationName);
     return collationTable[collationId];
   }
+
+  // TODO: Need to do this for every expression...
+  public static class Contains extends BiStringDispatch<Boolean> {
+    public Contains() { super(UTF8String::contains); }
+    public Boolean icu(
+        final UTF8String source, final UTF8String substring, int collationId) {
+      if (substring.numBytes() == 0) return true;
+      if (source.numBytes() == 0) return false;
+      StringSearch stringSearch = CollationFactory.getStringSearch(source, substring, collationId);
+      while (stringSearch.next() != StringSearch.DONE) {
+        if (stringSearch.getMatchLength() == stringSearch.getPattern().length()) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+
+  public static class StartsWith extends BiStringDispatch<Boolean> {
+    public StartsWith() { super(UTF8String::startsWith); }
+    public Boolean icu(
+        final UTF8String source, final UTF8String substring, int collationId) {
+      return CollationFactory.matchAt(source, substring, 0, collationId);
+    }
+  }
+
+  public static class EndsWith extends BiStringDispatch<Boolean> {
+    public EndsWith() { super(UTF8String::endsWith); }
+    public Boolean icu(
+        final UTF8String source, final UTF8String substring, int collationId) {
+      return CollationFactory.matchAt(source, substring, source.numBytes() - substring.numBytes(), collationId);
+    }
+  }
+
+  public static class Split extends TriDispatch<UTF8String[], UTF8String, UTF8String, Integer> {
+    public Split() {
+      super(UTF8String::split);
+    }
+
+    @Override
+    public UTF8String[] lcase(UTF8String x1, UTF8String x2, Integer x3) {
+      // TODO: Do what you need to do here...
+      return null;
+    }
+
+    @Override
+    public UTF8String[] icu(UTF8String x1, UTF8String x2, Integer x3, int collationId) {
+      // TODO: and here...
+      return null;
+    }
+  }
+
+  private static boolean matchAt(final UTF8String first, final UTF8String second, int pos, int collationId) {
+    if (second.numChars() + pos > first.numChars() || pos < 0) {
+      return false;
+    }
+    if (second.numBytes() == 0 || first.numBytes() == 0) {
+      return second.numBytes() == 0;
+    }
+    return CollationFactory.getStringSearch(first.substring(pos, pos + second.numChars()),
+      second, collationId).last() == 0;
+  }
+
+  // static list of all providers
+  public static Contains contains = new Contains();
+  public static StartsWith startsWith = new StartsWith();
+  public static EndsWith endsWith = new EndsWith();
+  public static Split split = new Split();
+  // -- --
+}
+
+abstract class BiDispatch<T, I1, I2> {
+  private final BiFunction<I1, I2, T> binaryFunctor;
+
+  public BiDispatch(BiFunction<I1, I2, T> functor) {
+    this.binaryFunctor = functor;
+  }
+  public T binary(final I1 source, final I2 substring) {
+    return binaryFunctor.apply(source, substring);
+  }
+  public abstract T lcase(final I1 source, final I2 substring);
+
+  public abstract T icu(final I1 source, final I2 substring, int collationId);
+
+  public T dispatch(final I1 source, final I2 substring, int collationId) {
+    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
+      return binary(source, substring);
+    } else if (collationId == CollationFactory.UTF8_BINARY_LCASE_COLLATION_ID) {
+      return lcase(source, substring);
+    } else {
+      return icu(source, substring, collationId);
+    }
+  }
+
+  public String dispatchCodeGen(
+          final String objectName, final String sourceVar, final String substringVar, int collationId) {
+    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
+      return String.format("CollationFactory.%s.binary(%s, %s)", objectName, sourceVar, substringVar);
+    } else if (collationId == CollationFactory.UTF8_BINARY_LCASE_COLLATION_ID) {
+      return String.format("CollationFactory.%s.lcase(%s, %s)", objectName, sourceVar, substringVar);
+    } else {
+      return String.format("CollationFactory.%s.icu(%s, %s, %d)", objectName, sourceVar, substringVar, collationId);
+    }
+  }
+}
+
+abstract class BiStringDispatch<T> extends BiDispatch<T, UTF8String, UTF8String> {
+  public BiStringDispatch(BiFunction<UTF8String, UTF8String, T> functor) {
+    super(functor);
+  }
+
+  public T lcase(final UTF8String source, final UTF8String substring) {
+    return this.binary(source.toLowerCase(), substring.toLowerCase());
+  }
+}
+
+abstract class TriDispatch<T, I1, I2, I3> {
+  private final TriFunction<I1, I2, I3, T> triFunctor;
+
+  public TriDispatch(TriFunction<I1, I2, I3, T> functor) {
+    this.triFunctor = functor;
+  }
+  public T binary(final I1 x1, final I2 x2, final I3 x3) {
+    return triFunctor.apply(x1, x2, x3);
+  }
+  public abstract T lcase(final I1 x1, final I2 x2, final I3 x3);
+
+  public abstract T icu(final I1 x1, final I2 x2, final I3 x3, int collationId);
+
+  public T dispatch(final I1 x1, final I2 x2, final I3 x3, int collationId) {
+    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
+      return binary(x1, x2, x3);
+    } else if (collationId == CollationFactory.UTF8_BINARY_LCASE_COLLATION_ID) {
+      return lcase(x1, x2, x3);
+    } else {
+      return icu(x1, x2, x3, collationId);
+    }
+  }
+
+  public String dispatchCodeGen(
+      final String objectName, final String x1, final String x2, final String x3, int collationId) {
+    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
+      return String.format("CollationFactory.%s.binary(%s, %s, %s)", objectName, x1, x2, x3);
+    } else if (collationId == CollationFactory.UTF8_BINARY_LCASE_COLLATION_ID) {
+      return String.format("CollationFactory.%s.lcase(%s, %s, %s)", objectName, x1, x2, x3);
+    } else {
+      return String.format("CollationFactory.%s.icu(%s, %s, %s, %d)", objectName, x1, x2, x3, collationId);
+    }
+  }
 }

@@ -590,18 +590,12 @@ object ContainsExpressionBuilder extends StringBinaryPredicateExpressionBuilderB
 
 case class Contains(left: Expression, right: Expression) extends StringPredicate {
   override def compare(l: UTF8String, r: UTF8String): Boolean = {
-    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
-      l.contains(r)
-    } else {
-      l.contains(r, collationId)
-    }
+    CollationFactory.contains.dispatch(l, r, collationId)
   }
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
-    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
-      defineCodeGen(ctx, ev, (c1, c2) => s"$c1.contains($c2)")
-    } else {
-      defineCodeGen(ctx, ev, (c1, c2) => s"$c1.contains($c2, $collationId)")
-    }
+
+    defineCodeGen(ctx, ev, (c1, c2) =>
+      CollationFactory.contains.dispatchCodeGen("contains", c1, c2, collationId))
   }
   override protected def withNewChildrenInternal(
     newLeft: Expression, newRight: Expression): Contains = copy(left = newLeft, right = newRight)
@@ -637,19 +631,12 @@ object StartsWithExpressionBuilder extends StringBinaryPredicateExpressionBuilde
 
 case class StartsWith(left: Expression, right: Expression) extends StringPredicate {
   override def compare(l: UTF8String, r: UTF8String): Boolean = {
-    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
-      l.startsWith(r)
-    } else {
-      l.startsWith(r, collationId)
-    }
+    CollationFactory.startsWith.dispatch(l, r, collationId)
   }
 
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
-    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
-      defineCodeGen(ctx, ev, (c1, c2) => s"$c1.startsWith($c2)")
-    } else {
-      defineCodeGen(ctx, ev, (c1, c2) => s"$c1.startsWith($c2, $collationId)")
-    }
+    defineCodeGen(ctx, ev, (c1, c2) =>
+      CollationFactory.startsWith.dispatchCodeGen("startsWith", c1, c2, collationId))
   }
   override protected def withNewChildrenInternal(
     newLeft: Expression, newRight: Expression): StartsWith = copy(left = newLeft, right = newRight)
@@ -685,19 +672,12 @@ object EndsWithExpressionBuilder extends StringBinaryPredicateExpressionBuilderB
 
 case class EndsWith(left: Expression, right: Expression) extends StringPredicate {
   override def compare(l: UTF8String, r: UTF8String): Boolean = {
-    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
-      l.endsWith(r)
-    } else {
-      l.endsWith(r, collationId)
-    }
+    CollationFactory.endsWith.dispatch(l, r, collationId)
   }
 
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
-    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
-      defineCodeGen(ctx, ev, (c1, c2) => s"$c1.endsWith($c2)")
-    } else {
-      defineCodeGen(ctx, ev, (c1, c2) => s"$c1.endsWith($c2, $collationId)")
-    }
+    defineCodeGen(ctx, ev, (c1, c2) =>
+      CollationFactory.endsWith.dispatchCodeGen("endsWith", c1, c2, collationId))
   }
   override protected def withNewChildrenInternal(
     newLeft: Expression, newRight: Expression): EndsWith = copy(left = newLeft, right = newRight)
