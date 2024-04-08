@@ -342,28 +342,6 @@ public final class UTF8String implements Comparable<UTF8String>, Externalizable,
     return false;
   }
 
-  public boolean contains(final UTF8String substring, int collationId) {
-    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
-      return this.contains(substring);
-    }
-    if (collationId == CollationFactory.UTF8_BINARY_LCASE_COLLATION_ID) {
-      return this.toLowerCase().contains(substring.toLowerCase());
-    }
-    return collatedContains(substring, collationId);
-  }
-
-  private boolean collatedContains(final UTF8String substring, int collationId) {
-    if (substring.numBytes == 0) return true;
-    if (this.numBytes == 0) return false;
-    StringSearch stringSearch = CollationFactory.getStringSearch(this, substring, collationId);
-    while (stringSearch.next() != StringSearch.DONE) {
-      if (stringSearch.getMatchLength() == stringSearch.getPattern().length()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   /**
    * Returns the byte at position `i`.
    */

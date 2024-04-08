@@ -590,18 +590,12 @@ object ContainsExpressionBuilder extends StringBinaryPredicateExpressionBuilderB
 
 case class Contains(left: Expression, right: Expression) extends StringPredicate {
   override def compare(l: UTF8String, r: UTF8String): Boolean = {
-    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
-      l.contains(r)
-    } else {
-      l.contains(r, collationId)
-    }
+    CollationFactory.contains.dispatch(l, r, collationId)
   }
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
-    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
-      defineCodeGen(ctx, ev, (c1, c2) => s"$c1.contains($c2)")
-    } else {
-      defineCodeGen(ctx, ev, (c1, c2) => s"$c1.contains($c2, $collationId)")
-    }
+
+    defineCodeGen(ctx, ev, (c1, c2) =>
+      CollationFactory.contains.dispatchCodeGen("contains", c1, c2, collationId))
   }
   override protected def withNewChildrenInternal(
     newLeft: Expression, newRight: Expression): Contains = copy(left = newLeft, right = newRight)

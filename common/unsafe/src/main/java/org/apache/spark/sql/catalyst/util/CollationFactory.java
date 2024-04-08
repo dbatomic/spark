@@ -214,4 +214,66 @@ public final class CollationFactory {
     int collationId = collationNameToId(collationName);
     return collationTable[collationId];
   }
+
+  // TODO: Need to do this for every expression...
+  public static class Contains extends Dispatch<Boolean> {
+    public Boolean binary(final UTF8String source, final UTF8String substring) {
+      return source.contains(substring);
+    }
+
+    public Boolean lcase(final UTF8String source, final UTF8String substring) {
+      return source.toLowerCase().contains(substring.toLowerCase());
+    }
+
+    public Boolean icu(
+        final UTF8String source, final UTF8String substring, int collationId) {
+      if (substring.numBytes() == 0) return true;
+      if (source.numBytes() == 0) return false;
+      StringSearch stringSearch = CollationFactory.getStringSearch(source, substring, collationId);
+      while (stringSearch.next() != StringSearch.DONE) {
+        if (stringSearch.getMatchLength() == stringSearch.getPattern().length()) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+
+  // static list of all providers
+  public static Contains contains = new Contains();
+  // -- --
 }
+
+abstract class Dispatch<T> {
+  public abstract T binary(final UTF8String source, final UTF8String substring);
+  public abstract T lcase(final UTF8String source, final UTF8String substring);
+  // TODO: this can also be directly implemented
+  // public T lcase(final UTF8String source, final UTF8String substring) {
+  //   return this.binary(source.toLowerCase(), substring.toLowerCase());
+  // }
+  public abstract T icu(
+      final UTF8String source, final UTF8String substring, int collationId);
+
+
+  public T dispatch(final UTF8String source, final UTF8String substring, int collationId) {
+    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
+      return binary(source, substring);
+    } else if (collationId == CollationFactory.UTF8_BINARY_LCASE_COLLATION_ID) {
+      return lcase(source, substring);
+    } else {
+      return icu(source, substring, collationId);
+    }
+  }
+
+  public String dispatchCodeGen(
+          final String objectName, final String sourceVar, final String substringVar, int collationId) {
+    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
+      return String.format("CollationFactory.%s.binary(%s, %s)", objectName, sourceVar, substringVar);
+    } else if (collationId == CollationFactory.UTF8_BINARY_LCASE_COLLATION_ID) {
+      return String.format("CollationFactory.%s.lcase(%s, %s)", objectName, sourceVar, substringVar);
+    } else {
+      return String.format("CollationFactory.%s.icu(%s, %s, %d)", objectName, sourceVar, substringVar, collationId);
+    }
+  }
+}
+
