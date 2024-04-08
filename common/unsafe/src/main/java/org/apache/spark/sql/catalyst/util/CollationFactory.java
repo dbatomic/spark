@@ -281,6 +281,7 @@ public final class CollationFactory {
   public static Contains contains = new Contains();
   public static StartsWith startsWith = new StartsWith();
   public static EndsWith endsWith = new EndsWith();
+  public static Split split = new Split();
   // -- --
 }
 
