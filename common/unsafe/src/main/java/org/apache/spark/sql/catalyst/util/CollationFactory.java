@@ -221,10 +221,6 @@ public final class CollationFactory {
       return source.contains(substring);
     }
 
-    public Boolean lcase(final UTF8String source, final UTF8String substring) {
-      return source.toLowerCase().contains(substring.toLowerCase());
-    }
-
     public Boolean icu(
         final UTF8String source, final UTF8String substring, int collationId) {
       if (substring.numBytes() == 0) return true;
@@ -244,10 +240,6 @@ public final class CollationFactory {
       return source.startsWith(substring);
     }
 
-    public Boolean lcase(final UTF8String source, final UTF8String substring) {
-      return source.toLowerCase().startsWith(substring.toLowerCase());
-    }
-
     public Boolean icu(
             final UTF8String source, final UTF8String substring, int collationId) {
       return CollationFactory.matchAt(source, substring, 0, collationId);
@@ -257,10 +249,6 @@ public final class CollationFactory {
   public static class EndsWith extends Dispatch<Boolean> {
     public Boolean binary(final UTF8String source, final UTF8String substring) {
       return source.endsWith(substring);
-    }
-
-    public Boolean lcase(final UTF8String source, final UTF8String substring) {
-      return source.toLowerCase().endsWith(substring.toLowerCase());
     }
 
     public Boolean icu(
@@ -289,14 +277,12 @@ public final class CollationFactory {
 
 abstract class Dispatch<T> {
   public abstract T binary(final UTF8String source, final UTF8String substring);
-  public abstract T lcase(final UTF8String source, final UTF8String substring);
-  // TODO: this can also be directly implemented
-  // public T lcase(final UTF8String source, final UTF8String substring) {
-  //   return this.binary(source.toLowerCase(), substring.toLowerCase());
-  // }
+  public T lcase(final UTF8String source, final UTF8String substring) {
+    // default, override if needed.
+    return this.binary(source.toLowerCase(), substring.toLowerCase());
+  }
   public abstract T icu(
       final UTF8String source, final UTF8String substring, int collationId);
-
 
   public T dispatch(final UTF8String source, final UTF8String substring, int collationId) {
     if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
