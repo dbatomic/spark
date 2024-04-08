@@ -216,11 +216,8 @@ public final class CollationFactory {
   }
 
   // TODO: Need to do this for every expression...
-  public static class Contains extends Dispatch<Boolean> {
-    public Boolean binary(final UTF8String source, final UTF8String substring) {
-      return source.contains(substring);
-    }
-
+  public static class Contains extends BiDispatch<Boolean> {
+    public Contains() { super(UTF8String::contains); }
     public Boolean icu(
         final UTF8String source, final UTF8String substring, int collationId) {
       if (substring.numBytes() == 0) return true;
@@ -235,22 +232,16 @@ public final class CollationFactory {
     }
   }
 
-  public static class StartsWith extends Dispatch<Boolean> {
-    public Boolean binary(final UTF8String source, final UTF8String substring) {
-      return source.startsWith(substring);
-    }
-
+  public static class StartsWith extends BiDispatch<Boolean> {
+    public StartsWith() { super(UTF8String::startsWith); }
     public Boolean icu(
-            final UTF8String source, final UTF8String substring, int collationId) {
+        final UTF8String source, final UTF8String substring, int collationId) {
       return CollationFactory.matchAt(source, substring, 0, collationId);
     }
   }
 
-  public static class EndsWith extends Dispatch<Boolean> {
-    public Boolean binary(final UTF8String source, final UTF8String substring) {
-      return source.endsWith(substring);
-    }
-
+  public static class EndsWith extends BiDispatch<Boolean> {
+    public EndsWith() { super(UTF8String::endsWith); }
     public Boolean icu(
         final UTF8String source, final UTF8String substring, int collationId) {
       return CollationFactory.matchAt(source, substring, source.numBytes() - substring.numBytes(), collationId);
@@ -275,8 +266,15 @@ public final class CollationFactory {
   // -- --
 }
 
-abstract class Dispatch<T> {
-  public abstract T binary(final UTF8String source, final UTF8String substring);
+abstract class BiDispatch<T> {
+  private final BiFunction<UTF8String, UTF8String, T> binaryFunctor;
+
+  public BiDispatch(BiFunction<UTF8String, UTF8String, T> functor) {
+    this.binaryFunctor = functor;
+  }
+  public T binary(final UTF8String source, final UTF8String substring) {
+    return binaryFunctor.apply(source, substring);
+  }
   public T lcase(final UTF8String source, final UTF8String substring) {
     // default, override if needed.
     return this.binary(source.toLowerCase(), substring.toLowerCase());
