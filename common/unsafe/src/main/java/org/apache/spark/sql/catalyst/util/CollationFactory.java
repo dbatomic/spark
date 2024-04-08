@@ -216,7 +216,7 @@ public final class CollationFactory {
   }
 
   // TODO: Need to do this for every expression...
-  public static class Contains extends BiDispatch<Boolean> {
+  public static class Contains extends BiStringDispatch<Boolean> {
     public Contains() { super(UTF8String::contains); }
     public Boolean icu(
         final UTF8String source, final UTF8String substring, int collationId) {
@@ -232,7 +232,7 @@ public final class CollationFactory {
     }
   }
 
-  public static class StartsWith extends BiDispatch<Boolean> {
+  public static class StartsWith extends BiStringDispatch<Boolean> {
     public StartsWith() { super(UTF8String::startsWith); }
     public Boolean icu(
         final UTF8String source, final UTF8String substring, int collationId) {
@@ -240,7 +240,7 @@ public final class CollationFactory {
     }
   }
 
-  public static class EndsWith extends BiDispatch<Boolean> {
+  public static class EndsWith extends BiStringDispatch<Boolean> {
     public EndsWith() { super(UTF8String::endsWith); }
     public Boolean icu(
         final UTF8String source, final UTF8String substring, int collationId) {
@@ -266,23 +266,20 @@ public final class CollationFactory {
   // -- --
 }
 
-abstract class BiDispatch<T> {
-  private final BiFunction<UTF8String, UTF8String, T> binaryFunctor;
+abstract class BiDispatch<T, I1, I2> {
+  private final BiFunction<I1, I2, T> binaryFunctor;
 
-  public BiDispatch(BiFunction<UTF8String, UTF8String, T> functor) {
+  public BiDispatch(BiFunction<I1, I2, T> functor) {
     this.binaryFunctor = functor;
   }
-  public T binary(final UTF8String source, final UTF8String substring) {
+  public T binary(final I1 source, final I2 substring) {
     return binaryFunctor.apply(source, substring);
   }
-  public T lcase(final UTF8String source, final UTF8String substring) {
-    // default, override if needed.
-    return this.binary(source.toLowerCase(), substring.toLowerCase());
-  }
-  public abstract T icu(
-      final UTF8String source, final UTF8String substring, int collationId);
+  public abstract T lcase(final I1 source, final I2 substring);
 
-  public T dispatch(final UTF8String source, final UTF8String substring, int collationId) {
+  public abstract T icu(final I1 source, final I2 substring, int collationId);
+
+  public T dispatch(final I1 source, final I2 substring, int collationId) {
     if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
       return binary(source, substring);
     } else if (collationId == CollationFactory.UTF8_BINARY_LCASE_COLLATION_ID) {
@@ -303,4 +300,15 @@ abstract class BiDispatch<T> {
     }
   }
 }
+
+abstract class BiStringDispatch<T> extends BiDispatch<T, UTF8String, UTF8String> {
+  public BiStringDispatch(BiFunction<UTF8String, UTF8String, T> functor) {
+    super(functor);
+  }
+
+  public T lcase(final UTF8String source, final UTF8String substring) {
+    return this.binary(source.toLowerCase(), substring.toLowerCase());
+  }
+}
+
 
