@@ -239,8 +239,51 @@ public final class CollationFactory {
     }
   }
 
+  public static class StartsWith extends Dispatch<Boolean> {
+    public Boolean binary(final UTF8String source, final UTF8String substring) {
+      return source.startsWith(substring);
+    }
+
+    public Boolean lcase(final UTF8String source, final UTF8String substring) {
+      return source.toLowerCase().startsWith(substring.toLowerCase());
+    }
+
+    public Boolean icu(
+            final UTF8String source, final UTF8String substring, int collationId) {
+      return CollationFactory.matchAt(source, substring, 0, collationId);
+    }
+  }
+
+  public static class EndsWith extends Dispatch<Boolean> {
+    public Boolean binary(final UTF8String source, final UTF8String substring) {
+      return source.endsWith(substring);
+    }
+
+    public Boolean lcase(final UTF8String source, final UTF8String substring) {
+      return source.toLowerCase().endsWith(substring.toLowerCase());
+    }
+
+    public Boolean icu(
+        final UTF8String source, final UTF8String substring, int collationId) {
+      return CollationFactory.matchAt(source, substring, source.numBytes() - substring.numBytes(), collationId);
+    }
+  }
+
+  private static boolean matchAt(final UTF8String first, final UTF8String second, int pos, int collationId) {
+    if (second.numChars() + pos > first.numChars() || pos < 0) {
+      return false;
+    }
+    if (second.numBytes() == 0 || first.numBytes() == 0) {
+      return second.numBytes() == 0;
+    }
+    return CollationFactory.getStringSearch(first.substring(pos, pos + second.numChars()),
+      second, collationId).last() == 0;
+  }
+
   // static list of all providers
   public static Contains contains = new Contains();
+  public static StartsWith startsWith = new StartsWith();
+  public static EndsWith endsWith = new EndsWith();
   // -- --
 }
 

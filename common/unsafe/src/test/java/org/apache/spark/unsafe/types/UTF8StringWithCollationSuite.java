@@ -27,14 +27,20 @@ public class UTF8StringWithCollationSuite {
 
   private void assertStartsWith(String pattern, String prefix, String collationName, boolean value)
       throws SparkException {
-    assertEquals(UTF8String.fromString(pattern).startsWith(UTF8String.fromString(prefix),
+    // assertEquals(UTF8String.fromString(pattern).startsWith(UTF8String.fromString(prefix),
+    //     CollationFactory.collationNameToId(collationName)), value);
+    assertEquals(CollationFactory.startsWith.dispatch(
+        UTF8String.fromString(pattern),
+        UTF8String.fromString(prefix),
         CollationFactory.collationNameToId(collationName)), value);
   }
 
   private void assertEndsWith(String pattern, String suffix, String collationName, boolean value)
       throws SparkException {
-    assertEquals(UTF8String.fromString(pattern).endsWith(UTF8String.fromString(suffix),
-        CollationFactory.collationNameToId(collationName)), value);
+    assertEquals(CollationFactory.endsWith.dispatch(
+            UTF8String.fromString(pattern),
+            UTF8String.fromString(suffix),
+            CollationFactory.collationNameToId(collationName)), value);
   }
 
   @Test
