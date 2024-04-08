@@ -248,6 +248,24 @@ public final class CollationFactory {
     }
   }
 
+  public static class Split extends TriDispatch<UTF8String[], UTF8String, UTF8String, Integer> {
+    public Split() {
+      super(UTF8String::split);
+    }
+
+    @Override
+    public UTF8String[] lcase(UTF8String x1, UTF8String x2, Integer x3) {
+      // TODO: Do what you need to do here...
+      return null;
+    }
+
+    @Override
+    public UTF8String[] icu(UTF8String x1, UTF8String x2, Integer x3, int collationId) {
+      // TODO: and here...
+      return null;
+    }
+  }
+
   private static boolean matchAt(final UTF8String first, final UTF8String second, int pos, int collationId) {
     if (second.numChars() + pos > first.numChars() || pos < 0) {
       return false;
@@ -311,4 +329,37 @@ abstract class BiStringDispatch<T> extends BiDispatch<T, UTF8String, UTF8String>
   }
 }
 
+abstract class TriDispatch<T, I1, I2, I3> {
+  private final TriFunction<I1, I2, I3, T> triFunctor;
 
+  public TriDispatch(TriFunction<I1, I2, I3, T> functor) {
+    this.triFunctor = functor;
+  }
+  public T binary(final I1 x1, final I2 x2, final I3 x3) {
+    return triFunctor.apply(x1, x2, x3);
+  }
+  public abstract T lcase(final I1 x1, final I2 x2, final I3 x3);
+
+  public abstract T icu(final I1 x1, final I2 x2, final I3 x3, int collationId);
+
+  public T dispatch(final I1 x1, final I2 x2, final I3 x3, int collationId) {
+    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
+      return binary(x1, x2, x3);
+    } else if (collationId == CollationFactory.UTF8_BINARY_LCASE_COLLATION_ID) {
+      return lcase(x1, x2, x3);
+    } else {
+      return icu(x1, x2, x3, collationId);
+    }
+  }
+
+  public String dispatchCodeGen(
+      final String objectName, final String x1, final String x2, final String x3, int collationId) {
+    if (CollationFactory.fetchCollation(collationId).supportsBinaryEquality) {
+      return String.format("CollationFactory.%s.binary(%s, %s, %s)", objectName, x1, x2, x3);
+    } else if (collationId == CollationFactory.UTF8_BINARY_LCASE_COLLATION_ID) {
+      return String.format("CollationFactory.%s.lcase(%s, %s, %s)", objectName, x1, x2, x3);
+    } else {
+      return String.format("CollationFactory.%s.icu(%s, %s, %s, %d)", objectName, x1, x2, x3, collationId);
+    }
+  }
+}
