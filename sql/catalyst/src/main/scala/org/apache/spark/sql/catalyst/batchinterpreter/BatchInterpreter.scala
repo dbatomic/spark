@@ -21,30 +21,22 @@ import org.apache.spark.sql.catalyst.analysis.UnresolvedIdentifier
 import org.apache.spark.sql.catalyst.parser.{BatchBody, BatchIfElseStatement, BatchPlanStatement, BatchWhileStatement, ParserInterface, SparkStatementWithPlan}
 import org.apache.spark.sql.catalyst.plans.logical.{CreateVariable, DropVariable, LogicalPlan}
 
-
-trait ProceduralLangInterface {
-  def buildInterpreter(
-    batch: String,
-    evaluator: StatementBooleanEvaluator,
-    sparkStatementParser: ParserInterface): ProceduralLangInterpreter
+trait ProceduralLangInterpreter {
+  def buildExecutionPlan(
+    batch: String, evaluator: StatementBooleanEvaluator) : Iterator[BatchStatementExec]
 }
 
-case class CiglaLangDispatcher() extends ProceduralLangInterface {
-  def buildInterpreter(
-    batch: String,
-    evaluator: StatementBooleanEvaluator,
-    sparkStatementParser: ParserInterface): ProceduralLangInterpreter
-  = CiglaLangInterpreter(batch, evaluator, sparkStatementParser)
-}
-
-trait ProceduralLangInterpreter extends Iterator[BatchStatementExec]
-
-case class CiglaLangInterpreter(
-                                 batch: String,
-                                 evaluator: StatementBooleanEvaluator,
-                                 sparkStatementParser: ParserInterface)
+case class CiglaLangInterpreter(sparkStatementParser: ParserInterface)
   extends ProceduralLangInterpreter {
-  private val treeNoEval = sparkStatementParser.parseBatch(batch)
+
+  def buildExecutionPlan(
+      batch: String,
+      evaluator: StatementBooleanEvaluator): Iterator[BatchStatementExec] = {
+    val treeNoEval = sparkStatementParser.parseBatch(batch)
+
+    val tree = transformTreeIntoEvaluable(treeNoEval, evaluator).asInstanceOf[BatchBodyExec]
+    new BatchBodyExec(tree.collection)
+  }
 
   private def getDeclareVarNameFromPlan(
       plan: LogicalPlan): Option[UnresolvedIdentifier] = plan match {
@@ -54,8 +46,8 @@ case class CiglaLangInterpreter(
     case _ => None
   }
 
-  private def transformTreeIntoEvaluable(node: BatchPlanStatement): BatchStatementExec = {
-    // Set evaluator where needed.
+  private def transformTreeIntoEvaluable(
+      node: BatchPlanStatement, evaluator: StatementBooleanEvaluator): BatchStatementExec = {
     node match {
       case body: BatchBody =>
         // Find all variables in this scope
@@ -65,30 +57,25 @@ case class CiglaLangInterpreter(
         }
         val dropVars = variables.map(varName => DropVariable(varName, ifExists = true))
           .map(SparkStatementWithPlanExec(_, 0, 0, internal = true)).reverse
-        new BatchBodyExec(body.collection.map(stmt => transformTreeIntoEvaluable(stmt)) ++ dropVars)
+        new BatchBodyExec(
+          body.collection.map(stmt => transformTreeIntoEvaluable(stmt, evaluator)) ++ dropVars)
       case BatchWhileStatement(condition, body) =>
         BatchWhileStatementExec(
           SparkStatementWithPlanExec(
             condition.parsedPlan, condition.sourceStart, condition.sourceEnd, internal = false),
-          transformTreeIntoEvaluable(body).asInstanceOf[BatchBodyExec],
+          transformTreeIntoEvaluable(body, evaluator).asInstanceOf[BatchBodyExec],
           Some(evaluator))
       case BatchIfElseStatement(condition, ifBody, elseBody) =>
         BatchIfElseStatementExec(
           SparkStatementWithPlanExec(
             condition.parsedPlan, condition.sourceStart, condition.sourceEnd, internal = false),
-          transformTreeIntoEvaluable(ifBody).asInstanceOf[BatchBodyExec], // TODO deal with this.
-          elseBody.map(transformTreeIntoEvaluable(_)).asInstanceOf[Option[BatchBodyExec]],
+          transformTreeIntoEvaluable(ifBody, evaluator).asInstanceOf[BatchBodyExec],
+          elseBody.map(
+            transformTreeIntoEvaluable(_, evaluator)).asInstanceOf[Option[BatchBodyExec]],
           Some(evaluator))
       case node: SparkStatementWithPlan =>
         SparkStatementWithPlanExec(
           node.parsedPlan, node.sourceStart, node.sourceEnd, internal = false)
-      case _ => throw new IllegalStateException("Unknown statement type")
     }
   }
-
-  private val tree = transformTreeIntoEvaluable(treeNoEval).asInstanceOf[BatchBodyExec]
-
-  private val iter = new BatchBodyExec(tree.collection)
-  override def hasNext: Boolean = iter.hasNext
-  override def next(): BatchStatementExec = iter.next()
 }

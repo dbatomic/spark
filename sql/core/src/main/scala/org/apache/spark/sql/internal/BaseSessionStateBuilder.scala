@@ -20,7 +20,7 @@ import org.apache.spark.annotation.Unstable
 import org.apache.spark.sql.{ExperimentalMethods, SparkSession, UDFRegistration, _}
 import org.apache.spark.sql.artifact.ArtifactManager
 import org.apache.spark.sql.catalyst.analysis.{Analyzer, EvalSubqueriesForTimeTravel, FunctionRegistry, ReplaceCharWithVarchar, ResolveSessionCatalog, TableFunctionRegistry}
-import org.apache.spark.sql.catalyst.batchinterpreter.{CiglaLangDispatcher, ProceduralLangInterface}
+import org.apache.spark.sql.catalyst.batchinterpreter.{CiglaLangInterpreter, ProceduralLangInterpreter}
 import org.apache.spark.sql.catalyst.catalog.{FunctionExpressionBuilder, SessionCatalog}
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.optimizer.Optimizer
@@ -147,9 +147,14 @@ abstract class BaseSessionStateBuilder(
     extensions.buildParser(session, new SparkSqlParser())
   }
 
-  // TODO: Should this be more modular?
-  // What is the extension story with parser?
-  protected lazy val proceduralLangDispatcher: ProceduralLangInterface = CiglaLangDispatcher()
+  /**
+   * batch interpreter that produces execution plan for sql batch procedural language.
+   *
+   * Note: this depends on the `conf` field.
+   */
+  protected lazy val batchInterpreter: ProceduralLangInterpreter = {
+    extensions.buildInterpreter(session, CiglaLangInterpreter(sqlParser))
+  }
 
   /**
    * ResourceLoader that is used to load function resources and jars.
@@ -400,7 +405,7 @@ abstract class BaseSessionStateBuilder(
       dataSourceRegistration,
       () => catalog,
       sqlParser,
-      proceduralLangDispatcher,
+      batchInterpreter,
       () => analyzer,
       () => optimizer,
       planner,

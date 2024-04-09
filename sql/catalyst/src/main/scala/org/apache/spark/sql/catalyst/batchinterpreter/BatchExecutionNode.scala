@@ -25,7 +25,7 @@ sealed trait BatchStatementExec extends Logging {
 }
 
 // Interpreter debugger can point to leaf statement.
-// This can either be a Spark statement or Cigla statement (e.g. var assignment or trace).
+// This can either be a Spark statement or Batch statement (e.g. var assignment or trace).
 // TODO: Add all debugging info here.
 trait LeafStatementExec extends BatchStatementExec
 
