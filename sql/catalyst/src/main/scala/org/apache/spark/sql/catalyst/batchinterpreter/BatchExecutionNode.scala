@@ -19,7 +19,7 @@ package org.apache.spark.sql.catalyst.batchinterpreter
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 
-trait BatchStatementExec extends Logging {
+sealed trait BatchStatementExec extends Logging {
   def rewind(): Unit
   val isInternal: Boolean = false
 }
@@ -49,7 +49,7 @@ case class SparkStatementWithPlanExec(
   def getText(batch: String): String = batch.substring(sourceStart, sourceEnd)
 }
 
-// This is base class for all nested cigla lang statements.
+// This is base class for all nested lang statements.
 // e.g. if/else/while or even regular body.
 case class BatchNestedIteratorStatementExec(collection: List[BatchStatementExec])
   extends NonLeafStatementExec {

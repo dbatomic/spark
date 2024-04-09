@@ -31,9 +31,9 @@ trait ProceduralLangInterface {
 
 case class CiglaLangDispatcher() extends ProceduralLangInterface {
   def buildInterpreter(
-                        batch: String,
-                        evaluator: StatementBooleanEvaluator,
-                        sparkStatementParser: ParserInterface): ProceduralLangInterpreter
+    batch: String,
+    evaluator: StatementBooleanEvaluator,
+    sparkStatementParser: ParserInterface): ProceduralLangInterpreter
   = CiglaLangInterpreter(batch, evaluator, sparkStatementParser)
 }
 

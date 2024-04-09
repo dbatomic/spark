@@ -57,6 +57,7 @@ class BatchStatementsSuite extends SparkFunSuite {
       List(TestStatement("one"), TestStatement("two"), TestStatement("three")))
     val statements = nestedIterator.map {
       case TestStatement(v) => v
+      case _ => fail("Unexpected statement type")
     }.toList
 
     assert(statements === List("one", "two", "three"))

@@ -18,7 +18,7 @@ package org.apache.spark.sql.catalyst.parser
 
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 
-trait BatchPlanStatement
+sealed trait BatchPlanStatement
 
 // Statement that is supposed to be executed against Spark.
 // This can also be a spark expression that is wrapped in a statement.
