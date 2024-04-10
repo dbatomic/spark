@@ -128,19 +128,10 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
 
   override def visitBatchBody(ctx: BatchBodyContext): BatchBody = {
     val buff = ListBuffer[BatchPlanStatement]()
-    var statementNum = 0 // TODO: this is a bit hacky
     for (i <- 0 until ctx.getChildCount) {
       val child = visit(ctx.getChild(i))
 
       child match {
-        case logicalPlan: LogicalPlan =>
-          // If this is a logical plan we know that we parsed statement.
-          // Figure out this flow later on.
-          val statement = ctx.statement(statementNum)
-          buff += SparkStatementWithPlan(
-            logicalPlan,
-            statement.start.getStartIndex, statement.stop.getStopIndex + 1)
-          statementNum = statementNum + 1
         case stmt: BatchPlanStatement => buff += stmt
         case null => () // TODO: Debug when null is returned.
         case t: AnyRef =>
@@ -148,7 +139,18 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
       }
     }
 
-    new BatchBody(buff.toList)
+    BatchBody(buff.toList)
+  }
+
+  override def visitBatchStatement(ctx: BatchStatementContext): BatchPlanStatement = {
+    val child = visit(ctx.getChild(0))
+    child match {
+      case logicalPlan: LogicalPlan =>
+        SparkStatementWithPlan(
+          logicalPlan,
+          ctx.statement().start.getStartIndex, ctx.statement().stop.getStopIndex + 1)
+      case stmt: BatchPlanStatement => stmt
+    }
   }
 
   override def visitIfElseStatement(ctx: IfElseStatementContext): BatchIfElseStatement = {

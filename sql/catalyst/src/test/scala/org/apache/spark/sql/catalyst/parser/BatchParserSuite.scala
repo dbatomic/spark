@@ -33,6 +33,20 @@ class BatchParserSuite extends SparkFunSuite with SQLHelper {
     assert(sparkStatement.getText(batch) == "SELECT 1")
   }
 
+  test("single select no ;") {
+    val batch = "SELECT 1"
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[SparkStatementWithPlan])
+    val sparkStatement = tree.collection.head.asInstanceOf[SparkStatementWithPlan]
+    assert(sparkStatement.getText(batch) == "SELECT 1")
+  }
+
+  test("multi select no ; should fail") {
+    val batch = "SELECT 1 SELECT 1"
+    intercept[ParseException] { parseBatch(batch) }
+  }
+
   test("multi select") {
     val batch = "SELECT 1;SELECT 2;"
     val tree = parseBatch(batch)
@@ -67,6 +81,26 @@ class BatchParserSuite extends SparkFunSuite with SQLHelper {
       val statementText = sparkStatement.getText(batch)
       assert(statementText == expected)
     }
+  }
+
+  test("multi statement no ; at the end") {
+    val batch =
+      """SELECT 1;
+        |SELECT 2;
+        |INSERT INTO A VALUES (a, b, 3);
+        |SELECT a, b, c FROM T;
+        |SELECT * FROM T""".stripMargin
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 5)
+    assert(tree.collection.forall(_.isInstanceOf[SparkStatementWithPlan]))
+    batch.split(";")
+      .map(_.replace("\n", ""))
+      .zip(tree.collection)
+      .foreach { case (expected, statement) =>
+        val sparkStatement = statement.asInstanceOf[SparkStatementWithPlan]
+        val statementText = sparkStatement.getText(batch)
+        assert(statementText == expected)
+      }
   }
 
   test("if else") {

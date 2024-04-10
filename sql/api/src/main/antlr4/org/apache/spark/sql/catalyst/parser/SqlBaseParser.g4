@@ -47,11 +47,18 @@ singleStatement
     ;
 
 batch
-    : batchBody EOF
+    : batchBody SEMICOLON* EOF
     ;
 
+batchStatement
+    : statement
+    | ifElseStatement
+    | whileStatement
+    ;
+
+// Last semicolon in body optional.
 batchBody
-    : ((ifElseStatement | whileStatement | statement) SEMICOLON+)*
+    : (batchStatement) (SEMICOLON+ batchStatement)* SEMICOLON*
     ;
 
 ifElseStatement
