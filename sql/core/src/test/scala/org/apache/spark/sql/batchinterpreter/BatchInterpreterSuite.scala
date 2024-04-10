@@ -17,7 +17,6 @@
 
 package org.apache.spark.sql.batchinterpreter
 
-import org.apache.spark.sql.catalyst.batchinterpreter.SparkStatementWithPlanExec
 import org.apache.spark.sql.catalyst.{ExtendedAnalysisException, QueryPlanningTracker}
 import org.apache.spark.sql.test.SharedSparkSession
 import org.apache.spark.sql.{Dataset, QueryTest, Row}

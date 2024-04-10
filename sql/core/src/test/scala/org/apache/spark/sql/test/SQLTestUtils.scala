@@ -34,9 +34,9 @@ import org.scalatest.concurrent.Eventually
 import org.apache.spark.SparkFunSuite
 
 import org.apache.spark.sql._
+import org.apache.spark.sql.batchinterpreter.BatchStatementExec
 import org.apache.spark.sql.catalyst.FunctionIdentifier
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
-import org.apache.spark.sql.catalyst.batchinterpreter.BatchStatementExec
 import org.apache.spark.sql.catalyst.catalog.SessionCatalog.DEFAULT_DATABASE
 import org.apache.spark.sql.catalyst.plans.PlanTest
 import org.apache.spark.sql.catalyst.plans.PlanTestBase

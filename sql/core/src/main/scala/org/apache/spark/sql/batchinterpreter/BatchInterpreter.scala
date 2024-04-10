@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.spark.sql.catalyst.batchinterpreter
+package org.apache.spark.sql.batchinterpreter
 
 import org.apache.spark.sql.catalyst.analysis.UnresolvedIdentifier
 import org.apache.spark.sql.catalyst.parser.{BatchBody, BatchIfElseStatement, BatchPlanStatement, BatchWhileStatement, ParserInterface, SparkStatementWithPlan}
@@ -26,9 +26,8 @@ trait ProceduralLangInterpreter {
     batch: String, evaluator: StatementBooleanEvaluator) : Iterator[BatchStatementExec]
 }
 
-case class CiglaLangInterpreter(sparkStatementParser: ParserInterface)
+case class BatchLangInterpreter(sparkStatementParser: ParserInterface)
   extends ProceduralLangInterpreter {
-
   def buildExecutionPlan(
       batch: String,
       evaluator: StatementBooleanEvaluator): Iterator[BatchStatementExec] = {

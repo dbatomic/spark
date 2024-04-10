@@ -17,10 +17,10 @@
 package org.apache.spark.sql.internal
 
 import org.apache.spark.annotation.Unstable
-import org.apache.spark.sql.{ExperimentalMethods, SparkSession, UDFRegistration, _}
+import org.apache.spark.sql._
 import org.apache.spark.sql.artifact.ArtifactManager
+import org.apache.spark.sql.batchinterpreter.{BatchLangInterpreter, ProceduralLangInterpreter}
 import org.apache.spark.sql.catalyst.analysis.{Analyzer, EvalSubqueriesForTimeTravel, FunctionRegistry, ReplaceCharWithVarchar, ResolveSessionCatalog, TableFunctionRegistry}
-import org.apache.spark.sql.catalyst.batchinterpreter.{CiglaLangInterpreter, ProceduralLangInterpreter}
 import org.apache.spark.sql.catalyst.catalog.{FunctionExpressionBuilder, SessionCatalog}
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.optimizer.Optimizer
@@ -153,7 +153,7 @@ abstract class BaseSessionStateBuilder(
    * Note: this depends on the `conf` field.
    */
   protected lazy val batchInterpreter: ProceduralLangInterpreter = {
-    extensions.buildInterpreter(session, CiglaLangInterpreter(sqlParser))
+    extensions.buildInterpreter(session, BatchLangInterpreter(sqlParser))
   }
 
   /**

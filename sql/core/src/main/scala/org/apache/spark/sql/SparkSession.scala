@@ -35,10 +35,10 @@ import org.apache.spark.internal.config.{ConfigEntry, EXECUTOR_ALLOW_SPARK_CONTE
 import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.artifact.ArtifactManager
+import org.apache.spark.sql.batchinterpreter.{BatchStatementExec, LeafStatementExec, SparkStatementWithPlanExec, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis.{NameParameterizedQuery, PosParameterizedQuery, UnresolvedRelation}
-import org.apache.spark.sql.catalyst.batchinterpreter.{BatchStatementExec, LeafStatementExec, SparkStatementWithPlanExec, StatementBooleanEvaluator}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
 import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Range}
@@ -701,6 +701,7 @@ class SparkSession private(
     withActive {
       val plan = tracker.measurePhase(QueryPlanningTracker.PARSING) {
         val parsedPlan = sessionState.sqlParser.parsePlan(sqlText)
+        // val batch = sessionState.sqlBatchInterpreter.buildExecutionPlan(sqlText)
         if (args.nonEmpty) {
           NameParameterizedQuery(parsedPlan, args.transform((_, v) => lit(v).expr))
         } else {

@@ -26,8 +26,8 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.annotation.Unstable
 import org.apache.spark.sql._
 import org.apache.spark.sql.artifact.ArtifactManager
+import org.apache.spark.sql.batchinterpreter.ProceduralLangInterpreter
 import org.apache.spark.sql.catalyst.analysis.{Analyzer, FunctionRegistry, TableFunctionRegistry}
-import org.apache.spark.sql.catalyst.batchinterpreter.ProceduralLangInterpreter
 import org.apache.spark.sql.catalyst.catalog._
 import org.apache.spark.sql.catalyst.optimizer.Optimizer
 import org.apache.spark.sql.catalyst.parser.ParserInterface
