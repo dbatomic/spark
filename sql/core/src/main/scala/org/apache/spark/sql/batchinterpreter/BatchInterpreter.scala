@@ -61,7 +61,7 @@ case class BatchLangInterpreter(sparkStatementParser: ParserInterface)
           SparkStatementWithPlanExec(
             condition.parsedPlan, condition.sourceStart, condition.sourceEnd, internal = false),
           transformTreeIntoEvaluable(body, evaluator).asInstanceOf[BatchBodyExec],
-          Some(evaluator))
+          evaluator)
       case BatchIfElseStatement(condition, ifBody, elseBody) =>
         BatchIfElseStatementExec(
           SparkStatementWithPlanExec(
@@ -69,7 +69,7 @@ case class BatchLangInterpreter(sparkStatementParser: ParserInterface)
           transformTreeIntoEvaluable(ifBody, evaluator).asInstanceOf[BatchBodyExec],
           elseBody.map(
             transformTreeIntoEvaluable(_, evaluator)).asInstanceOf[Option[BatchBodyExec]],
-          Some(evaluator))
+          evaluator)
       case node: SparkStatementWithPlan =>
         SparkStatementWithPlanExec(
           node.parsedPlan, node.sourceStart, node.sourceEnd, internal = false)

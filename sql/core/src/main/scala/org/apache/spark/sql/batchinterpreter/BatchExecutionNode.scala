@@ -102,7 +102,7 @@ case class BatchIfElseStatementExec(
     condition: LeafStatementExec,
     ifBody: BatchBodyExec,
     elseBody: Option[BatchNestedIteratorStatementExec],
-    evaluator: Option[StatementBooleanEvaluator])
+    evaluator: StatementBooleanEvaluator)
     extends NonLeafStatementExec {
   private object IfElseState extends Enumeration {
     val Condition, IfBody, ElseBody = Value
@@ -122,12 +122,11 @@ case class BatchIfElseStatementExec(
   override def hasNext: Boolean = curr.nonEmpty
 
   override def next(): BatchStatementExec = {
-    assert(evaluator.nonEmpty, "Evaluator must be set for execution")
     state match {
       case IfElseState.Condition =>
         logInfo("Entering condition")
         assert(curr.get.isInstanceOf[SparkStatementWithPlanExec])
-        val evalRes = evaluator.get.eval(condition)
+        val evalRes = evaluator.eval(condition)
         if (evalRes) {
           state = IfElseState.IfBody
           curr = Some(ifBody)
@@ -156,7 +155,7 @@ case class BatchIfElseStatementExec(
 case class BatchWhileStatementExec(
     condition: LeafStatementExec,
     whileBody: BatchNestedIteratorStatementExec,
-    evaluator: Option[StatementBooleanEvaluator])
+    evaluator: StatementBooleanEvaluator)
     extends NonLeafStatementExec {
   private object WhileState extends Enumeration {
     val Condition, Body = Value
@@ -167,10 +166,9 @@ case class BatchWhileStatementExec(
 
   override def hasNext: Boolean = curr.nonEmpty
   override def next(): BatchStatementExec = {
-    assert(evaluator.nonEmpty, "Evaluator must be set for execution")
     state match {
       case WhileState.Condition =>
-        if (evaluator.get.eval(condition)) {
+        if (evaluator.eval(condition)) {
           whileBody.rewind()
           state = WhileState.Body
           curr = Some(whileBody)
@@ -206,7 +204,6 @@ case class BatchWhileStatementExec(
 trait StatementBooleanEvaluator {
   def eval(statement: LeafStatementExec): Boolean
 }
-
 case class DataFrameEvaluator(session: SparkSession) extends StatementBooleanEvaluator {
   override def eval(statement: LeafStatementExec): Boolean = statement match {
     case stmt: SparkStatementWithPlanExec =>

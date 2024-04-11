@@ -37,7 +37,7 @@ class BatchStatementsSuite extends SparkFunSuite {
   }
 
   class TestWhile(condition: LeafStatementExec, body: TestBody, reps: Int)
-    extends BatchWhileStatementExec(condition, body, Some(RepEval(reps)))
+    extends BatchWhileStatementExec(condition, body, RepEval(reps))
 
   test("test body single statement") {
     val nestedIterator = new TestBody(
