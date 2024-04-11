@@ -36,11 +36,9 @@ case class BatchLangInterpreter(sparkStatementParser: ParserInterface)
   }
 
   private def getDeclareVarNameFromPlan(
-      plan: LogicalPlan): Option[UnresolvedIdentifier] = plan match {
-    case CreateVariable(name, _, _) => name match {
-      case u: UnresolvedIdentifier => Some(u)
-    }
-    case _ => None
+    plan: LogicalPlan): Option[UnresolvedIdentifier] = plan match {
+      case CreateVariable(name: UnresolvedIdentifier, _, _) => Some(name)
+      case _ => None
   }
 
   private def transformTreeIntoEvaluable(
