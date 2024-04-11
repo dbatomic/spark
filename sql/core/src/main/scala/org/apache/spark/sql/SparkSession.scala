@@ -35,12 +35,13 @@ import org.apache.spark.internal.config.{ConfigEntry, EXECUTOR_ALLOW_SPARK_CONTE
 import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.artifact.ArtifactManager
-import org.apache.spark.sql.batchinterpreter.{BatchStatementExec, LeafStatementExec, SparkStatementWithPlanExec, StatementBooleanEvaluator}
+import org.apache.spark.sql.batchinterpreter.{BatchStatementExec, DataFrameEvaluator, SparkStatementWithPlanExec }
 import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis.{NameParameterizedQuery, PosParameterizedQuery, UnresolvedRelation}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
+import org.apache.spark.sql.catalyst.parser.{BatchBody, SparkStatementWithPlan}
 import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Range}
 import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.catalyst.util.CharVarcharUtils
@@ -54,7 +55,7 @@ import org.apache.spark.sql.internal._
 import org.apache.spark.sql.internal.StaticSQLConf.CATALOG_IMPLEMENTATION
 import org.apache.spark.sql.sources.BaseRelation
 import org.apache.spark.sql.streaming._
-import org.apache.spark.sql.types.{BooleanType, DataType, StructType}
+import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.sql.util.ExecutionListenerManager
 import org.apache.spark.util.{CallSite, Utils}
 import org.apache.spark.util.ArrayImplicits._
@@ -700,15 +701,42 @@ class SparkSession private(
       tracker: QueryPlanningTracker): DataFrame =
     withActive {
       val plan = tracker.measurePhase(QueryPlanningTracker.PARSING) {
-        val parsedPlan = sessionState.sqlParser.parsePlan(sqlText)
-        // val batch = sessionState.sqlBatchInterpreter.buildExecutionPlan(sqlText)
-        if (args.nonEmpty) {
-          NameParameterizedQuery(parsedPlan, args.transform((_, v) => lit(v).expr))
-        } else {
-          parsedPlan
+        val parsedPlan = sessionState.sqlParser.parseBatch(sqlText)
+
+        parsedPlan match {
+          case BatchBody((singleStmtPlan: SparkStatementWithPlan) :: Nil) if args.nonEmpty =>
+            BatchBody(List(SparkStatementWithPlan(
+              NameParameterizedQuery(
+                singleStmtPlan.parsedPlan, args.transform((_, v) => lit(v).expr)),
+              singleStmtPlan.sourceStart, singleStmtPlan.sourceEnd)))
+          case p =>
+            assert(args.isEmpty, "Named parameters are not supported for batch queries")
+            p
         }
       }
-      Dataset.ofRows(self, plan, tracker)
+
+      plan match {
+        // If plan is a single statement, we can directly return a DataFrame
+        // without interpreter.
+        case BatchBody((singleStmtPlan: SparkStatementWithPlan) :: Nil) =>
+          Dataset.ofRows(self, singleStmtPlan.parsedPlan, tracker)
+        case _ =>
+          val batch = sessionState.sqlBatchInterpreter.buildExecutionPlan(
+            plan, DataFrameEvaluator(self))
+          val res = batch.flatMap { statement =>
+            statement match {
+              case st: SparkStatementWithPlanExec if !st.consumed =>
+                if (st.internal) {
+                  val _ = Dataset.ofRows(this, st.parsedPlan)
+                  None
+                } else {
+                  Some(Dataset.ofRows(this, st.parsedPlan))
+                }
+              case _ => None
+            }
+          }.toList // materialize everything and return the last DataFrame. (TODO: fold)
+        res.last
+      }
     }
 
 
@@ -716,28 +744,9 @@ class SparkSession private(
       batchText: String,
       tracker: QueryPlanningTracker): Iterator[BatchStatementExec] =
     withActive {
-      val session = this
-      object DataFrameEvaluator extends StatementBooleanEvaluator {
-        override def eval(statement: LeafStatementExec): Boolean = statement match {
-          case stmt: SparkStatementWithPlanExec =>
-            assert (!stmt.consumed)
-            stmt.consumed = true
-            val df = Dataset.ofRows (session, stmt.parsedPlan, tracker)
-
-            // Rules to check whether this dataframe evaluates to true:
-            // True only if single row with single column of a boolean type
-            // with value TRUE.
-            (df.count (), df.schema.fields) match {
-              case (1, Array (field) ) if field.dataType == BooleanType =>
-                df.collect () (0).getBoolean (0)
-              case _ => false
-            }
-          case _ => false
-        }
-      }
-
+      val batchPlan = sessionState.sqlParser.parseBatch(batchText)
       val interpreter = sessionState.sqlBatchInterpreter.buildExecutionPlan(
-        batchText, DataFrameEvaluator)
+        batchPlan, DataFrameEvaluator(self))
       interpreter
     }
 

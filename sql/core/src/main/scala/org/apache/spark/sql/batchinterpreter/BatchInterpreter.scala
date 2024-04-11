@@ -23,17 +23,15 @@ import org.apache.spark.sql.catalyst.plans.logical.{CreateVariable, DropVariable
 
 trait ProceduralLangInterpreter {
   def buildExecutionPlan(
-    batch: String, evaluator: StatementBooleanEvaluator) : Iterator[BatchStatementExec]
+    batch: BatchBody, evaluator: StatementBooleanEvaluator) : Iterator[BatchStatementExec]
 }
 
 case class BatchLangInterpreter(sparkStatementParser: ParserInterface)
   extends ProceduralLangInterpreter {
   def buildExecutionPlan(
-      batch: String,
+      batch: BatchBody,
       evaluator: StatementBooleanEvaluator): Iterator[BatchStatementExec] = {
-    val treeNoEval = sparkStatementParser.parseBatch(batch)
-
-    val tree = transformTreeIntoEvaluable(treeNoEval, evaluator).asInstanceOf[BatchBodyExec]
+    val tree = transformTreeIntoEvaluable(batch, evaluator).asInstanceOf[BatchBodyExec]
     new BatchBodyExec(tree.collection)
   }
 

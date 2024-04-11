@@ -18,6 +18,8 @@ package org.apache.spark.sql.batchinterpreter
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.{Dataset, SparkSession}
+import org.apache.spark.sql.types.BooleanType
 
 sealed trait BatchStatementExec extends Logging {
   def rewind(): Unit
@@ -208,4 +210,23 @@ trait StatementBooleanEvaluator {
 
 case object AlwaysTrueEval extends StatementBooleanEvaluator {
   override def eval(statement: LeafStatementExec): Boolean = true
+}
+
+case class DataFrameEvaluator(session: SparkSession) extends StatementBooleanEvaluator {
+  override def eval(statement: LeafStatementExec): Boolean = statement match {
+    case stmt: SparkStatementWithPlanExec =>
+      assert(!stmt.consumed)
+      stmt.consumed = true
+      val df = Dataset.ofRows(session, stmt.parsedPlan)
+
+      // Rules to check whether this dataframe evaluates to true:
+      // True only if single row with single column of a boolean type
+      // with value TRUE.
+      (df.count(), df.schema.fields) match {
+        case (1, Array(field)) if field.dataType == BooleanType =>
+          df.collect()(0).getBoolean(0)
+        case _ => false
+      }
+    case _ => false
+  }
 }

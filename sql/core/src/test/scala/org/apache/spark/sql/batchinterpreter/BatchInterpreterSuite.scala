@@ -292,5 +292,38 @@ class BatchInterpreterSuite extends QueryTest with SharedSparkSession {
     verifyBatchResult(commands, expected, printRes = true)
   }
 
+  test("direct sql API") {
+    withTable("T") {
+      val commands =
+        """
+         CREATE TABLE T (a INT) USING parquet;
+         INSERT INTO T VALUES (42);
+         SELECT * FROM T;
+      """.stripMargin
+      checkAnswer(sql(commands), Row(42))
+    }
+  }
+
+  test("direct sql API nested") {
+    val commands =
+      """
+        | IF (SELECT TRUE)
+        | THEN
+        |   DECLARE var = 1;
+        |   SELECT var;
+        | END IF;
+        | IF (SELECT TRUE)
+        | THEN
+        |   DECLARE var = 2;
+        |   SELECT var;
+        | END IF;
+        | IF (SELECT FALSE)
+        | THEN
+        |   DECLARE var = 2;
+        |   SELECT var;
+        | END IF;
+        | """.stripMargin
+    checkAnswer(sql(commands), Row(2))
+  }
   // TODO: Tests for proper error reporting...
 }
