@@ -716,17 +716,19 @@ class SparkSession private(
       }
 
       plan match {
-        // If plan is a single statement, we can directly return a DataFrame
-        // without interpreter.
         case BatchBody((singleStmtPlan: SparkStatementWithPlan) :: Nil) =>
-          Dataset.ofRows(self, singleStmtPlan.parsedPlan, tracker)
+          // If plan is a single statement, we can directly return a DataFrame
+          // without interpreter.
+        Dataset.ofRows(self, singleStmtPlan.parsedPlan, tracker)
         case _ =>
           val batch = sessionState.sqlBatchInterpreter.buildExecutionPlan(
             plan, DataFrameEvaluator(self))
-          val res = batch.flatMap { statement =>
-            statement match {
+            batch.flatMap { statement => statement match {
               case st: SparkStatementWithPlanExec if !st.consumed =>
                 if (st.internal) {
+                  // This is internally added statement. E.g. DROP variable that
+                  // tracks variable lifetime in given scope. We need to execute to make sure that
+                  // side effects propagate but there is no need to return a DataFrame.
                   val _ = Dataset.ofRows(this, st.parsedPlan)
                   None
                 } else {
@@ -734,8 +736,7 @@ class SparkSession private(
                 }
               case _ => None
             }
-          }.toList // materialize everything and return the last DataFrame. (TODO: fold)
-        res.last
+          }.foldLeft(emptyDataFrame)((_, next) => next)
       }
     }
 
