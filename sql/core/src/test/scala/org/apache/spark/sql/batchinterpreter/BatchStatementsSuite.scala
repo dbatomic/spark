@@ -19,8 +19,6 @@ package org.apache.spark.sql.batchinterpreter
 
 import org.apache.spark.SparkFunSuite
 
-import org.apache.spark.sql.batchinterpreter.{BatchNestedIteratorStatementExec, BatchStatementExec, BatchWhileStatementExec, LeafStatementExec, StatementBooleanEvaluator}
-
 class BatchStatementsSuite extends SparkFunSuite {
   case class TestStatement(myval: String) extends LeafStatementExec {
     override def rewind(): Unit = ()

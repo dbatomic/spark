@@ -203,13 +203,8 @@ case class BatchWhileStatementExec(
 // Provide a way to evaluate a statement to a boolean.
 // Interpreter at this point only needs to know true/false
 // result of a statement. E.g. if it is part of branching condition.
-// For var assignment, we will need more complex evaluator.
 trait StatementBooleanEvaluator {
   def eval(statement: LeafStatementExec): Boolean
-}
-
-case object AlwaysTrueEval extends StatementBooleanEvaluator {
-  override def eval(statement: LeafStatementExec): Boolean = true
 }
 
 case class DataFrameEvaluator(session: SparkSession) extends StatementBooleanEvaluator {
