@@ -27,6 +27,7 @@ import scala.reflect.runtime.universe.TypeTag
 import scala.util.control.NonFatal
 
 import org.apache.spark.{SPARK_VERSION, SparkConf, SparkContext, SparkException, TaskContext}
+
 import org.apache.spark.annotation.{DeveloperApi, Experimental, Stable, Unstable}
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.internal.Logging
@@ -34,11 +35,13 @@ import org.apache.spark.internal.config.{ConfigEntry, EXECUTOR_ALLOW_SPARK_CONTE
 import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.artifact.ArtifactManager
+import org.apache.spark.sql.batchinterpreter.{DataFrameEvaluator, SparkStatementWithPlanExec }
 import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis.{NameParameterizedQuery, PosParameterizedQuery, UnresolvedRelation}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.catalyst.expressions.AttributeReference
+import org.apache.spark.sql.catalyst.parser.{BatchBody, SparkStatementWithPlan}
 import org.apache.spark.sql.catalyst.plans.logical.{LocalRelation, Range}
 import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.catalyst.util.CharVarcharUtils
@@ -698,14 +701,27 @@ class SparkSession private(
       tracker: QueryPlanningTracker): DataFrame =
     withActive {
       val plan = tracker.measurePhase(QueryPlanningTracker.PARSING) {
-        val parsedPlan = sessionState.sqlParser.parsePlan(sqlText)
-        if (args.nonEmpty) {
-          NameParameterizedQuery(parsedPlan, args.transform((_, v) => lit(v).expr))
-        } else {
-          parsedPlan
+        val parsedPlan = sessionState.sqlParser.parseBatch(sqlText)
+
+        parsedPlan match {
+          case BatchBody((singleStmtPlan: SparkStatementWithPlan) :: Nil) if args.nonEmpty =>
+            BatchBody(List(SparkStatementWithPlan(
+              NameParameterizedQuery(
+                singleStmtPlan.parsedPlan, args.transform((_, v) => lit(v).expr)),
+              singleStmtPlan.sourceStart, singleStmtPlan.sourceEnd)))
+          case p =>
+            assert(args.isEmpty, "Named parameters are not supported for batch queries")
+            p
         }
       }
-      Dataset.ofRows(self, plan, tracker)
+
+      plan match {
+        case BatchBody((singleStmtPlan: SparkStatementWithPlan) :: Nil) =>
+          // If plan is a single statement, we can directly return a DataFrame
+          // without interpreter.
+        Dataset.ofRows(self, singleStmtPlan.parsedPlan, tracker)
+        case _ => executeBatch(plan).foldLeft(emptyDataFrame)((_, next) => next)
+      }
     }
 
   /**
@@ -728,6 +744,28 @@ class SparkSession private(
   @Experimental
   def sql(sqlText: String, args: Map[String, Any]): DataFrame = {
     sql(sqlText, args, new QueryPlanningTracker)
+  }
+
+  def sqlBatch(batchText: String): Iterator[DataFrame] = {
+    val batchPlan = sessionState.sqlParser.parseBatch(batchText)
+    executeBatch(batchPlan)
+  }
+
+  private def executeBatch(batchPlan: BatchBody): Iterator[DataFrame] = {
+    val interpreter = sessionState.sqlBatchInterpreter.buildExecutionPlan(
+      batchPlan, DataFrameEvaluator(self))
+    interpreter.flatMap { statement =>
+      statement match {
+        case st: SparkStatementWithPlanExec if !st.consumed =>
+          if (st.internal) {
+            val _ = Dataset.ofRows(this, st.parsedPlan)
+            None
+          } else {
+            Some(Dataset.ofRows(this, st.parsedPlan))
+          }
+        case _ => None
+      }
+    }
   }
 
   /**

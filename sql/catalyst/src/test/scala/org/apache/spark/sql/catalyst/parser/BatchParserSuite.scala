@@ -1,0 +1,193 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.spark.sql.catalyst.parser
+
+import org.apache.spark.SparkFunSuite
+
+import org.apache.spark.sql.catalyst.plans.SQLHelper
+
+class BatchParserSuite extends SparkFunSuite with SQLHelper {
+  import CatalystSqlParser._
+
+  test("single select") {
+    val batch = "SELECT 1;"
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[SparkStatementWithPlan])
+    val sparkStatement = tree.collection.head.asInstanceOf[SparkStatementWithPlan]
+    assert(sparkStatement.getText(batch) == "SELECT 1")
+  }
+
+  test("single select no ;") {
+    val batch = "SELECT 1"
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[SparkStatementWithPlan])
+    val sparkStatement = tree.collection.head.asInstanceOf[SparkStatementWithPlan]
+    assert(sparkStatement.getText(batch) == "SELECT 1")
+  }
+
+  test("multi select no ; should fail") {
+    val batch = "SELECT 1 SELECT 1"
+    intercept[ParseException] { parseBatch(batch) }
+  }
+
+  test("multi select") {
+    val batch = "SELECT 1;SELECT 2;"
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 2)
+    assert(tree.collection.forall(_.isInstanceOf[SparkStatementWithPlan]))
+
+    batch.split(";")
+      .map(_.replace("\n", ""))
+      .zip(tree.collection)
+      .foreach { case (expected, statement) =>
+        val sparkStatement = statement.asInstanceOf[SparkStatementWithPlan]
+        val statementText = sparkStatement.getText(batch)
+        assert(statementText == expected)
+      }
+  }
+
+  test("multi statement") {
+    val batch = """SELECT 1;
+      |SELECT 2;
+      |INSERT INTO A VALUES (a, b, 3);
+      |SELECT a, b, c FROM T;
+      |SELECT * FROM T;
+        """.stripMargin
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 5)
+    assert(tree.collection.forall(_.isInstanceOf[SparkStatementWithPlan]))
+    batch.split(";")
+      .map(_.replace("\n", ""))
+      .zip(tree.collection)
+      .foreach { case (expected, statement) =>
+      val sparkStatement = statement.asInstanceOf[SparkStatementWithPlan]
+      val statementText = sparkStatement.getText(batch)
+      assert(statementText == expected)
+    }
+  }
+
+  test("multi statement no ; at the end") {
+    val batch =
+      """SELECT 1;
+        |SELECT 2;
+        |INSERT INTO A VALUES (a, b, 3);
+        |SELECT a, b, c FROM T;
+        |SELECT * FROM T""".stripMargin
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 5)
+    assert(tree.collection.forall(_.isInstanceOf[SparkStatementWithPlan]))
+    batch.split(";")
+      .map(_.replace("\n", ""))
+      .zip(tree.collection)
+      .foreach { case (expected, statement) =>
+        val sparkStatement = statement.asInstanceOf[SparkStatementWithPlan]
+        val statementText = sparkStatement.getText(batch)
+        assert(statementText == expected)
+      }
+  }
+
+  test("if else") {
+    val batch =
+      """IF 1 = 1 THEN
+        |  SELECT 1;
+        |ELSE
+        |  SELECT 2;
+        |END IF;
+        """.stripMargin
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[BatchIfElseStatement])
+    val ifStmt = tree.collection.head.asInstanceOf[BatchIfElseStatement]
+    assert(ifStmt.condition.isInstanceOf[SparkStatementWithPlan])
+    assert(ifStmt.condition.asInstanceOf[SparkStatementWithPlan].getText(batch) == "1 = 1")
+
+    assert(ifStmt.ifBody.collection.length == 1)
+    assert(ifStmt.ifBody.collection.head.isInstanceOf[SparkStatementWithPlan])
+    assert(ifStmt.ifBody.collection.head.asInstanceOf[SparkStatementWithPlan].getText(batch) == "SELECT 1")
+
+    assert(ifStmt.elseBody.isDefined)
+    assert(ifStmt.elseBody.get.collection.length == 1)
+    assert(ifStmt.elseBody.get.collection.head.isInstanceOf[SparkStatementWithPlan])
+    assert(ifStmt.elseBody.get.collection.head.asInstanceOf[SparkStatementWithPlan].getText(batch) == "SELECT 2")
+  }
+
+  test("while") {
+    val batch =
+      """WHILE 1 = 1 DO
+        |  SELECT 1;
+        |  SELECT 2;
+        |END WHILE;
+      """.stripMargin
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[BatchWhileStatement])
+    val whileStatement = tree.collection.head.asInstanceOf[BatchWhileStatement]
+    assert(whileStatement.condition.isInstanceOf[SparkStatementWithPlan])
+    assert(whileStatement.condition.asInstanceOf[SparkStatementWithPlan].getText(batch) == "1 = 1")
+
+    assert(whileStatement.whileBody.asInstanceOf[BatchBody].collection.length == 2)
+    val whileBody = whileStatement.whileBody.asInstanceOf[BatchBody]
+    assert(whileBody.collection.head.isInstanceOf[SparkStatementWithPlan])
+    assert(whileBody.collection.head.asInstanceOf[SparkStatementWithPlan].getText(batch) == "SELECT 1")
+    assert(whileBody.collection(1).asInstanceOf[SparkStatementWithPlan].getText(batch) == "SELECT 2")
+  }
+
+  test("while with query as condition") {
+    val batch =
+      """WHILE (SELECT a FROM T) DO
+        |  SELECT 1;
+        |  SELECT 2;
+        |END WHILE;
+      """.stripMargin
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[BatchWhileStatement])
+    val whileStatement = tree.collection.head.asInstanceOf[BatchWhileStatement]
+    assert(whileStatement.condition.isInstanceOf[SparkStatementWithPlan])
+  }
+
+  test("variable declare and set") {
+    val batch =
+      """
+        |DECLARE totalInsertCount = 0;
+        |SET VAR totalInsertCount = totalInsertCount + 1;""".stripMargin
+    val tree = parseBatch(batch)
+
+    assert(tree.collection.length == 2)
+    assert(tree.collection.head.isInstanceOf[SparkStatementWithPlan])
+    assert(tree.collection(1).isInstanceOf[SparkStatementWithPlan])
+  }
+
+  test("SET VAR in IF") {
+    val batch =
+      """
+        |IF 1=1 THEN
+        |  SET VAR v = 1;
+        |END IF;
+        |""".stripMargin
+    val tree = parseBatch(batch)
+    assert(tree.collection.length == 1)
+    assert(tree.collection.head.isInstanceOf[BatchIfElseStatement])
+    val ifElseStatement = tree.collection.head.asInstanceOf[BatchIfElseStatement]
+    assert(ifElseStatement.ifBody.collection.length == 1)
+    assert(ifElseStatement.ifBody.collection.head.isInstanceOf[SparkStatementWithPlan])
+    assert(ifElseStatement.ifBody.collection.head.asInstanceOf[SparkStatementWithPlan].getText(batch) == "SET VAR v = 1")
+  }
+}

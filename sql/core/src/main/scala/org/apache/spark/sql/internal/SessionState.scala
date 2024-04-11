@@ -26,6 +26,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.annotation.Unstable
 import org.apache.spark.sql._
 import org.apache.spark.sql.artifact.ArtifactManager
+import org.apache.spark.sql.batchinterpreter.ProceduralLangInterpreter
 import org.apache.spark.sql.catalyst.analysis.{Analyzer, FunctionRegistry, TableFunctionRegistry}
 import org.apache.spark.sql.catalyst.catalog._
 import org.apache.spark.sql.catalyst.optimizer.Optimizer
@@ -80,6 +81,7 @@ private[sql] class SessionState(
     val dataSourceRegistration: DataSourceRegistration,
     catalogBuilder: () => SessionCatalog,
     val sqlParser: ParserInterface,
+    val sqlBatchInterpreter: ProceduralLangInterpreter,
     analyzerBuilder: () => Analyzer,
     optimizerBuilder: () => Optimizer,
     val planner: SparkPlanner,

@@ -46,6 +46,29 @@ singleStatement
     : statement SEMICOLON* EOF
     ;
 
+batch
+    : batchBody SEMICOLON* EOF
+    ;
+
+batchStatement
+    : statement
+    | ifElseStatement
+    | whileStatement
+    ;
+
+// Last semicolon in body optional.
+batchBody
+    : (batchStatement) (SEMICOLON+ batchStatement)* SEMICOLON*
+    ;
+
+ifElseStatement
+    : IF booleanExpression THEN batchBody (ELSE batchBody)? END IF
+    ;
+
+whileStatement
+    : WHILE booleanExpression DO batchBody END WHILE
+    ;
+
 singleExpression
     : namedExpression EOF
     ;

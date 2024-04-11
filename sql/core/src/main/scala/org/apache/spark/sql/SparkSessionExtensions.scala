@@ -20,6 +20,7 @@ package org.apache.spark.sql
 import scala.collection.mutable
 
 import org.apache.spark.annotation.{DeveloperApi, Experimental, Unstable}
+import org.apache.spark.sql.batchinterpreter.ProceduralLangInterpreter
 import org.apache.spark.sql.catalyst.FunctionIdentifier
 import org.apache.spark.sql.catalyst.analysis.{FunctionRegistry, TableFunctionRegistry}
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder
@@ -110,6 +111,7 @@ class SparkSessionExtensions {
   type CheckRuleBuilder = SparkSession => LogicalPlan => Unit
   type StrategyBuilder = SparkSession => Strategy
   type ParserBuilder = (SparkSession, ParserInterface) => ParserInterface
+  type InterpreterBuilder = (SparkSession, ProceduralLangInterpreter) => ProceduralLangInterpreter
   type FunctionDescription = (FunctionIdentifier, ExpressionInfo, FunctionBuilder)
   type TableFunctionDescription = (FunctionIdentifier, ExpressionInfo, TableFunctionBuilder)
   type ColumnarRuleBuilder = SparkSession => ColumnarRule
@@ -321,11 +323,20 @@ class SparkSessionExtensions {
   }
 
   private[this] val parserBuilders = mutable.Buffer.empty[ParserBuilder]
+  private[this] val interpreterBuilders = mutable.Buffer.empty[InterpreterBuilder]
 
   private[sql] def buildParser(
       session: SparkSession,
       initial: ParserInterface): ParserInterface = {
     parserBuilders.foldLeft(initial) { (parser, builder) =>
+      builder(session, parser)
+    }
+  }
+
+  private[sql] def buildInterpreter(
+      session: SparkSession,
+      initial: ProceduralLangInterpreter): ProceduralLangInterpreter = {
+    interpreterBuilders.foldLeft(initial) { (parser, builder) =>
       builder(session, parser)
     }
   }

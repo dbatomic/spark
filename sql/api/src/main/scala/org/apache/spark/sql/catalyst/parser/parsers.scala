@@ -36,6 +36,7 @@ import org.apache.spark.sql.types.{DataType, StructType}
  * Base SQL parsing infrastructure.
  */
 abstract class AbstractParser extends DataTypeParserInterface with Logging {
+
   /** Creates/Resolves DataType for a given SQL string. */
   override def parseDataType(sqlText: String): DataType = parse(sqlText) { parser =>
     astBuilder.visitSingleDataType(parser.singleDataType())
@@ -51,6 +52,7 @@ abstract class AbstractParser extends DataTypeParserInterface with Logging {
 
   /** Get the builder (visitor) which converts a ParseTree into an AST. */
   protected def astBuilder: DataTypeAstBuilder
+
 
   protected def parse[T](command: String)(toResult: SqlBaseParser => T): T = {
     logDebug(s"Parsing command: $command")

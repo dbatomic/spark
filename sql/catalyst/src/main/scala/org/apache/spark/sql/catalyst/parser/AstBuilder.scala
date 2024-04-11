@@ -20,7 +20,7 @@ package org.apache.spark.sql.catalyst.parser
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-import scala.collection.mutable.{ArrayBuffer, Set}
+import scala.collection.mutable.{ArrayBuffer, ListBuffer, Set}
 import scala.jdk.CollectionConverters._
 import scala.util.{Left, Right}
 
@@ -29,8 +29,8 @@ import org.antlr.v4.runtime.misc.Interval
 import org.antlr.v4.runtime.tree.{ParseTree, RuleNode, TerminalNode}
 import org.apache.commons.codec.DecoderException
 import org.apache.commons.codec.binary.Hex
-
 import org.apache.spark.{SparkArithmeticException, SparkException, SparkIllegalArgumentException, SparkThrowable}
+
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.{FunctionIdentifier, SQLConfHelper, TableIdentifier}
 import org.apache.spark.sql.catalyst.analysis._
@@ -47,7 +47,7 @@ import org.apache.spark.sql.catalyst.util.{CharVarcharUtils, DateTimeUtils, Inte
 import org.apache.spark.sql.catalyst.util.DateTimeUtils.{convertSpecialDate, convertSpecialTimestamp, convertSpecialTimestampNTZ, getZoneId, stringToDate, stringToTimestamp, stringToTimestampWithoutTimeZone}
 import org.apache.spark.sql.connector.catalog.{CatalogV2Util, SupportsNamespaces, TableCatalog}
 import org.apache.spark.sql.connector.catalog.TableChange.ColumnPosition
-import org.apache.spark.sql.connector.expressions.{ApplyTransform, BucketTransform, DaysTransform, Expression => V2Expression, FieldReference, HoursTransform, IdentityTransform, LiteralValue, MonthsTransform, Transform, YearsTransform}
+import org.apache.spark.sql.connector.expressions.{ApplyTransform, BucketTransform, DaysTransform, FieldReference, HoursTransform, IdentityTransform, LiteralValue, MonthsTransform, Transform, YearsTransform, Expression => V2Expression}
 import org.apache.spark.sql.errors.{QueryCompilationErrors, QueryParsingErrors}
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types._
@@ -120,6 +120,73 @@ class AstBuilder extends DataTypeAstBuilder with SQLConfHelper with Logging {
   override def visitSingleExpression(ctx: SingleExpressionContext): Expression = withOrigin(ctx) {
     visitNamedExpression(ctx.namedExpression)
   }
+
+  // Batch processing methods (CIGLA)
+  override def visitBatch(ctx: BatchContext): BatchBody = {
+    visit(ctx.batchBody()).asInstanceOf[BatchBody]
+  }
+
+  override def visitBatchBody(ctx: BatchBodyContext): BatchBody = {
+    val buff = ListBuffer[BatchPlanStatement]()
+    for (i <- 0 until ctx.getChildCount) {
+      val child = visit(ctx.getChild(i))
+
+      child match {
+        case stmt: BatchPlanStatement => buff += stmt
+        case null => () // TODO: Debug when null is returned.
+        case t: AnyRef =>
+          throw new SparkException("Unexpected type returned from visit: " + t.getClass)
+      }
+    }
+
+    BatchBody(buff.toList)
+  }
+
+  override def visitBatchStatement(ctx: BatchStatementContext): BatchPlanStatement = {
+    val child = visit(ctx.getChild(0))
+    child match {
+      case logicalPlan: LogicalPlan =>
+        SparkStatementWithPlan(
+          logicalPlan,
+          ctx.statement().start.getStartIndex, ctx.statement().stop.getStopIndex + 1)
+      case stmt: BatchPlanStatement => stmt
+    }
+  }
+
+  override def visitIfElseStatement(ctx: IfElseStatementContext): BatchIfElseStatement = {
+    val condition = expression(ctx.booleanExpression())
+
+    // build a logical plan out of this expression.
+    val plan = Project(Seq(Alias(condition, "condition")()), OneRowRelation())
+
+    val ifBody = visitBatchBody(ctx.batchBody(0))
+
+    // matching here should be better... Refactor.
+    val elseBody = if (ctx.batchBody().size() == 2) {
+      Some(visitBatchBody(ctx.batchBody(1)))
+    } else {
+      None
+    }
+    BatchIfElseStatement(
+      SparkStatementWithPlan(
+        plan,
+        ctx.booleanExpression().start.getStartIndex,
+        ctx.booleanExpression().stop.getStopIndex + 1), ifBody, elseBody)
+  }
+
+  override def visitWhileStatement(ctx: WhileStatementContext): BatchWhileStatement = {
+    val condition = expression(ctx.booleanExpression())
+
+    // build a logical plan out of this expression.
+    val plan = Project(Seq(Alias(condition, "condition")()), OneRowRelation())
+    val whileBody = visitBatchBody(ctx.batchBody)
+    BatchWhileStatement(
+      SparkStatementWithPlan(
+        plan,
+        ctx.booleanExpression().start.getStartIndex,
+        ctx.booleanExpression().stop.getStopIndex + 1), whileBody)
+  }
+  // END OF - Batch processing methods (CIGLA)
 
   override def visitSingleTableIdentifier(
       ctx: SingleTableIdentifierContext): TableIdentifier = withOrigin(ctx) {
