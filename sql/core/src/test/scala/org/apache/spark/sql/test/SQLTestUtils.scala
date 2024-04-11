@@ -34,7 +34,6 @@ import org.scalatest.concurrent.Eventually
 import org.apache.spark.SparkFunSuite
 
 import org.apache.spark.sql._
-import org.apache.spark.sql.batchinterpreter.BatchStatementExec
 import org.apache.spark.sql.catalyst.FunctionIdentifier
 import org.apache.spark.sql.catalyst.analysis.NoSuchTableException
 import org.apache.spark.sql.catalyst.catalog.SessionCatalog.DEFAULT_DATABASE
@@ -232,9 +231,7 @@ private[sql] trait SQLTestUtilsBase
 
   // Shorthand for running a query using our SQLContext
   protected lazy val sql: String => DataFrame = spark.sql _
-
-  protected lazy val sqlBatch: String =>
-    Iterator[BatchStatementExec] = spark.sqlBatch _
+  protected lazy val sqlBatch: String => Iterator[DataFrame] = spark.sqlBatch _
 
   /**
    * A helper object for importing SQL implicits.

@@ -35,7 +35,7 @@ import org.apache.spark.internal.config.{ConfigEntry, EXECUTOR_ALLOW_SPARK_CONTE
 import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd}
 import org.apache.spark.sql.artifact.ArtifactManager
-import org.apache.spark.sql.batchinterpreter.{BatchStatementExec, DataFrameEvaluator, SparkStatementWithPlanExec }
+import org.apache.spark.sql.batchinterpreter.{DataFrameEvaluator, SparkStatementWithPlanExec }
 import org.apache.spark.sql.catalog.Catalog
 import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis.{NameParameterizedQuery, PosParameterizedQuery, UnresolvedRelation}
@@ -720,35 +720,8 @@ class SparkSession private(
           // If plan is a single statement, we can directly return a DataFrame
           // without interpreter.
         Dataset.ofRows(self, singleStmtPlan.parsedPlan, tracker)
-        case _ =>
-          val batch = sessionState.sqlBatchInterpreter.buildExecutionPlan(
-            plan, DataFrameEvaluator(self))
-            batch.flatMap { statement => statement match {
-              case st: SparkStatementWithPlanExec if !st.consumed =>
-                if (st.internal) {
-                  // This is internally added statement. E.g. DROP variable that
-                  // tracks variable lifetime in given scope. We need to execute to make sure that
-                  // side effects propagate but there is no need to return a DataFrame.
-                  val _ = Dataset.ofRows(this, st.parsedPlan)
-                  None
-                } else {
-                  Some(Dataset.ofRows(this, st.parsedPlan))
-                }
-              case _ => None
-            }
-          }.foldLeft(emptyDataFrame)((_, next) => next)
+        case _ => executeBatch(plan).foldLeft(emptyDataFrame)((_, next) => next)
       }
-    }
-
-
-  private[sql] def sqlBatch(
-      batchText: String,
-      tracker: QueryPlanningTracker): Iterator[BatchStatementExec] =
-    withActive {
-      val batchPlan = sessionState.sqlParser.parseBatch(batchText)
-      val interpreter = sessionState.sqlBatchInterpreter.buildExecutionPlan(
-        batchPlan, DataFrameEvaluator(self))
-      interpreter
     }
 
   /**
@@ -773,15 +746,23 @@ class SparkSession private(
     sql(sqlText, args, new QueryPlanningTracker)
   }
 
-  def sqlBatch(batchText: String): Iterator[BatchStatementExec] = {
-    sqlBatch(batchText, new QueryPlanningTracker)
+  def sqlBatch(batchText: String): Iterator[DataFrame] = {
+    val batchPlan = sessionState.sqlParser.parseBatch(batchText)
+    executeBatch(batchPlan)
   }
 
-  def sqlBatchExec(batchText: String): Iterator[DataFrame] = {
-    sqlBatch(batchText).flatMap { statement =>
+  private def executeBatch(batchPlan: BatchBody): Iterator[DataFrame] = {
+    val interpreter = sessionState.sqlBatchInterpreter.buildExecutionPlan(
+      batchPlan, DataFrameEvaluator(self))
+    interpreter.flatMap { statement =>
       statement match {
         case st: SparkStatementWithPlanExec if !st.consumed =>
-          Some(Dataset.ofRows (this, st.parsedPlan))
+          if (st.internal) {
+            val _ = Dataset.ofRows(this, st.parsedPlan)
+            None
+          } else {
+            Some(Dataset.ofRows(this, st.parsedPlan))
+          }
         case _ => None
       }
     }

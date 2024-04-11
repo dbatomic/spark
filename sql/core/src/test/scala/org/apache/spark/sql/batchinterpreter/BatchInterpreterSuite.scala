@@ -21,13 +21,15 @@ import org.apache.spark.sql.catalyst.{ExtendedAnalysisException, QueryPlanningTr
 import org.apache.spark.sql.test.SharedSparkSession
 import org.apache.spark.sql.{Dataset, QueryTest, Row}
 
-
 //noinspection ScalaStyle
 class BatchInterpreterSuite extends QueryTest with SharedSparkSession {
   private def verifyBatchResult(
       batch: String, expected: Seq[Seq[Row]], printRes: Boolean = false): Unit = {
-    val commands = sqlBatch(batch)
-    val result = commands.flatMap {
+
+    val interpreter = BatchLangInterpreter(spark.sessionState.sqlParser)
+    val batchBody = interpreter.sparkStatementParser.parseBatch(batch)
+    val executionPlan = interpreter.buildExecutionPlan(batchBody, DataFrameEvaluator(spark))
+    val result = executionPlan.flatMap {
       case stmt: SparkStatementWithPlanExec =>
         if (printRes) {
           println("Executing: " + stmt.getText(batch))
@@ -237,7 +239,7 @@ class BatchInterpreterSuite extends QueryTest with SharedSparkSession {
           |SELECT COUNT(*) as t2FinalCount FROM t2;
           |SELECT totalInsertCount;
           |""".stripMargin
-      spark.sqlBatchExec(commands).foreach(_.show())
+      spark.sqlBatch(commands).foreach(_.show())
     }
   }
 
