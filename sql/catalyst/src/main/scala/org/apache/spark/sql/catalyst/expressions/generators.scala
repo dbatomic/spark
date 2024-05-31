@@ -409,6 +409,43 @@ abstract class ExplodeBase extends UnaryExpression with CollectionGenerator with
   }
 }
 
+case class WalkDir(child: Expression) extends UnaryExpression with Generator {
+  override def checkInputDataTypes(): TypeCheckResult = {
+    if (child.dataType.isInstanceOf[StringType]) {
+      TypeCheckResult.TypeCheckSuccess
+    } else {
+      DataTypeMismatch(
+        errorSubClass = "UNEXPECTED_INPUT_TYPE",
+        messageParameters = Map(
+          "paramIndex" -> ordinalNumber(0),
+          "requiredType" -> toSQLType(IntegerType),
+          "inputSql" -> toSQLExpr(child),
+          "inputType" -> toSQLType(child.dataType)))
+    }
+  }
+
+  override def supportCodegen: Boolean = false
+
+  override protected def withNewChildInternal(newChild: Expression): WalkDir =
+    copy(child = newChild)
+
+  override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
+    throw QueryExecutionErrors.cannotGenerateCodeForExpressionError(this)
+  }
+
+  override def elementSchema: StructType =
+    StructType(StructField("path", StringType, nullable = false) :: Nil)
+
+  override def eval(input: InternalRow): IterableOnce[InternalRow] = {
+    val dir = child.eval(input).asInstanceOf[UTF8String]
+    import java.io.File
+    val files = new File(dir.toString).listFiles()
+    for (file <- files if !file.isDirectory) yield {
+      InternalRow(UTF8String.fromString(file.getAbsolutePath))
+    }
+  }
+}
+
 /**
  * Given an input array produces a sequence of rows for each value in the array.
  *

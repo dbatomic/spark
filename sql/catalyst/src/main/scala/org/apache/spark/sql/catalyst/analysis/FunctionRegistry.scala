@@ -364,6 +364,7 @@ object FunctionRegistry {
     expression[Abs]("abs"),
     expression[Coalesce]("coalesce"),
     expressionBuilder("explode", ExplodeExpressionBuilder),
+    expression[WalkDir]("walkdir"),
     expressionGeneratorBuilderOuter("explode_outer", ExplodeExpressionBuilder),
     expression[Greatest]("greatest"),
     expression[If]("if"),
@@ -1098,6 +1099,7 @@ object TableFunctionRegistry {
     generator[PosExplode]("posexplode"),
     generator[PosExplode]("posexplode_outer", outer = true),
     generator[Stack]("stack"),
+    generator[WalkDir]("walkdir"),
     generator[SQLKeywords]("sql_keywords"),
     generator[VariantExplode]("variant_explode"),
     generator[VariantExplode]("variant_explode_outer", outer = true)

@@ -88,6 +88,10 @@ class DatasetSuite extends QueryTest
       data: _*)
   }
 
+  test("walk_dir") {
+    sql("SELECT walkdir('/Users/aleksandar.tomic/private_repos/Tara/exploration/test_videos/')").show(truncate = false)
+  }
+
   test("toDS should compare map with byte array keys correctly") {
     // Choose the order of arrays in such way, that sorting keys of different maps by _.toString
     // will not incidentally put equal keys together.
